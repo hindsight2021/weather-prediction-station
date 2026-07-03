@@ -17,7 +17,9 @@ This starter repo gives you:
 - Local scaler/calibration placeholders
 - KNN example store placeholder
 - Home Assistant helper/package examples
-- GitHub Actions lint/test workflow
+- GitHub Actions test workflow
+- Unit tests for feature windows, risk scoring, and MQTT discovery
+- QA plan for local, CI, Home Assistant, and ML-readiness checks
 
 ## Architecture
 
@@ -48,6 +50,23 @@ docker compose up --build
 ```
 
 4. Check Home Assistant for MQTT-discovered entities beginning with `sensor.weather_brain_`.
+
+## QA commands
+
+Run the local QA suite before changing scoring, MQTT discovery, or model plumbing:
+
+```bash
+make qa
+```
+
+Or run the steps manually:
+
+```bash
+python -m compileall app training calibration inference tests
+pytest -q
+```
+
+See `docs/qa-plan.md` for the broader validation checklist.
 
 ## Project phases
 
