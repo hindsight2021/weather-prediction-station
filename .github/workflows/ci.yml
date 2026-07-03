@@ -17,4 +17,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Compile Python files
-        run: python -m compileall app training calibration inference
+        run: python -m compileall app training calibration inference tests
+      - name: Run unit tests
+        run: pytest -q
