@@ -1,0 +1,34 @@
+mqtt:
+  discovery_prefix: homeassistant
+  client_id: kcr-weather-brain
+  birth_topic: weather_brain/status
+  state_topic: weather_brain/prediction/state
+  availability_topic: weather_brain/status
+
+input_topics:
+  temperature_c: rtl_433/atlas/temperature_C
+  humidity_pct: rtl_433/atlas/humidity
+  pressure_hpa: weather/barometer/pressure_hpa
+  wind_speed_kmh: rtl_433/atlas/wind_avg_km_h
+  wind_gust_kmh: rtl_433/atlas/wind_max_km_h
+  rain_rate_mm_h: rtl_433/atlas/rain_rate_mm_h
+  daily_rain_mm: rtl_433/atlas/rain_mm
+  local_lightning_distance_km: lightning/local/distance_km
+  local_lightning_count_30m: lightning/local/count_30m
+  internet_lightning_count_30m: lightning/internet/count_30m
+  radar_precip_nearby: radar/nearby/precip
+
+risk_thresholds:
+  pressure_drop_1h_hpa_watch: -1.5
+  pressure_drop_3h_hpa_watch: -3.0
+  wind_gust_watch_kmh: 45
+  wind_gust_warning_kmh: 65
+  rain_rate_watch_mm_h: 4
+  rain_rate_warning_mm_h: 10
+  lightning_nearby_km: 25
+
+runtime:
+  publish_interval_seconds: 300
+  snapshot_history_limit: 2016
+  write_snapshots_jsonl: true
+  snapshot_path: /app/data/weather_snapshots.jsonl
