@@ -1,0 +1,30 @@
+title: Weather Brain
+views:
+  - title: Weather Brain
+    path: weather-brain
+    cards:
+      - type: entities
+        title: Current Prediction
+        entities:
+          - sensor.weather_brain_alert_level
+          - sensor.weather_brain_storm_risk_1h
+          - sensor.weather_brain_storm_risk_24h
+          - sensor.weather_brain_wind_risk_1h
+          - sensor.weather_brain_rain_risk_1h
+          - sensor.weather_brain_lightning_risk_1h
+          - sensor.weather_brain_confidence
+          - sensor.weather_brain_explanation
+      - type: history-graph
+        title: Weather Brain Risk History
+        hours_to_show: 24
+        entities:
+          - sensor.weather_brain_storm_risk_1h
+          - sensor.weather_brain_wind_risk_1h
+          - sensor.weather_brain_rain_risk_1h
+          - sensor.weather_brain_lightning_risk_1h
+      - type: entities
+        title: Feedback
+        entities:
+          - input_select.weather_brain_feedback_label
+          - input_text.weather_brain_feedback_notes
+          - input_button.weather_brain_submit_feedback
