@@ -1,0 +1,27 @@
+mqtt:
+  discovery_prefix: homeassistant
+  client_id: kcr-weather-brain
+  state_topic: weather_brain_prediction_state
+  availability_topic: weather_brain_status
+
+input_topics:
+  temperature_c: replace_with_your_temperature_topic
+  humidity_pct: replace_with_your_humidity_topic
+  pressure_hpa: replace_with_your_pressure_topic
+  wind_gust_kmh: replace_with_your_wind_gust_topic
+  rain_rate_mm_h: replace_with_your_rain_rate_topic
+  local_lightning_distance_km: replace_with_your_lightning_distance_topic
+  radar_precip_nearby: replace_with_your_radar_topic
+
+risk_thresholds:
+  wind_gust_watch_kmh: 45
+  wind_gust_warning_kmh: 65
+  rain_rate_watch_mm_h: 4
+  rain_rate_warning_mm_h: 10
+  lightning_nearby_km: 25
+
+runtime:
+  publish_interval_seconds: 300
+  snapshot_history_limit: 2016
+  write_snapshots_jsonl: true
+  snapshot_path: data_weather_snapshots.jsonl
