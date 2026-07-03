@@ -1,0 +1,26 @@
+automation:
+  - alias: Weather Brain Storm Risk Notification
+    id: weather_brain_storm_risk_notification
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.weather_brain_storm_risk_1h
+        above: 70
+    action:
+      - service: notify.mobile_app_mike_iphone
+        data:
+          title: Storm risk rising
+          message: "{{ states('sensor.weather_brain_explanation') }}"
+
+  - alias: Weather Brain High Risk Notification
+    id: weather_brain_high_risk_notification
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.weather_brain_alert_level
+        to: warning
+    action:
+      - service: notify.mobile_app_mike_iphone
+        data:
+          title: Weather Brain Warning
+          message: "{{ states('sensor.weather_brain_explanation') }}"
