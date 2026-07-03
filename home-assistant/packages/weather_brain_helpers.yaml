@@ -1,0 +1,26 @@
+input_select:
+  weather_brain_feedback_label:
+    name: Weather Brain Feedback Label
+    options:
+      - none
+      - thunderstorm_warning
+      - thunderstorm_watch
+      - rainfall_warning
+      - wind_warning
+      - freezing_rain_warning
+      - snowfall_warning
+      - winter_storm_warning
+      - heat_warning
+      - cold_warning
+      - fog_advisory
+      - special_weather_statement
+    initial: none
+
+input_text:
+  weather_brain_feedback_notes:
+    name: Weather Brain Feedback Notes
+    max: 255
+
+input_button:
+  weather_brain_submit_feedback:
+    name: Submit Weather Brain Feedback
