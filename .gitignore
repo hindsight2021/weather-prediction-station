@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+*.pkl
+*.pt
+*.onnx
+*.npz
+/data/*.csv
+/data/*.jsonl
+/data/training/
+/data/labels/
+/models/*
+!/models/.gitkeep
