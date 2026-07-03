@@ -1,0 +1,7 @@
+paho-mqtt
+PyYAML
+numpy
+pandas
+scikit-learn
+joblib
+python-dateutil
