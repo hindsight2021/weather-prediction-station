@@ -7,7 +7,12 @@ __pycache__/
 *.npz
 /data/*.csv
 /data/*.jsonl
+/data/raw/
+/data/inventory/*.csv
+/data/processed/*.csv
+/data/processed/*.csv.gz
 /data/training/
 /data/labels/
+!/data/README.md
 /models/*
 !/models/.gitkeep
