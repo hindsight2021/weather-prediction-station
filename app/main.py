@@ -33,12 +33,15 @@ def parse_float(payload: str) -> float | None:
         return None
 
 
+from inference.ml_predictor import MLPredictor
+
 def main() -> None:
     config = load_config()
     current_values: dict[str, float | None] = {key: None for key in config.input_topics}
     topic_to_field = {topic: field for field, topic in config.input_topics.items()}
     store = SnapshotStore(maxlen=config.runtime.snapshot_history_limit)
     mqtt_client = WeatherMqttClient(config.mqtt)
+    predictor = MLPredictor()
     running = True
 
     def handle_signal(signum: int, frame: object) -> None:
@@ -66,7 +69,19 @@ def main() -> None:
                 snapshot = WeatherSnapshot(timestamp=datetime.now(timezone.utc), **current_values)
                 store.add(snapshot)
                 maybe_write_snapshot(config.runtime.snapshot_path, snapshot, config.runtime.write_snapshots_jsonl)
+                ml_probs = predictor.predict(snapshot, store)
                 prediction = score_weather(snapshot, store, config.risk_thresholds)
+                
+                if ml_probs:
+                    LOGGER.info(f"ML Model Probabilities: {ml_probs}")
+                    # Blend the ML predictions into the rule-based prediction
+                    if "convective_risk" in ml_probs and ml_probs["convective_risk"] > 0.5:
+                        prediction.storm_risk_1h = max(prediction.storm_risk_1h, int(ml_probs["convective_risk"] * 100))
+                        prediction.explanation += " (Enhanced by ML Convective Model)"
+                    if "wind_1h" in ml_probs and ml_probs["wind_1h"] > 0.5:
+                        prediction.wind_risk_1h = max(prediction.wind_risk_1h, int(ml_probs["wind_1h"] * 100))
+                        prediction.explanation += " (Enhanced by ML Wind Model)"
+                
                 publish_prediction(mqtt_client, config.mqtt, prediction)
                 LOGGER.info("Published prediction: %s", prediction.as_dict())
                 last_publish = now
