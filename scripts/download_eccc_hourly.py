@@ -115,7 +115,7 @@ def _first_existing_column(frame: pd.DataFrame, candidates: Iterable[str]) -> st
 
 
 def load_stations(inventory_path: Path) -> list[Station]:
-    frame = pd.read_csv(inventory_path)
+    frame = pd.read_csv(inventory_path, skiprows=3)
 
     station_id_col = _first_existing_column(frame, ["Station ID", "StationID"])
     name_col = _first_existing_column(frame, ["Name", "Station Name"])

@@ -176,7 +176,7 @@ def add_window_features(frame: pd.DataFrame) -> pd.DataFrame:
                 lambda values, window=hours: values.rolling(window=window, min_periods=1).mean()
             )
             result[f"{column}_rolling_std_{hours}h"] = grouped[column].transform(
-                lambda values, window=hours: values.rolling(window=window, min_periods=2).std()
+                lambda values, window=hours: values.rolling(window=window, min_periods=min(2, window)).std()
             )
 
     result["rapid_pressure_drop_3h"] = result["station_pressure_hpa_delta_3h"] <= -3.0
