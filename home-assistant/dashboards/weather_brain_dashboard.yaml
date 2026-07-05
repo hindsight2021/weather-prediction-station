@@ -1,19 +1,32 @@
 title: Weather Brain
 views:
-  - title: Weather Brain
+  - title: Weather Brain 🧠 Training Playground
     path: weather-brain
+    icon: mdi:brain
     cards:
-      - type: entities
-        title: Current Prediction
-        entities:
-          - sensor.weather_brain_alert_level
-          - sensor.weather_brain_storm_risk_1h
-          - sensor.weather_brain_storm_risk_24h
-          - sensor.weather_brain_wind_risk_1h
-          - sensor.weather_brain_rain_risk_1h
-          - sensor.weather_brain_lightning_risk_1h
-          - sensor.weather_brain_confidence
-          - sensor.weather_brain_explanation
+      - type: markdown
+        title: Welcome to the Machine Learning Playground
+        content: >
+          This dashboard shows live predictions from your **local AI Weather Engine**. 
+          When predictions are inaccurate, use the Feedback section below to flag them as a **False Alarm**. 
+          The AI will securely log these corrections locally over MQTT, allowing you to fine-tune and retrain the models!
+      - type: horizontal-stack
+        cards:
+          - type: entities
+            title: Current Prediction
+            entities:
+              - sensor.weather_brain_alert_level
+              - sensor.weather_brain_explanation
+              - sensor.weather_brain_confidence
+          - type: gauge
+            entity: sensor.weather_brain_storm_risk_1h
+            name: 1h Storm Risk
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 40
+              red: 80
       - type: history-graph
         title: Weather Brain Risk History
         hours_to_show: 24
@@ -23,7 +36,7 @@ views:
           - sensor.weather_brain_rain_risk_1h
           - sensor.weather_brain_lightning_risk_1h
       - type: entities
-        title: Feedback
+        title: 🎯 Fine-Tune & Train Models
         entities:
           - input_select.weather_brain_feedback_label
           - input_text.weather_brain_feedback_notes

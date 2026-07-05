@@ -3,6 +3,8 @@ input_select:
     name: Weather Brain Feedback Label
     options:
       - none
+      - false_alarm
+      - correct_prediction
       - thunderstorm_warning
       - thunderstorm_watch
       - rainfall_warning

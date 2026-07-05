@@ -1,26 +1,57 @@
 automation:
-  - alias: Weather Brain Storm Risk Notification
-    id: weather_brain_storm_risk_notification
-    mode: single
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.weather_brain_storm_risk_1h
-        above: 70
-    action:
-      - service: notify.mobile_app_mike_iphone
-        data:
-          title: Storm risk rising
-          message: "{{ states('sensor.weather_brain_explanation') }}"
-
-  - alias: Weather Brain High Risk Notification
-    id: weather_brain_high_risk_notification
+  - alias: Weather Brain Alert Notification
+    id: weather_brain_alert_notification
     mode: single
     trigger:
       - platform: state
         entity_id: sensor.weather_brain_alert_level
+        to: advisory
+      - platform: state
+        entity_id: sensor.weather_brain_alert_level
+        to: watch
+      - platform: state
+        entity_id: sensor.weather_brain_alert_level
         to: warning
     action:
-      - service: notify.mobile_app_mike_iphone
+      - variables:
+          emoji: >
+            {% if trigger.to_state.state == 'warning' %}
+              🚨
+            {% elif trigger.to_state.state == 'watch' %}
+              ⚠️
+            {% else %}
+              🔔
+            {% endif %}
+          level: "{{ trigger.to_state.state | title }}"
+      - service: notify.pushover
         data:
-          title: Weather Brain Warning
+          title: "{{ emoji }} Weather Brain {{ level }}"
           message: "{{ states('sensor.weather_brain_explanation') }}"
+
+  - alias: Weather Brain Submit Feedback
+    id: weather_brain_submit_feedback
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_button.weather_brain_submit_feedback
+    action:
+      - service: mqtt.publish
+        data:
+          topic: ha_bridge/feedback/weather_brain
+          payload: >
+            {
+              "label": "{{ states('input_select.weather_brain_feedback_label') }}",
+              "notes": "{{ states('input_text.weather_brain_feedback_notes') }}",
+              "timestamp": "{{ now().isoformat() }}"
+            }
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.weather_brain_feedback_label
+        data:
+          option: "none"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.weather_brain_feedback_notes
+        data:
+          value: ""
+
