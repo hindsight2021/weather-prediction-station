@@ -53,12 +53,45 @@ def main() -> None:
     signal.signal(signal.SIGINT, handle_signal)
 
     def on_message(topic: str, payload: str) -> None:
+        if topic == "ha_bridge/feedback/weather_brain":
+            try:
+                feedback = json.loads(payload)
+                LOGGER.info(f"Received feedback: {feedback}")
+                if feedback.get("label") not in ("none", "", None):
+                    import threading
+                    def autonomous_retrain():
+                        LOGGER.info("Starting autonomous retraining sequence on Pi...")
+                        try:
+                            # 1. Save feedback event to a dataset
+                            feedback_file = Path("data/processed/feedback_dataset.csv")
+                            is_new = not feedback_file.exists()
+                            with feedback_file.open("a", encoding="utf-8") as f:
+                                if is_new:
+                                    f.write("timestamp,label,notes\n")
+                                f.write(f"{feedback['timestamp']},{feedback['label']},\"{feedback.get('notes', '')}\"\n")
+                            
+                            # 2. Run the training script (it will load the feedback dataset in the future)
+                            import subprocess
+                            subprocess.run(["python", "-m", "training.train_models"], check=True)
+                            
+                            # 3. Reload the predictor models live
+                            predictor._load_models()
+                            LOGGER.info("Autonomous retraining complete. New models loaded live.")
+                        except Exception as e:
+                            LOGGER.error(f"Autonomous retraining failed: {e}")
+                    
+                    threading.Thread(target=autonomous_retrain, daemon=True).start()
+            except json.JSONDecodeError:
+                pass
+            return
+            
         field = topic_to_field.get(topic)
         if not field:
             return
         current_values[field] = parse_float(payload)
 
-    mqtt_client.connect(on_message=on_message, topics=list(topic_to_field))
+    topics_to_subscribe = list(topic_to_field) + ["ha_bridge/feedback/weather_brain"]
+    mqtt_client.connect(on_message=on_message, topics=topics_to_subscribe)
     publish_discovery(mqtt_client, config.mqtt)
 
     last_publish = 0.0
