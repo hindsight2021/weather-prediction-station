@@ -6,13 +6,13 @@ mqtt:
   availability_topic: weather_brain/status
 
 input_topics:
-  temperature_c: rtl_433/atlas/temperature_C
-  humidity_pct: rtl_433/atlas/humidity
-  pressure_hpa: weather/barometer/pressure_hpa
-  wind_speed_kmh: rtl_433/atlas/wind_avg_km_h
-  wind_gust_kmh: rtl_433/atlas/wind_max_km_h
-  rain_rate_mm_h: rtl_433/atlas/rain_rate_mm_h
-  daily_rain_mm: rtl_433/atlas/rain_mm
+  temperature_c: ha_bridge/atlas/temperature_c
+  humidity_pct: ha_bridge/atlas/humidity_pct
+  pressure_hpa: ha_bridge/fredericton/pressure_hpa
+  wind_speed_kmh: ha_bridge/atlas/wind_speed_kmh
+  wind_gust_kmh: ha_bridge/atlas/wind_gust_kmh
+  rain_rate_mm_h: ha_bridge/atlas/rain_rate
+  daily_rain_mm: ha_bridge/atlas/rain_total
   local_lightning_distance_km: lightning/local/distance_km
   local_lightning_count_30m: lightning/local/count_30m
   internet_lightning_count_30m: lightning/internet/count_30m

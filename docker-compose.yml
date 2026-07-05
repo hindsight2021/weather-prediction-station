@@ -12,6 +12,16 @@ services:
     networks:
       - weather-brain
 
+  ha-bridge:
+    build: .
+    container_name: kcr-ha-bridge
+    command: python -m app.ha_bridge
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - weather-brain
+
 networks:
   weather-brain:
     driver: bridge
