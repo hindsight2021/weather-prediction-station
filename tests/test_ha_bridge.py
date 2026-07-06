@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.9 seconds
-Output:
 from app.ha_bridge import (
     LIGHTNING_COUNT_ENTITY,
     LIGHTNING_DISTANCE_ENTITY,
