@@ -36,14 +36,51 @@ FEATURES = [
 ]
 
 TARGETS = {
-    "convective_risk": "proxy_convective_risk_now",
-    "wind_1h": "proxy_wind_event_1h",
-    "storm_24h": "proxy_storm_event_24h"
+    "convective_risk": {"target": "proxy_convective_risk_now", "kind": "binary"},
+    "wind_1h": {"target": "proxy_wind_event_1h", "kind": "binary"},
+    "storm_24h": {"target": "proxy_storm_event_24h", "kind": "binary"},
+    "heat_disturbance_24h": {"target": "proxy_heat_disturbance_24h", "kind": "multiclass"},
+    "cold_disturbance_24h": {"target": "proxy_cold_disturbance_24h", "kind": "multiclass"},
 }
 
 def load_data(path: Path) -> pd.DataFrame:
     LOGGER.info(f"Loading dataset from {path}")
     return pd.read_csv(path)
+
+
+def _future_window_max(values: pd.Series, hours: int) -> pd.Series:
+    return values.shift(-1).iloc[::-1].rolling(window=hours, min_periods=1).max().iloc[::-1]
+
+
+def _future_window_min(values: pd.Series, hours: int) -> pd.Series:
+    return values.shift(-1).iloc[::-1].rolling(window=hours, min_periods=1).min().iloc[::-1]
+
+
+def add_thermal_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    grouped = result.groupby("station_name", group_keys=False)
+
+    humidex = result["humidex"] if "humidex" in result else pd.Series(index=result.index, dtype="float64")
+    wind_chill = result["wind_chill"] if "wind_chill" in result else pd.Series(index=result.index, dtype="float64")
+    heat_source = humidex.combine_first(result["temp_c"])
+    cold_source = wind_chill.combine_first(result["temp_c"])
+
+    result["_thermal_heat_source"] = heat_source
+    result["_thermal_cold_source"] = cold_source
+    future_heat = grouped["_thermal_heat_source"].transform(lambda values: _future_window_max(values, 24))
+    future_cold = grouped["_thermal_cold_source"].transform(lambda values: _future_window_min(values, 24))
+
+    result["proxy_heat_disturbance_24h"] = 0
+    result.loc[future_heat >= 30.0, "proxy_heat_disturbance_24h"] = 1
+    result.loc[future_heat >= 35.0, "proxy_heat_disturbance_24h"] = 2
+    result.loc[future_heat >= 40.0, "proxy_heat_disturbance_24h"] = 3
+
+    result["proxy_cold_disturbance_24h"] = 0
+    result.loc[future_cold <= -10.0, "proxy_cold_disturbance_24h"] = 1
+    result.loc[future_cold <= -20.0, "proxy_cold_disturbance_24h"] = 2
+    result.loc[future_cold <= -30.0, "proxy_cold_disturbance_24h"] = 3
+
+    return result.drop(columns=["_thermal_heat_source", "_thermal_cold_source"])
 
 def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoostingClassifier:
     clf = HistGradientBoostingClassifier(
@@ -57,11 +94,14 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoosti
 
 def evaluate_model(clf, X_test, y_test, name: str):
     preds = clf.predict(X_test)
-    probs = clf.predict_proba(X_test)[:, 1]
+    probs = clf.predict_proba(X_test)
     
     LOGGER.info(f"--- Evaluation for {name} ---")
     if len(y_test.unique()) > 1:
-        auc = roc_auc_score(y_test, probs)
+        if len(clf.classes_) > 2:
+            auc = roc_auc_score(y_test, probs, multi_class="ovr")
+        else:
+            auc = roc_auc_score(y_test, probs[:, 1])
         LOGGER.info(f"ROC AUC: {auc:.3f}")
     LOGGER.info("\n" + classification_report(y_test, preds))
 
@@ -78,6 +118,7 @@ def main(argv: list[str] = None) -> int:
         return 1
 
     df = load_data(args.dataset)
+    df = add_thermal_proxy_targets(df)
     
     # -------------------------------------------------------------
     # Autonomous Feedback Loop: Apply HA feedback corrections
@@ -98,12 +139,14 @@ def main(argv: list[str] = None) -> int:
                     closest_idx = time_diffs.idxmin()
                     if label == "false_alarm":
                         LOGGER.info(f"Applying false_alarm correction at {fb_time}")
-                        for col in TARGETS.values():
+                        for target in TARGETS.values():
+                            col = target["target"]
                             if pd.notna(df.at[closest_idx, col]):
                                 df.at[closest_idx, col] = 0.0
                     elif label == "correct_prediction" or "warning" in label:
                         LOGGER.info(f"Applying positive event correction at {fb_time}")
-                        for col in TARGETS.values():
+                        for target in TARGETS.values():
+                            col = target["target"]
                             if pd.notna(df.at[closest_idx, col]):
                                 df.at[closest_idx, col] = 1.0
         except Exception as e:
@@ -117,7 +160,9 @@ def main(argv: list[str] = None) -> int:
     
     args.models_dir.mkdir(parents=True, exist_ok=True)
     
-    for model_name, target_col in TARGETS.items():
+    for model_name, target in TARGETS.items():
+        target_col = target["target"]
+        kind = target["kind"]
         LOGGER.info(f"Training model for {model_name}...")
         
         # Filter out missing targets
@@ -140,6 +185,7 @@ def main(argv: list[str] = None) -> int:
                 "model": clf,
                 "features": FEATURES,
                 "target": target_col,
+                "kind": kind,
                 "version": "1.0"
             }, f)
         LOGGER.info(f"Saved {model_name} model to {model_path}\n")

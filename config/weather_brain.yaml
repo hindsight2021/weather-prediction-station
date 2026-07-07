@@ -7,6 +7,8 @@ mqtt:
 
 input_topics:
   temperature_c: ha_bridge/atlas/temperature_c
+  humidex: ha_bridge/derived/humidex
+  wind_chill_c: ha_bridge/derived/wind_chill_c
   humidity_pct: ha_bridge/atlas/humidity_pct
   pressure_hpa: ha_bridge/fredericton/pressure_hpa
   wind_speed_kmh: ha_bridge/atlas/wind_speed_kmh
@@ -26,6 +28,12 @@ risk_thresholds:
   rain_rate_watch_mm_h: 4
   rain_rate_warning_mm_h: 10
   lightning_nearby_km: 25
+  heat_humidex_mild: 30
+  heat_humidex_moderate: 35
+  heat_humidex_severe: 40
+  cold_wind_chill_mild_c: -10
+  cold_wind_chill_moderate_c: -20
+  cold_wind_chill_severe_c: -30
 
 runtime:
   publish_interval_seconds: 300

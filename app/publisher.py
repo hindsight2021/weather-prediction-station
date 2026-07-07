@@ -15,6 +15,8 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "wind_risk_1h": {"name": "Weather Brain Wind Risk 1h", "unit": "%", "icon": "mdi:weather-windy"},
         "rain_risk_1h": {"name": "Weather Brain Rain Risk 1h", "unit": "%", "icon": "mdi:weather-pouring"},
         "lightning_risk_1h": {"name": "Weather Brain Lightning Risk 1h", "unit": "%", "icon": "mdi:weather-lightning"},
+        "heat_risk_24h": {"name": "Weather Brain Heat Risk 24h", "unit": "%", "icon": "mdi:thermometer-alert"},
+        "cold_risk_24h": {"name": "Weather Brain Cold Risk 24h", "unit": "%", "icon": "mdi:snowflake-alert"},
         "confidence": {"name": "Weather Brain Confidence", "unit": "%", "icon": "mdi:brain"},
     }
 
@@ -36,6 +38,8 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
     text_sensors = {
         "level": {"name": "Weather Brain Alert Level", "icon": "mdi:alert"},
         "explanation": {"name": "Weather Brain Explanation", "icon": "mdi:text-box-search"},
+        "heat_severity": {"name": "Weather Brain Heat Severity", "icon": "mdi:thermometer-lines"},
+        "cold_severity": {"name": "Weather Brain Cold Severity", "icon": "mdi:snowflake-thermometer"},
     }
     for key, meta in text_sensors.items():
         topic = f"{settings.discovery_prefix}/sensor/weather_brain/{key}/config"

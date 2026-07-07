@@ -18,6 +18,8 @@ MQTT_PASS = os.environ.get("MQTT_PASSWORD", "rodeo101")
 
 ENTITY_TO_TOPIC = {
     "sensor.ihome_atlas_temperature": "ha_bridge/atlas/temperature_c",
+    "sensor.humidex": "ha_bridge/derived/humidex",
+    "sensor.wind_chill": "ha_bridge/derived/wind_chill_c",
     "sensor.ihome_atlas_humidity": "ha_bridge/atlas/humidity_pct",
     "sensor.ihome_atlas_wind_speed": "ha_bridge/atlas/wind_speed_kmh",
     "sensor.ihome_atlas_wind_direction": "ha_bridge/atlas/wind_direction",

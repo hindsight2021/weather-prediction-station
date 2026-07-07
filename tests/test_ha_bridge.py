@@ -18,6 +18,11 @@ def test_wind_gust_bridge_uses_live_average_gust_sensor() -> None:
     assert "sensor.ihome_atlas_wind_gust" not in ha_bridge.ENTITY_TO_TOPIC
 
 
+def test_thermal_bridge_uses_live_derived_sensors() -> None:
+    assert ha_bridge.ENTITY_TO_TOPIC["sensor.humidex"] == "ha_bridge/derived/humidex"
+    assert ha_bridge.ENTITY_TO_TOPIC["sensor.wind_chill"] == "ha_bridge/derived/wind_chill_c"
+
+
 def test_publish_state_clears_unavailable_retained_value() -> None:
     client = FakeMqttClient()
 

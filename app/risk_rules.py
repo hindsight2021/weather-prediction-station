@@ -8,6 +8,36 @@ def clamp_score(value: float) -> int:
     return max(0, min(100, int(round(value))))
 
 
+def _heat_risk(value: float | None, thresholds: dict[str, float]) -> tuple[float, str]:
+    if value is None:
+        return 0.0, "none"
+    mild = thresholds.get("heat_humidex_mild", 30.0)
+    moderate = thresholds.get("heat_humidex_moderate", 35.0)
+    severe = thresholds.get("heat_humidex_severe", 40.0)
+    if value >= severe:
+        return min(100.0, 90.0 + (value - severe) * 2.0), "severe"
+    if value >= moderate:
+        return min(89.0, 65.0 + (value - moderate) * 4.0), "moderate"
+    if value >= mild:
+        return min(64.0, 35.0 + (value - mild) * 5.0), "mild"
+    return max(0.0, (value - 24.0) * 3.0), "none"
+
+
+def _cold_risk(value: float | None, thresholds: dict[str, float]) -> tuple[float, str]:
+    if value is None:
+        return 0.0, "none"
+    mild = thresholds.get("cold_wind_chill_mild_c", -10.0)
+    moderate = thresholds.get("cold_wind_chill_moderate_c", -20.0)
+    severe = thresholds.get("cold_wind_chill_severe_c", -30.0)
+    if value <= severe:
+        return min(100.0, 90.0 + abs(value - severe) * 1.5), "severe"
+    if value <= moderate:
+        return min(89.0, 65.0 + abs(value - moderate) * 2.5), "moderate"
+    if value <= mild:
+        return min(64.0, 35.0 + abs(value - mild) * 3.0), "mild"
+    return 0.0, "none"
+
+
 def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: dict[str, float]) -> Prediction:
     pressure_1h = store.pressure_delta(1)
     pressure_3h = store.pressure_delta(3)
@@ -64,6 +94,18 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     if snapshot.radar_precip_nearby is not None and snapshot.radar_precip_nearby > 0:
         radar_score = 35.0
 
+    heat_signal = snapshot.humidex if snapshot.humidex is not None else snapshot.temperature_c
+    max_heat_6h = store.field_max("humidex", 6)
+    if max_heat_6h is not None:
+        heat_signal = max(heat_signal or max_heat_6h, max_heat_6h)
+    heat_risk, heat_severity = _heat_risk(heat_signal, thresholds)
+
+    cold_signal = snapshot.wind_chill_c if snapshot.wind_chill_c is not None else snapshot.temperature_c
+    min_cold_6h = store.field_min("wind_chill_c", 6)
+    if min_cold_6h is not None:
+        cold_signal = min(cold_signal if cold_signal is not None else min_cold_6h, min_cold_6h)
+    cold_risk, cold_severity = _cold_risk(cold_signal, thresholds)
+
     storm_risk_1h = clamp_score(
         pressure_score * 0.30
         + humidity_score * 0.15
@@ -82,6 +124,8 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
             snapshot.pressure_hpa,
             snapshot.wind_gust_kmh,
             snapshot.rain_rate_mm_h,
+            snapshot.humidex,
+            snapshot.wind_chill_c,
             snapshot.local_lightning_distance_km,
             snapshot.radar_precip_nearby,
         ]
@@ -89,11 +133,11 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     confidence = clamp_score(35 + present_fields * 8)
 
     level = "normal"
-    if storm_risk_1h >= 80 or wind_risk >= 80 or lightning_risk >= 85:
+    if storm_risk_1h >= 80 or wind_risk >= 80 or lightning_risk >= 85 or heat_risk >= 90 or cold_risk >= 90:
         level = "warning"
-    elif storm_risk_1h >= 60 or wind_risk >= 60 or lightning_risk >= 60:
+    elif storm_risk_1h >= 60 or wind_risk >= 60 or lightning_risk >= 60 or heat_risk >= 65 or cold_risk >= 65:
         level = "watch"
-    elif storm_risk_1h >= 40:
+    elif storm_risk_1h >= 40 or heat_risk >= 35 or cold_risk >= 35:
         level = "advisory"
 
     explanation_parts: list[str] = []
@@ -109,6 +153,10 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         explanation_parts.append("lightning signal active")
     if radar_score > 0:
         explanation_parts.append("radar precipitation nearby")
+    if heat_severity != "none" and heat_signal is not None:
+        explanation_parts.append(f"{heat_severity} heat signal near {heat_signal:.0f}")
+    if cold_severity != "none" and cold_signal is not None:
+        explanation_parts.append(f"{cold_severity} cold signal near {cold_signal:.0f}")
 
     explanation = "; ".join(explanation_parts) if explanation_parts else "No strong local severe-weather signal detected."
 
@@ -121,4 +169,8 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         confidence=confidence,
         level=level,
         explanation=explanation,
+        heat_risk_24h=clamp_score(heat_risk),
+        cold_risk_24h=clamp_score(cold_risk),
+        heat_severity=heat_severity,
+        cold_severity=cold_severity,
     )

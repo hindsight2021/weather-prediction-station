@@ -70,3 +70,29 @@ def test_score_weather_stays_normal_when_inputs_are_quiet() -> None:
     assert prediction.level == "normal"
     assert prediction.storm_risk_1h < 40
     assert prediction.explanation == "No strong local severe-weather signal detected."
+
+
+def test_score_weather_adds_heat_advisory_from_humidex() -> None:
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=100)
+    snapshot = WeatherSnapshot(timestamp=base, temperature_c=30.0, humidex=36.0, humidity_pct=70.0)
+    store.add(snapshot)
+
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+
+    assert prediction.level == "watch"
+    assert prediction.heat_severity == "moderate"
+    assert prediction.heat_risk_24h >= 65
+
+
+def test_score_weather_adds_cold_warning_from_wind_chill() -> None:
+    base = datetime(2026, 1, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=100)
+    snapshot = WeatherSnapshot(timestamp=base, temperature_c=-22.0, wind_chill_c=-31.0, humidity_pct=50.0)
+    store.add(snapshot)
+
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+
+    assert prediction.level == "warning"
+    assert prediction.cold_severity == "severe"
+    assert prediction.cold_risk_24h >= 90

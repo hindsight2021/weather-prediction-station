@@ -12,7 +12,8 @@ class MLPredictor:
     def __init__(self, models_dir: Path = Path("models")):
         self.models_dir = models_dir
         self.models = {}
-        self.features = []
+        self.model_features = {}
+        self.model_kinds = {}
         self._load_models()
 
     def _load_models(self):
@@ -25,14 +26,14 @@ class MLPredictor:
                     data = pickle.load(f)
                     name = pkl_file.stem
                     self.models[name] = data["model"]
-                    if not self.features:
-                        self.features = data["features"]
+                    self.model_features[name] = data["features"]
+                    self.model_kinds[name] = data.get("kind", "binary")
                 LOGGER.info(f"Loaded ML model: {name}")
             except Exception as e:
                 LOGGER.warning(f"Failed to load model {pkl_file}: {e}")
 
-    def predict(self, snapshot: WeatherSnapshot, store) -> dict[str, float]:
-        """Returns a dict mapping model names to their positive class probability [0.0, 1.0]."""
+    def predict(self, snapshot: WeatherSnapshot, store) -> dict[str, float | dict[str, object]]:
+        """Return binary positive probabilities or multiclass class/probability payloads."""
         if not self.models:
             return {}
             
@@ -50,6 +51,8 @@ class MLPredictor:
             
             row = {
                 "temp_c": snapshot.temperature_c,
+                "humidex": snapshot.humidex,
+                "wind_chill": snapshot.wind_chill_c,
                 "dew_point_c": snapshot.temperature_c - (100 - snapshot.humidity_pct)/5 if snapshot.temperature_c and snapshot.humidity_pct else None,
                 "rel_hum_pct": snapshot.humidity_pct,
                 "wind_speed_kmh": snapshot.wind_speed_kmh,
@@ -73,8 +76,19 @@ class MLPredictor:
             
             results = {}
             for name, model in self.models.items():
-                probs = model.predict_proba(df[self.features])
-                results[name] = probs[0][1] # Probability of positive class
+                features = self.model_features.get(name, [])
+                probs = model.predict_proba(df[features])
+                classes = list(model.classes_)
+                if self.model_kinds.get(name) != "multiclass" and len(classes) <= 2:
+                    positive_index = classes.index(1) if 1 in classes else len(classes) - 1
+                    results[name] = float(probs[0][positive_index])
+                else:
+                    best_index = int(np.argmax(probs[0]))
+                    results[name] = {
+                        "class": int(classes[best_index]),
+                        "probability": float(probs[0][best_index]),
+                        "probabilities": {str(int(cls)): float(probs[0][idx]) for idx, cls in enumerate(classes)},
+                    }
             return results
         except Exception as e:
             LOGGER.error(f"ML inference failed: {e}")

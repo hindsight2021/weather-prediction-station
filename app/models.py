@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 class WeatherSnapshot:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     temperature_c: float | None = None
+    humidex: float | None = None
+    wind_chill_c: float | None = None
     humidity_pct: float | None = None
     pressure_hpa: float | None = None
     wind_speed_kmh: float | None = None
@@ -23,6 +25,8 @@ class WeatherSnapshot:
         return {
             "timestamp": self.timestamp.isoformat(),
             "temperature_c": self.temperature_c,
+            "humidex": self.humidex,
+            "wind_chill_c": self.wind_chill_c,
             "humidity_pct": self.humidity_pct,
             "pressure_hpa": self.pressure_hpa,
             "wind_speed_kmh": self.wind_speed_kmh,
@@ -46,6 +50,10 @@ class Prediction:
     confidence: int
     level: str
     explanation: str
+    heat_risk_24h: int = 0
+    cold_risk_24h: int = 0
+    heat_severity: str = "none"
+    cold_severity: str = "none"
 
     def as_dict(self) -> dict[str, int | str]:
         return {
@@ -57,4 +65,8 @@ class Prediction:
             "confidence": self.confidence,
             "level": self.level,
             "explanation": self.explanation,
+            "heat_risk_24h": self.heat_risk_24h,
+            "cold_risk_24h": self.cold_risk_24h,
+            "heat_severity": self.heat_severity,
+            "cold_severity": self.cold_severity,
         }

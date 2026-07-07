@@ -48,6 +48,14 @@ class SnapshotStore:
         values = _values_since(self._snapshots, "rain_rate_mm_h", minutes)
         return max(values) if values else None
 
+    def field_max(self, field_name: str, hours: float) -> float | None:
+        values = _values_since_hours(self._snapshots, field_name, hours)
+        return max(values) if values else None
+
+    def field_min(self, field_name: str, hours: float) -> float | None:
+        values = _values_since_hours(self._snapshots, field_name, hours)
+        return min(values) if values else None
+
 
 def _values_since(snapshots: Iterable[WeatherSnapshot], field_name: str, minutes: int) -> list[float]:
     items = list(snapshots)

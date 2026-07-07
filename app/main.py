@@ -41,6 +41,27 @@ def parse_float(payload: str) -> float | None:
 
 from inference.ml_predictor import MLPredictor
 
+THERMAL_SEVERITY = {
+    0: ("none", 0),
+    1: ("mild", 45),
+    2: ("moderate", 70),
+    3: ("severe", 90),
+}
+
+
+def apply_multiclass_thermal_prediction(prediction, model_result, risk_attr: str, severity_attr: str, label: str) -> None:
+    if not isinstance(model_result, dict):
+        return
+    severity_class = int(model_result.get("class", 0))
+    severity, base_score = THERMAL_SEVERITY.get(severity_class, THERMAL_SEVERITY[0])
+    probability = float(model_result.get("probability", 0.0))
+    if severity == "none":
+        return
+    current_score = getattr(prediction, risk_attr)
+    setattr(prediction, risk_attr, max(current_score, min(100, int(round(base_score + probability * 10)))))
+    setattr(prediction, severity_attr, severity)
+    prediction.explanation += f" (ML {label}: {severity})"
+
 def main() -> None:
     config = load_config()
     current_values: dict[str, float | None] = {key: None for key in config.input_topics}
@@ -120,6 +141,12 @@ def main() -> None:
                     if "wind_1h" in ml_probs and ml_probs["wind_1h"] > 0.5:
                         prediction.wind_risk_1h = max(prediction.wind_risk_1h, int(ml_probs["wind_1h"] * 100))
                         prediction.explanation += " (Enhanced by ML Wind Model)"
+                    apply_multiclass_thermal_prediction(
+                        prediction, ml_probs.get("heat_disturbance_24h"), "heat_risk_24h", "heat_severity", "heat"
+                    )
+                    apply_multiclass_thermal_prediction(
+                        prediction, ml_probs.get("cold_disturbance_24h"), "cold_risk_24h", "cold_severity", "cold"
+                    )
                 
                 publish_prediction(mqtt_client, config.mqtt, prediction)
                 LOGGER.info("Published prediction: %s", prediction.as_dict())
