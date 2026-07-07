@@ -16,6 +16,7 @@ from app.publisher import publish_discovery, publish_prediction
 from app.risk_rules import score_weather
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+STARTUP_GRACE_SECONDS = float(os.environ.get("STARTUP_GRACE_SECONDS", "5"))
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
 
@@ -120,6 +121,9 @@ def main() -> None:
     topics_to_subscribe = list(topic_to_field) + ["ha_bridge/feedback/weather_brain"]
     mqtt_client.connect(on_message=on_message, topics=topics_to_subscribe)
     publish_discovery(mqtt_client, config.mqtt)
+    if STARTUP_GRACE_SECONDS > 0:
+        LOGGER.info("Waiting %.1f seconds for retained MQTT inputs", STARTUP_GRACE_SECONDS)
+        time.sleep(STARTUP_GRACE_SECONDS)
 
     last_publish = 0.0
     try:
