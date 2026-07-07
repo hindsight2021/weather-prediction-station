@@ -58,7 +58,11 @@ def _future_window_min(values: pd.Series, hours: int) -> pd.Series:
 
 def add_thermal_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
-    grouped = result.groupby("station_name", group_keys=False)
+    group_column = "station_name"
+    if group_column not in result:
+        group_column = "_thermal_station"
+        result[group_column] = "local"
+    grouped = result.groupby(group_column, group_keys=False)
 
     humidex = result["humidex"] if "humidex" in result else pd.Series(index=result.index, dtype="float64")
     wind_chill = result["wind_chill"] if "wind_chill" in result else pd.Series(index=result.index, dtype="float64")
@@ -80,7 +84,7 @@ def add_thermal_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
     result.loc[future_cold <= -20.0, "proxy_cold_disturbance_24h"] = 2
     result.loc[future_cold <= -30.0, "proxy_cold_disturbance_24h"] = 3
 
-    return result.drop(columns=["_thermal_heat_source", "_thermal_cold_source"])
+    return result.drop(columns=["_thermal_heat_source", "_thermal_cold_source", "_thermal_station"], errors="ignore")
 
 def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoostingClassifier:
     clf = HistGradientBoostingClassifier(
