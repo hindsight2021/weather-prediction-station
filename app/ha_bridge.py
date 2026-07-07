@@ -21,11 +21,24 @@ ENTITY_TO_TOPIC = {
     "sensor.ihome_atlas_humidity": "ha_bridge/atlas/humidity_pct",
     "sensor.ihome_atlas_wind_speed": "ha_bridge/atlas/wind_speed_kmh",
     "sensor.ihome_atlas_wind_direction": "ha_bridge/atlas/wind_direction",
-    "sensor.ihome_atlas_wind_gust": "ha_bridge/atlas/wind_gust_kmh",
+    "sensor.wind_gust_average": "ha_bridge/atlas/wind_gust_kmh",
     "sensor.ihome_atlas_rain_total": "ha_bridge/atlas/rain_total",
     "sensor.ihome_atlas_rain_rate": "ha_bridge/atlas/rain_rate",
     "sensor.fredericton_barometric_pressure": "ha_bridge/fredericton/pressure_hpa",
 }
+
+INVALID_STATES = {"unavailable", "unknown", None}
+
+
+def mqtt_payload_for_state(state):
+    if state in INVALID_STATES:
+        return json.dumps({"value": None, "state": "unavailable"})
+    return state
+
+
+def publish_state(mqtt_client, entity_id, state):
+    topic = ENTITY_TO_TOPIC[entity_id]
+    mqtt_client.publish(topic, mqtt_payload_for_state(state), retain=True)
 
 def setup_mqtt():
     client = mqtt.Client(client_id="ha_bridge_service", protocol=mqtt.MQTTv5)
@@ -60,16 +73,23 @@ async def ha_ws_loop(mqtt_client):
                     msg = json.loads(await ws.recv())
                     if msg.get("id") == 2 and msg.get("type") == "result":
                         states = msg.get("result", [])
+                        seen_entities = set()
                         for s in states:
                             eid = s.get("entity_id")
                             if eid in ENTITY_TO_TOPIC:
+                                seen_entities.add(eid)
                                 val = s.get("state")
                                 try:
-                                    if val not in ("unavailable", "unknown"):
-                                        mqtt_client.publish(ENTITY_TO_TOPIC[eid], val, retain=True)
-                                        LOGGER.info("Initial state %s: %s", eid, val)
+                                    publish_state(mqtt_client, eid, val)
+                                    LOGGER.info("Initial state %s: %s", eid, val)
                                 except Exception as e:
                                     LOGGER.error("Error publishing initial state: %s", e)
+                        for eid in set(ENTITY_TO_TOPIC) - seen_entities:
+                            try:
+                                publish_state(mqtt_client, eid, None)
+                                LOGGER.warning("Entity %s missing from HA state list; cleared %s", eid, ENTITY_TO_TOPIC[eid])
+                            except Exception as e:
+                                LOGGER.error("Error clearing missing entity state: %s", e)
 
                     elif msg.get("type") == "event" and msg.get("event", {}).get("event_type") == "state_changed":
                         event_data = msg["event"]["data"]
@@ -77,9 +97,8 @@ async def ha_ws_loop(mqtt_client):
                         if eid in ENTITY_TO_TOPIC:
                             new_state = event_data.get("new_state", {}).get("state")
                             try:
-                                if new_state not in ("unavailable", "unknown"):
-                                    mqtt_client.publish(ENTITY_TO_TOPIC[eid], new_state, retain=True)
-                                    LOGGER.info("State changed %s: %s", eid, new_state)
+                                publish_state(mqtt_client, eid, new_state)
+                                LOGGER.info("State changed %s: %s", eid, new_state)
                             except Exception as e:
                                 LOGGER.error("Error publishing state change: %s", e)
 

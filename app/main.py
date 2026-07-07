@@ -26,7 +26,13 @@ def parse_float(payload: str) -> float | None:
         if isinstance(parsed, dict):
             for key in ("value", "state", "pressure", "temperature", "humidity", "distance", "count"):
                 if key in parsed:
-                    return float(parsed[key])
+                    value = parsed[key]
+                    if value in (None, "unavailable", "unknown", ""):
+                        return None
+                    return float(value)
+            return None
+        if parsed is None:
+            return None
         return float(parsed)
     except (ValueError, TypeError, json.JSONDecodeError):
         LOGGER.warning("Could not parse numeric MQTT payload: %s", payload)

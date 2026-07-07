@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from app.feature_builder import SnapshotStore
+from app.main import parse_float
 from app.models import WeatherSnapshot
 from app.risk_rules import clamp_score, score_weather
 
@@ -12,6 +13,11 @@ def test_clamp_score_bounds_values() -> None:
     assert clamp_score(42.4) == 42
     assert clamp_score(42.6) == 43
     assert clamp_score(150) == 100
+
+
+def test_parse_float_treats_explicit_unavailable_payload_as_missing() -> None:
+    assert parse_float('{"value": null, "state": "unavailable"}') is None
+    assert parse_float('{"value": "unknown"}') is None
 
 
 def test_snapshot_store_calculates_pressure_delta() -> None:
