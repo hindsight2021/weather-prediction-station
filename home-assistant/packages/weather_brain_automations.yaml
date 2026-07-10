@@ -14,19 +14,29 @@ automation:
         to: warning
     action:
       - variables:
-          emoji: >
-            {% if trigger.to_state.state == 'warning' %}
-              🚨
-            {% elif trigger.to_state.state == 'watch' %}
-              ⚠️
-            {% else %}
-              🔔
-            {% endif %}
           level: "{{ trigger.to_state.state | title }}"
       - service: notify.pushover
         data:
-          title: "{{ emoji }} Weather Brain {{ level }}"
+          title: "Weather Brain {{ level }}"
           message: "{{ states('sensor.weather_brain_explanation') }}"
+
+  - alias: Weather Brain Imminent Event Notification
+    id: weather_brain_imminent_event_notification
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.weather_brain_imminent_event
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['none', 'unknown', 'unavailable']
+             and trigger.to_state.state != trigger.from_state.state
+             and states('sensor.weather_brain_imminent_minutes') | int(-1) in range(0, 61) }}
+    action:
+      - service: notify.pushover
+        data:
+          title: "Weather Brain: Imminent {{ trigger.to_state.state | replace('_', ' ') | title }}"
+          message: "{{ states('sensor.weather_brain_imminent_summary') }}"
 
   - alias: Weather Brain Submit Feedback
     id: weather_brain_submit_feedback
@@ -48,10 +58,9 @@ automation:
         target:
           entity_id: input_select.weather_brain_feedback_label
         data:
-          option: "none"
+          option: none
       - service: input_text.set_value
         target:
           entity_id: input_text.weather_brain_feedback_notes
         data:
           value: ""
-

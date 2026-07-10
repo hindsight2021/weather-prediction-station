@@ -20,6 +20,17 @@ class WeatherSnapshot:
     local_lightning_count_30m: float | None = None
     internet_lightning_count_30m: float | None = None
     radar_precip_nearby: float | None = None
+    forecast_precip_probability_1h: float | None = None
+    forecast_precip_probability_6h: float | None = None
+    forecast_precip_probability_24h: float | None = None
+    forecast_precip_mm_1h: float | None = None
+    forecast_precip_mm_24h: float | None = None
+    forecast_wind_gust_max_1h: float | None = None
+    forecast_wind_gust_max_24h: float | None = None
+    forecast_next_precip_minutes: float | None = None
+    forecast_next_severe_minutes: float | None = None
+    forecast_severe_condition_24h: float | None = None
+    forecast_source_count: float | None = None
 
     def as_dict(self) -> dict[str, float | str | None]:
         return {
@@ -37,6 +48,17 @@ class WeatherSnapshot:
             "local_lightning_count_30m": self.local_lightning_count_30m,
             "internet_lightning_count_30m": self.internet_lightning_count_30m,
             "radar_precip_nearby": self.radar_precip_nearby,
+            "forecast_precip_probability_1h": self.forecast_precip_probability_1h,
+            "forecast_precip_probability_6h": self.forecast_precip_probability_6h,
+            "forecast_precip_probability_24h": self.forecast_precip_probability_24h,
+            "forecast_precip_mm_1h": self.forecast_precip_mm_1h,
+            "forecast_precip_mm_24h": self.forecast_precip_mm_24h,
+            "forecast_wind_gust_max_1h": self.forecast_wind_gust_max_1h,
+            "forecast_wind_gust_max_24h": self.forecast_wind_gust_max_24h,
+            "forecast_next_precip_minutes": self.forecast_next_precip_minutes,
+            "forecast_next_severe_minutes": self.forecast_next_severe_minutes,
+            "forecast_severe_condition_24h": self.forecast_severe_condition_24h,
+            "forecast_source_count": self.forecast_source_count,
         }
 
 
@@ -54,6 +76,11 @@ class Prediction:
     cold_risk_24h: int = 0
     heat_severity: str = "none"
     cold_severity: str = "none"
+    rain_risk_24h: int = 0
+    wind_risk_24h: int = 0
+    imminent_event: str = "none"
+    imminent_minutes: int = -1
+    imminent_summary: str = "No imminent weather event detected."
 
     def as_dict(self) -> dict[str, int | str]:
         return {
@@ -69,4 +96,9 @@ class Prediction:
             "cold_risk_24h": self.cold_risk_24h,
             "heat_severity": self.heat_severity,
             "cold_severity": self.cold_severity,
+            "rain_risk_24h": self.rain_risk_24h,
+            "wind_risk_24h": self.wind_risk_24h,
+            "imminent_event": self.imminent_event,
+            "imminent_minutes": self.imminent_minutes,
+            "imminent_summary": self.imminent_summary,
         }

@@ -2,7 +2,7 @@
 
 Local Home Assistant weather intelligence sidecar for Kingsclear-style microclimate prediction.
 
-This project is designed to consume weather data that already exists in Home Assistant and MQTT, build normalized weather snapshots, run deterministic risk scoring now, and provide a clean path toward regional ML training with ECCC/MSC data, local Atlas calibration, Monte Carlo uncertainty, and KNN feedback learning.
+This project consumes local observations plus Home Assistant hourly forecasts, builds normalized weather snapshots, and publishes separate 1-hour and 24-hour risks with imminent-event warnings. Regional ML models augment—not replace—the forecast and local-station evidence.
 
 ## Current scope
 
@@ -11,7 +11,8 @@ This starter repo gives you:
 - Dockerized Python service
 - MQTT input/output layer
 - Configurable topic mapping
-- Rule-based risk scoring baseline
+- Forecast-driven 1h/6h/24h risk scoring
+- Imminent rain/severe-weather ETA and snapshot warnings
 - MQTT discovery publishing for Home Assistant
 - Training pipeline placeholders for ECCC/MSC regional history
 - Local scaler/calibration placeholders
@@ -24,13 +25,14 @@ This starter repo gives you:
 ## Architecture
 
 ```text
-Atlas / RTL_433 / lightning / barometer / radar MQTT topics
+Local station / lightning / barometer observations
+        + Home Assistant hourly forecasts
         ↓
 KCR Weather Brain Python service
         ↓
 Weather snapshot normalization
         ↓
-Risk scoring baseline now
+Forecast/rule/ML ensemble
         ↓
 Future ML model inference
         ↓
@@ -50,6 +52,10 @@ docker compose up --build
 ```
 
 4. Check Home Assistant for MQTT-discovered entities beginning with `sensor.weather_brain_`.
+
+The Home Assistant bridge calls `weather.get_forecasts` for the entities in
+`HA_WEATHER_ENTITIES` every 15 minutes and whenever those weather entities update.
+Credentials must be supplied through `.env`; the application contains no password defaults.
 
 ## QA commands
 

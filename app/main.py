@@ -145,6 +145,11 @@ def main() -> None:
                     if "wind_1h" in ml_probs and ml_probs["wind_1h"] > 0.5:
                         prediction.wind_risk_1h = max(prediction.wind_risk_1h, int(ml_probs["wind_1h"] * 100))
                         prediction.explanation += " (Enhanced by ML Wind Model)"
+                    if "storm_24h" in ml_probs and isinstance(ml_probs["storm_24h"], float):
+                        prediction.storm_risk_24h = max(
+                            prediction.storm_risk_24h, int(ml_probs["storm_24h"] * 100)
+                        )
+                        prediction.explanation += " (Enhanced by ML 24h Storm Model)"
                     apply_multiclass_thermal_prediction(
                         prediction, ml_probs.get("heat_disturbance_24h"), "heat_risk_24h", "heat_severity", "heat"
                     )

@@ -96,3 +96,35 @@ def test_score_weather_adds_cold_warning_from_wind_chill() -> None:
     assert prediction.level == "warning"
     assert prediction.cold_severity == "severe"
     assert prediction.cold_risk_24h >= 90
+
+
+def test_current_rain_can_never_publish_zero_risk() -> None:
+    snapshot = WeatherSnapshot(rain_rate_mm_h=2.0)
+    store = SnapshotStore(maxlen=10)
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.rain_risk_1h >= 85
+    assert prediction.imminent_event == "rain"
+    assert prediction.imminent_minutes == 0
+
+
+def test_hourly_forecast_drives_real_24h_and_imminent_prediction() -> None:
+    snapshot = WeatherSnapshot(
+        forecast_precip_probability_1h=90,
+        forecast_precip_probability_24h=95,
+        forecast_precip_mm_1h=3,
+        forecast_precip_mm_24h=12,
+        forecast_wind_gust_max_24h=70,
+        forecast_next_precip_minutes=35,
+        forecast_severe_condition_24h=1,
+        forecast_source_count=2,
+    )
+    store = SnapshotStore(maxlen=10)
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.rain_risk_1h >= 90
+    assert prediction.rain_risk_24h >= 95
+    assert prediction.wind_risk_24h >= 90
+    assert prediction.storm_risk_24h >= 85
+    assert prediction.imminent_minutes == 35
+    assert prediction.level == "warning"

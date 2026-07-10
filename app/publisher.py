@@ -14,6 +14,8 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "storm_risk_24h": {"name": "Weather Brain Storm Risk 24h", "unit": "%", "icon": "mdi:weather-partly-lightning"},
         "wind_risk_1h": {"name": "Weather Brain Wind Risk 1h", "unit": "%", "icon": "mdi:weather-windy"},
         "rain_risk_1h": {"name": "Weather Brain Rain Risk 1h", "unit": "%", "icon": "mdi:weather-pouring"},
+        "rain_risk_24h": {"name": "Weather Brain Rain Risk 24h", "unit": "%", "icon": "mdi:weather-rainy"},
+        "wind_risk_24h": {"name": "Weather Brain Wind Risk 24h", "unit": "%", "icon": "mdi:weather-windy-variant"},
         "lightning_risk_1h": {"name": "Weather Brain Lightning Risk 1h", "unit": "%", "icon": "mdi:weather-lightning"},
         "heat_risk_24h": {"name": "Weather Brain Heat Risk 24h", "unit": "%", "icon": "mdi:thermometer-alert"},
         "cold_risk_24h": {"name": "Weather Brain Cold Risk 24h", "unit": "%", "icon": "mdi:snowflake-alert"},
@@ -40,6 +42,8 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "explanation": {"name": "Weather Brain Explanation", "icon": "mdi:text-box-search"},
         "heat_severity": {"name": "Weather Brain Heat Severity", "icon": "mdi:thermometer-lines"},
         "cold_severity": {"name": "Weather Brain Cold Severity", "icon": "mdi:snowflake-thermometer"},
+        "imminent_event": {"name": "Weather Brain Imminent Event", "icon": "mdi:alert-decagram"},
+        "imminent_summary": {"name": "Weather Brain Imminent Summary", "icon": "mdi:timeline-alert"},
     }
     for key, meta in text_sensors.items():
         topic = f"{settings.discovery_prefix}/sensor/weather_brain/{key}/config"
@@ -53,6 +57,20 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
             "device": _device_payload(),
         }
         client.publish_text(topic, json.dumps(payload), retain=True)
+
+    topic = f"{settings.discovery_prefix}/sensor/weather_brain/imminent_minutes/config"
+    payload = {
+        "name": "Weather Brain Imminent Event ETA",
+        "unique_id": "weather_brain_imminent_minutes",
+        "state_topic": settings.state_topic,
+        "availability_topic": settings.availability_topic,
+        "value_template": "{{ value_json.imminent_minutes }}",
+        "unit_of_measurement": "min",
+        "icon": "mdi:timer-alert",
+        "state_class": "measurement",
+        "device": _device_payload(),
+    }
+    client.publish_text(topic, json.dumps(payload), retain=True)
 
 
 def publish_prediction(client: WeatherMqttClient, settings: MqttSettings, prediction: Prediction) -> None:
