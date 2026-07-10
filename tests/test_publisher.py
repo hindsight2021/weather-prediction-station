@@ -39,8 +39,13 @@ def test_publish_discovery_creates_numeric_and_text_sensors() -> None:
 
     topics = {topic for topic, _payload, _retain in client.text_messages}
     assert "homeassistant/sensor/weather_brain/storm_risk_1h/config" in topics
+    assert "homeassistant/sensor/weather_brain/heat_risk_24h/config" in topics
+    assert "homeassistant/sensor/weather_brain/cold_severity/config" in topics
     assert "homeassistant/sensor/weather_brain/explanation/config" in topics
-    assert len(client.text_messages) == 8
+    assert "homeassistant/sensor/weather_brain/rain_risk_24h/config" in topics
+    assert "homeassistant/sensor/weather_brain/imminent_event/config" in topics
+    assert "homeassistant/sensor/weather_brain/imminent_minutes/config" in topics
+    assert len(client.text_messages) == 17
 
     storm_payload = next(
         json.loads(payload)
@@ -63,6 +68,8 @@ def test_publish_prediction_uses_state_topic_and_retains_payload() -> None:
         confidence=76,
         level="watch",
         explanation="test explanation",
+        heat_risk_24h=70,
+        heat_severity="moderate",
     )
 
     publish_prediction(client, settings(), prediction)  # type: ignore[arg-type]

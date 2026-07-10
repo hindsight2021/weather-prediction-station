@@ -70,3 +70,61 @@ def test_score_weather_stays_normal_when_inputs_are_quiet() -> None:
     assert prediction.level == "normal"
     assert prediction.storm_risk_1h < 40
     assert prediction.explanation == "No strong local severe-weather signal detected."
+
+
+def test_score_weather_adds_heat_advisory_from_humidex() -> None:
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=100)
+    snapshot = WeatherSnapshot(timestamp=base, temperature_c=30.0, humidex=36.0, humidity_pct=70.0)
+    store.add(snapshot)
+
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+
+    assert prediction.level == "watch"
+    assert prediction.heat_severity == "moderate"
+    assert prediction.heat_risk_24h >= 65
+
+
+def test_score_weather_adds_cold_warning_from_wind_chill() -> None:
+    base = datetime(2026, 1, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=100)
+    snapshot = WeatherSnapshot(timestamp=base, temperature_c=-22.0, wind_chill_c=-31.0, humidity_pct=50.0)
+    store.add(snapshot)
+
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+
+    assert prediction.level == "warning"
+    assert prediction.cold_severity == "severe"
+    assert prediction.cold_risk_24h >= 90
+
+
+def test_current_rain_can_never_publish_zero_risk() -> None:
+    snapshot = WeatherSnapshot(rain_rate_mm_h=2.0)
+    store = SnapshotStore(maxlen=10)
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.rain_risk_1h >= 85
+    assert prediction.imminent_event == "rain"
+    assert prediction.imminent_minutes == 0
+
+
+def test_hourly_forecast_drives_real_24h_and_imminent_prediction() -> None:
+    snapshot = WeatherSnapshot(
+        forecast_precip_probability_1h=90,
+        forecast_precip_probability_24h=95,
+        forecast_precip_mm_1h=3,
+        forecast_precip_mm_24h=12,
+        forecast_wind_gust_max_24h=70,
+        forecast_next_precip_minutes=35,
+        forecast_severe_condition_24h=1,
+        forecast_source_count=2,
+    )
+    store = SnapshotStore(maxlen=10)
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.rain_risk_1h >= 90
+    assert prediction.rain_risk_24h >= 95
+    assert prediction.wind_risk_24h >= 90
+    assert prediction.storm_risk_24h >= 85
+    assert prediction.imminent_minutes == 35
+    assert prediction.level == "warning"

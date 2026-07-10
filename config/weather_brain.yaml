@@ -7,6 +7,8 @@ mqtt:
 
 input_topics:
   temperature_c: ha_bridge/atlas/temperature_c
+  humidex: ha_bridge/derived/humidex
+  wind_chill_c: ha_bridge/derived/wind_chill_c
   humidity_pct: ha_bridge/atlas/humidity_pct
   pressure_hpa: ha_bridge/fredericton/pressure_hpa
   wind_speed_kmh: ha_bridge/atlas/wind_speed_kmh
@@ -17,6 +19,17 @@ input_topics:
   local_lightning_count_30m: lightning/local/count_30m
   internet_lightning_count_30m: lightning/internet/count_30m
   radar_precip_nearby: radar/nearby/precip
+  forecast_precip_probability_1h: ha_bridge/forecast/precip_probability_1h
+  forecast_precip_probability_6h: ha_bridge/forecast/precip_probability_6h
+  forecast_precip_probability_24h: ha_bridge/forecast/precip_probability_24h
+  forecast_precip_mm_1h: ha_bridge/forecast/precip_mm_1h
+  forecast_precip_mm_24h: ha_bridge/forecast/precip_mm_24h
+  forecast_wind_gust_max_1h: ha_bridge/forecast/wind_gust_max_1h
+  forecast_wind_gust_max_24h: ha_bridge/forecast/wind_gust_max_24h
+  forecast_next_precip_minutes: ha_bridge/forecast/next_precip_minutes
+  forecast_next_severe_minutes: ha_bridge/forecast/next_severe_minutes
+  forecast_severe_condition_24h: ha_bridge/forecast/severe_condition_24h
+  forecast_source_count: ha_bridge/forecast/source_count
 
 risk_thresholds:
   pressure_drop_1h_hpa_watch: -1.5
@@ -26,6 +39,12 @@ risk_thresholds:
   rain_rate_watch_mm_h: 4
   rain_rate_warning_mm_h: 10
   lightning_nearby_km: 25
+  heat_humidex_mild: 30
+  heat_humidex_moderate: 35
+  heat_humidex_severe: 40
+  cold_wind_chill_mild_c: -10
+  cold_wind_chill_moderate_c: -20
+  cold_wind_chill_severe_c: -30
 
 runtime:
   publish_interval_seconds: 300

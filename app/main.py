@@ -16,6 +16,7 @@ from app.publisher import publish_discovery, publish_prediction
 from app.risk_rules import score_weather
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+STARTUP_GRACE_SECONDS = float(os.environ.get("STARTUP_GRACE_SECONDS", "5"))
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +27,13 @@ def parse_float(payload: str) -> float | None:
         if isinstance(parsed, dict):
             for key in ("value", "state", "pressure", "temperature", "humidity", "distance", "count"):
                 if key in parsed:
-                    return float(parsed[key])
+                    value = parsed[key]
+                    if value in (None, "unavailable", "unknown", ""):
+                        return None
+                    return float(value)
+            return None
+        if parsed is None:
+            return None
         return float(parsed)
     except (ValueError, TypeError, json.JSONDecodeError):
         LOGGER.warning("Could not parse numeric MQTT payload: %s", payload)
@@ -34,6 +41,27 @@ def parse_float(payload: str) -> float | None:
 
 
 from inference.ml_predictor import MLPredictor
+
+THERMAL_SEVERITY = {
+    0: ("none", 0),
+    1: ("mild", 45),
+    2: ("moderate", 70),
+    3: ("severe", 90),
+}
+
+
+def apply_multiclass_thermal_prediction(prediction, model_result, risk_attr: str, severity_attr: str, label: str) -> None:
+    if not isinstance(model_result, dict):
+        return
+    severity_class = int(model_result.get("class", 0))
+    severity, base_score = THERMAL_SEVERITY.get(severity_class, THERMAL_SEVERITY[0])
+    probability = float(model_result.get("probability", 0.0))
+    if severity == "none":
+        return
+    current_score = getattr(prediction, risk_attr)
+    setattr(prediction, risk_attr, max(current_score, min(100, int(round(base_score + probability * 10)))))
+    setattr(prediction, severity_attr, severity)
+    prediction.explanation += f" (ML {label}: {severity})"
 
 def main() -> None:
     config = load_config()
@@ -93,6 +121,9 @@ def main() -> None:
     topics_to_subscribe = list(topic_to_field) + ["ha_bridge/feedback/weather_brain"]
     mqtt_client.connect(on_message=on_message, topics=topics_to_subscribe)
     publish_discovery(mqtt_client, config.mqtt)
+    if STARTUP_GRACE_SECONDS > 0:
+        LOGGER.info("Waiting %.1f seconds for retained MQTT inputs", STARTUP_GRACE_SECONDS)
+        time.sleep(STARTUP_GRACE_SECONDS)
 
     last_publish = 0.0
     try:
@@ -114,6 +145,17 @@ def main() -> None:
                     if "wind_1h" in ml_probs and ml_probs["wind_1h"] > 0.5:
                         prediction.wind_risk_1h = max(prediction.wind_risk_1h, int(ml_probs["wind_1h"] * 100))
                         prediction.explanation += " (Enhanced by ML Wind Model)"
+                    if "storm_24h" in ml_probs and isinstance(ml_probs["storm_24h"], float):
+                        prediction.storm_risk_24h = max(
+                            prediction.storm_risk_24h, int(ml_probs["storm_24h"] * 100)
+                        )
+                        prediction.explanation += " (Enhanced by ML 24h Storm Model)"
+                    apply_multiclass_thermal_prediction(
+                        prediction, ml_probs.get("heat_disturbance_24h"), "heat_risk_24h", "heat_severity", "heat"
+                    )
+                    apply_multiclass_thermal_prediction(
+                        prediction, ml_probs.get("cold_disturbance_24h"), "cold_risk_24h", "cold_severity", "cold"
+                    )
                 
                 publish_prediction(mqtt_client, config.mqtt, prediction)
                 LOGGER.info("Published prediction: %s", prediction.as_dict())

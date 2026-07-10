@@ -1,15 +1,25 @@
 title: Weather Brain
 views:
-  - title: Weather Brain 🧠 Training Playground
+  - title: Weather Brain Prediction
     path: weather-brain
     icon: mdi:brain
     cards:
       - type: markdown
-        title: Welcome to the Machine Learning Playground
+        title: Local Weather Prediction
         content: >
-          This dashboard shows live predictions from your **local AI Weather Engine**. 
-          When predictions are inaccurate, use the Feedback section below to flag them as a **False Alarm**. 
-          The AI will securely log these corrections locally over MQTT, allowing you to fine-tune and retrain the models!
+          Forecast-driven 1-hour and 24-hour risks, calibrated by local station observations.
+          Imminent events are surfaced separately from current conditions.
+      - type: conditional
+        conditions:
+          - entity: sensor.weather_brain_imminent_event
+            state_not: none
+        card:
+          type: markdown
+          title: Imminent Weather
+          content: >
+            **{{ states('sensor.weather_brain_imminent_summary') }}**
+
+            ETA: {{ states('sensor.weather_brain_imminent_minutes') }} minutes
       - type: horizontal-stack
         cards:
           - type: entities
@@ -27,6 +37,26 @@ views:
               green: 0
               yellow: 40
               red: 80
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.weather_brain_rain_risk_24h
+            name: 24h Rain Risk
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 40
+              red: 75
+          - type: gauge
+            entity: sensor.weather_brain_wind_risk_24h
+            name: 24h Wind Risk
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 40
+              red: 75
       - type: history-graph
         title: Weather Brain Risk History
         hours_to_show: 24
@@ -35,8 +65,11 @@ views:
           - sensor.weather_brain_wind_risk_1h
           - sensor.weather_brain_rain_risk_1h
           - sensor.weather_brain_lightning_risk_1h
+          - sensor.weather_brain_storm_risk_24h
+          - sensor.weather_brain_rain_risk_24h
+          - sensor.weather_brain_wind_risk_24h
       - type: entities
-        title: 🎯 Fine-Tune & Train Models
+        title: Fine-Tune & Train Models
         entities:
           - input_select.weather_brain_feedback_label
           - input_text.weather_brain_feedback_notes

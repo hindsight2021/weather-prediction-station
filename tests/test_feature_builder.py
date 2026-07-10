@@ -25,3 +25,26 @@ def test_recent_max_values_ignore_old_snapshots() -> None:
 
     assert store.max_wind_gust(30) == 52.0
     assert store.max_rain_rate(30) == 6.0
+
+
+def test_ml_rolling_features_use_recent_snapshots() -> None:
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=10)
+    store.add(WeatherSnapshot(timestamp=base, temperature_c=20.0, wind_speed_kmh=99.0))
+    store.add(WeatherSnapshot(timestamp=base + timedelta(hours=2), temperature_c=23.0, wind_speed_kmh=10.0))
+    store.add(WeatherSnapshot(timestamp=base + timedelta(hours=3), temperature_c=24.0, wind_speed_kmh=20.0))
+
+    assert store.temp_delta(3) == 4.0
+    assert store.wind_speed_mean(1) == 15.0
+    assert store.wind_speed_std(1) == 5.0
+
+
+def test_generic_field_min_max_use_recent_snapshots() -> None:
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=10)
+    store.add(WeatherSnapshot(timestamp=base, humidex=41.0, wind_chill_c=-30.0))
+    store.add(WeatherSnapshot(timestamp=base + timedelta(hours=7), humidex=31.0, wind_chill_c=-8.0))
+    store.add(WeatherSnapshot(timestamp=base + timedelta(hours=8), humidex=35.0, wind_chill_c=-12.0))
+
+    assert store.field_max("humidex", 6) == 35.0
+    assert store.field_min("wind_chill_c", 6) == -12.0
