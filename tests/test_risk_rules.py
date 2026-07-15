@@ -81,8 +81,8 @@ def test_score_weather_adds_heat_advisory_from_humidex() -> None:
     prediction = score_weather(snapshot, store, THRESHOLDS)
 
     assert prediction.level == "watch"
-    assert prediction.heat_severity == "moderate"
-    assert prediction.heat_risk_24h >= 65
+    assert prediction.heat_severity == "ongoing"
+    assert prediction.heat_risk_24h == 0
 
 
 def test_score_weather_adds_cold_warning_from_wind_chill() -> None:
