@@ -229,22 +229,29 @@ def test_two_day_temperature_pattern_promotes_heat_class() -> None:
 # --- roadmap §4.6: heat risk reads warning proximity -------------------------
 
 def test_july_afternoon_humidex_34_scores_below_45() -> None:
+    # Roadmap acceptance fixture: humidex 34, no forecast triggers ->
+    # heat_risk well under 45 (the old curve published 65+ here).
     store = SnapshotStore(maxlen=100)
     snapshot = WeatherSnapshot(
         timestamp=BASE, temperature_c=29.0, humidex=34.0, humidity_pct=55.0,
+        forecast_temp_max_24h=34.0,
     )
     store.add(snapshot)
     prediction = score_weather(snapshot, store, THRESHOLDS)
     assert prediction.heat_risk_24h < 45
-    assert prediction.heat_severity == "mild"
+    # Warm now with nothing hotter coming reads "ongoing", never warning-level.
+    assert prediction.heat_severity in ("mild", "ongoing")
     assert prediction.level in ("normal", "advisory")
 
 
-def test_humidex_36_maps_to_warning_proximity() -> None:
+def test_forecast_above_eccc_criterion_maps_to_warning_proximity() -> None:
     store = SnapshotStore(maxlen=100)
-    snapshot = WeatherSnapshot(timestamp=BASE, temperature_c=30.0, humidex=36.0, humidity_pct=70.0)
+    snapshot = WeatherSnapshot(
+        timestamp=BASE, temperature_c=27.0, humidex=30.0, humidity_pct=70.0,
+        forecast_temp_max_24h=38.0,
+    )
     store.add(snapshot)
     prediction = score_weather(snapshot, store, THRESHOLDS)
-    # ECCC NB warning criterion met -> score >= 65.
+    # Heat above the ECCC criterion (36) incoming within 24h -> score >= 65.
     assert prediction.heat_risk_24h >= 65
     assert prediction.heat_severity == "moderate"
