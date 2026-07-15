@@ -71,6 +71,8 @@ views:
       - type: entities
         title: Fine-Tune & Train Models
         entities:
-          - input_select.weather_brain_feedback_label
+          - input_select.weather_brain_feedback_hazard
+          - input_select.weather_brain_feedback_verdict
+          - input_select.weather_brain_feedback_severity
           - input_text.weather_brain_feedback_notes
           - input_button.weather_brain_submit_feedback

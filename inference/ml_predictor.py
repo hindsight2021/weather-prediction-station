@@ -2,11 +2,34 @@ from __future__ import annotations
 
 import logging
 import pickle
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.models import WeatherSnapshot
+from features.transforms import DELTA_FEATURES, LEVEL_FEATURES, build_inference_row, magnus_dew_point
 
 LOGGER = logging.getLogger(__name__)
+
+# Snapshot fields backing each level feature, used for rolling-median
+# imputation from recent history (roadmap §4.4: never impute levels with 0).
+LEVEL_FEATURE_SNAPSHOT_FIELD = {
+    "temp_c": "temperature_c",
+    "rel_hum_pct": "humidity_pct",
+    "wind_speed_kmh": "wind_speed_kmh",
+    "station_pressure_hpa": "pressure_hpa",
+}
+
+IMPUTE_WINDOW_HOURS = 24.0
+
+
+@dataclass
+class MLPredictionResult:
+    probabilities: dict[str, float | dict[str, object]] = field(default_factory=dict)
+    # True when one or more models were skipped because a level feature had
+    # no live value and no recent history to impute from.
+    degraded: bool = False
+    skipped_models: list[str] = field(default_factory=list)
+
 
 class MLPredictor:
     def __init__(self, models_dir: Path = Path("models")):
@@ -19,7 +42,7 @@ class MLPredictor:
     def _load_models(self):
         if not self.models_dir.exists():
             return
-            
+
         for pkl_file in self.models_dir.glob("*.pkl"):
             try:
                 with pkl_file.open("rb") as f:
@@ -32,64 +55,75 @@ class MLPredictor:
             except Exception as e:
                 LOGGER.warning(f"Failed to load model {pkl_file}: {e}")
 
-    def predict(self, snapshot: WeatherSnapshot, store) -> dict[str, float | dict[str, object]]:
-        """Return binary positive probabilities or multiclass class/probability payloads."""
+    def _impute_levels(self, row: dict[str, float | None], store) -> dict[str, float | None]:
+        """Fill missing level features with the rolling 24h median; recompute
+        the dew-point derivations if their inputs were imputed."""
+        imputed = dict(row)
+        for feature_name, snapshot_field in LEVEL_FEATURE_SNAPSHOT_FIELD.items():
+            if imputed.get(feature_name) is None:
+                imputed[feature_name] = store.field_median(snapshot_field, IMPUTE_WINDOW_HOURS)
+        if imputed.get("dew_point_c") is None:
+            imputed["dew_point_c"] = magnus_dew_point(
+                imputed.get("temp_c"), imputed.get("rel_hum_pct")
+            )
+        if imputed.get("dew_point_spread_c") is None and imputed.get("dew_point_c") is not None:
+            imputed["dew_point_spread_c"] = imputed["temp_c"] - imputed["dew_point_c"]
+        return imputed
+
+    def predict(self, snapshot: WeatherSnapshot, store) -> MLPredictionResult:
+        """Run every loadable model whose inputs are trustworthy.
+
+        Level features (pressure, temperature, ...) are imputed with the
+        rolling 24h median from the snapshot store; if one is still missing,
+        the models needing it are skipped and the result is flagged degraded
+        instead of feeding the model an impossible 0.0. Delta/rolling features
+        default to 0 (no recent change).
+        """
+        result = MLPredictionResult()
         if not self.models:
-            return {}
-            
-        # Build feature vector
+            return result
+
         try:
-            import pandas as pd
             import numpy as np
-            import math
-            
-            timestamp = pd.to_datetime(snapshot.timestamp)
-            hour_sin = np.sin(2.0 * math.pi * timestamp.hour / 24.0)
-            hour_cos = np.cos(2.0 * math.pi * timestamp.hour / 24.0)
-            month_sin = np.sin(2.0 * math.pi * timestamp.month / 12.0)
-            month_cos = np.cos(2.0 * math.pi * timestamp.month / 12.0)
-            
-            row = {
-                "temp_c": snapshot.temperature_c,
-                "humidex": snapshot.humidex,
-                "wind_chill": snapshot.wind_chill_c,
-                "dew_point_c": snapshot.temperature_c - (100 - snapshot.humidity_pct)/5 if snapshot.temperature_c and snapshot.humidity_pct else None,
-                "rel_hum_pct": snapshot.humidity_pct,
-                "wind_speed_kmh": snapshot.wind_speed_kmh,
-                "station_pressure_hpa": snapshot.pressure_hpa,
-                "dew_point_spread_c": (100 - snapshot.humidity_pct)/5 if snapshot.humidity_pct else None,
-                "temp_c_delta_3h": store.temp_delta(3),
-                "temp_c_delta_6h": store.temp_delta(6),
-                "station_pressure_hpa_delta_3h": store.pressure_delta(3),
-                "station_pressure_hpa_delta_6h": store.pressure_delta(6),
-                "wind_speed_kmh_rolling_mean_3h": store.wind_speed_mean(3),
-                "wind_speed_kmh_rolling_std_3h": store.wind_speed_std(3),
-                "hour_sin": hour_sin,
-                "hour_cos": hour_cos,
-                "month_sin": month_sin,
-                "month_cos": month_cos
-            }
-            
-            df = pd.DataFrame([row])
-            # If any features are missing, ML fails to predict cleanly, so fillna or abort
-            df = df.fillna(0.0) # naive impute
-            
-            results = {}
+            import pandas as pd
+
+            row = self._impute_levels(build_inference_row(snapshot, store), store)
+            for feature_name in DELTA_FEATURES:
+                if row.get(feature_name) is None:
+                    row[feature_name] = 0.0
+            frame = pd.DataFrame([row])
+
             for name, model in self.models.items():
                 features = self.model_features.get(name, [])
-                probs = model.predict_proba(df[features])
+                missing_levels = [
+                    feature
+                    for feature in features
+                    if feature in LEVEL_FEATURES and row.get(feature) is None
+                ]
+                if missing_levels:
+                    result.degraded = True
+                    result.skipped_models.append(name)
+                    LOGGER.warning(
+                        "Skipping model %s: no live value or 24h history for %s",
+                        name,
+                        ", ".join(missing_levels),
+                    )
+                    continue
+                probs = model.predict_proba(frame[features])
                 classes = list(model.classes_)
                 if self.model_kinds.get(name) != "multiclass" and len(classes) <= 2:
                     positive_index = classes.index(1) if 1 in classes else len(classes) - 1
-                    results[name] = float(probs[0][positive_index])
+                    result.probabilities[name] = float(probs[0][positive_index])
                 else:
                     best_index = int(np.argmax(probs[0]))
-                    results[name] = {
+                    result.probabilities[name] = {
                         "class": int(classes[best_index]),
                         "probability": float(probs[0][best_index]),
-                        "probabilities": {str(int(cls)): float(probs[0][idx]) for idx, cls in enumerate(classes)},
+                        "probabilities": {
+                            str(int(cls)): float(probs[0][idx]) for idx, cls in enumerate(classes)
+                        },
                     }
-            return results
+            return result
         except Exception as e:
             LOGGER.error(f"ML inference failed: {e}")
-            return {}
+            return MLPredictionResult(degraded=bool(self.models))

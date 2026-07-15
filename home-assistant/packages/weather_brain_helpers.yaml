@@ -1,22 +1,35 @@
 input_select:
-  weather_brain_feedback_label:
-    name: Weather Brain Feedback Label
+  # Per-hazard feedback: each report trains only that hazard's model
+  # (accuracy roadmap Phase 1). Pick the hazard, the verdict, and for
+  # heat/cold events a severity, then press Submit.
+  weather_brain_feedback_hazard:
+    name: Weather Brain Feedback Hazard
+    options:
+      - none
+      - storm
+      - wind
+      - rain
+      - heat
+      - cold
+    initial: none
+
+  weather_brain_feedback_verdict:
+    name: Weather Brain Feedback Verdict
     options:
       - none
       - false_alarm
+      - missed_event
       - correct_prediction
-      - thunderstorm_warning
-      - thunderstorm_watch
-      - rainfall_warning
-      - wind_warning
-      - freezing_rain_warning
-      - snowfall_warning
-      - winter_storm_warning
-      - heat_warning
-      - cold_warning
-      - fog_advisory
-      - special_weather_statement
     initial: none
+
+  weather_brain_feedback_severity:
+    name: Weather Brain Feedback Severity
+    options:
+      - unspecified
+      - mild
+      - moderate
+      - severe
+    initial: unspecified
 
 input_text:
   weather_brain_feedback_notes:

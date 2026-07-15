@@ -42,10 +42,13 @@ def parse_float(payload: str) -> float | None:
 
 from inference.ml_predictor import MLPredictor
 
+# Base scores per predicted thermal severity class, aligned with the
+# recalibrated rule scale where score >= 65 means ECCC warning criteria met
+# or imminent (roadmap §4.6).
 THERMAL_SEVERITY = {
     0: ("none", 0),
-    1: ("mild", 45),
-    2: ("moderate", 70),
+    1: ("mild", 35),
+    2: ("moderate", 65),
     3: ("severe", 90),
 }
 
@@ -90,14 +93,20 @@ def main() -> None:
                     def autonomous_retrain():
                         LOGGER.info("Starting autonomous retraining sequence on Pi...")
                         try:
-                            # 1. Save feedback event to a dataset
+                            # 1. Save feedback event to a dataset. hazard and
+                            # severity let training apply the label to that
+                            # hazard's target only (roadmap §4.2).
                             feedback_file = Path("data/processed/feedback_dataset.csv")
                             is_new = not feedback_file.exists()
                             with feedback_file.open("a", encoding="utf-8") as f:
                                 if is_new:
-                                    f.write("timestamp,label,notes\n")
-                                f.write(f"{feedback['timestamp']},{feedback['label']},\"{feedback.get('notes', '')}\"\n")
-                            
+                                    f.write("timestamp,label,hazard,severity,notes\n")
+                                f.write(
+                                    f"{feedback['timestamp']},{feedback['label']},"
+                                    f"{feedback.get('hazard', '')},{feedback.get('severity', '')},"
+                                    f"\"{feedback.get('notes', '')}\"\n"
+                                )
+
                             # 2. Run the training script (it will load the feedback dataset in the future)
                             import subprocess
                             subprocess.run(["python", "-m", "training.train_models"], check=True)
@@ -133,9 +142,17 @@ def main() -> None:
                 snapshot = WeatherSnapshot(timestamp=datetime.now(timezone.utc), **current_values)
                 store.add(snapshot)
                 maybe_write_snapshot(config.runtime.snapshot_path, snapshot, config.runtime.write_snapshots_jsonl)
-                ml_probs = predictor.predict(snapshot, store)
+                ml_result = predictor.predict(snapshot, store)
+                ml_probs = ml_result.probabilities
                 prediction = score_weather(snapshot, store, config.risk_thresholds)
-                
+
+                if ml_result.degraded:
+                    # Some models were skipped for missing/unimputable inputs;
+                    # don't let the published confidence claim otherwise.
+                    prediction.confidence = min(prediction.confidence, 60)
+                    prediction.explanation += (
+                        f" (ML degraded: skipped {', '.join(ml_result.skipped_models)})"
+                    )
                 if ml_probs:
                     LOGGER.info(f"ML Model Probabilities: {ml_probs}")
                     # Blend the ML predictions into the rule-based prediction

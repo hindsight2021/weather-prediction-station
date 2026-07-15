@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import timedelta
-from statistics import mean, pstdev
+from statistics import mean, median, pstdev
 from typing import Iterable
 
 from app.models import WeatherSnapshot
@@ -55,6 +55,10 @@ class SnapshotStore:
     def field_min(self, field_name: str, hours: float) -> float | None:
         values = _values_since_hours(self._snapshots, field_name, hours)
         return min(values) if values else None
+
+    def field_median(self, field_name: str, hours: float) -> float | None:
+        values = _values_since_hours(self._snapshots, field_name, hours)
+        return median(values) if values else None
 
 
 def _values_since(snapshots: Iterable[WeatherSnapshot], field_name: str, minutes: int) -> list[float]:

@@ -8,7 +8,7 @@ test:
 	pytest -q
 
 compile:
-	python -m compileall app training calibration inference verification tests
+	python -m compileall app training calibration inference features verification tests
 
 qa: compile test
 

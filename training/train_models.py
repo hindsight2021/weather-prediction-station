@@ -4,36 +4,22 @@
 import argparse
 import logging
 import pickle
+from datetime import timedelta
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import brier_score_loss, classification_report, roc_auc_score
+
+from features.transforms import FEATURES
 
 LOGGER = logging.getLogger("train_models")
 
 DEFAULT_DATASET = Path("data/processed/weather_features.csv.gz")
 DEFAULT_MODELS_DIR = Path("models")
 
-FEATURES = [
-    "temp_c",
-    "dew_point_c",
-    "rel_hum_pct",
-    "wind_speed_kmh",
-    "station_pressure_hpa",
-    "dew_point_spread_c",
-    "temp_c_delta_3h",
-    "temp_c_delta_6h",
-    "station_pressure_hpa_delta_3h",
-    "station_pressure_hpa_delta_6h",
-    "wind_speed_kmh_rolling_mean_3h",
-    "wind_speed_kmh_rolling_std_3h",
-    "hour_sin",
-    "hour_cos",
-    "month_sin",
-    "month_cos"
-]
+TEST_FRACTION = 0.2
 
 TARGETS = {
     "convective_risk": {"target": "proxy_convective_risk_now", "kind": "binary"},
@@ -42,6 +28,31 @@ TARGETS = {
     "heat_disturbance_24h": {"target": "proxy_heat_disturbance_24h", "kind": "multiclass"},
     "cold_disturbance_24h": {"target": "proxy_cold_disturbance_24h", "kind": "multiclass"},
 }
+
+# Which proxy target columns a per-hazard feedback label may touch. A heat
+# report must never rewrite the storm/wind/cold targets (roadmap §4.2).
+HAZARD_TO_TARGET_COLUMNS = {
+    "storm": ["proxy_convective_risk_now", "proxy_storm_event_24h"],
+    "wind": ["proxy_wind_event_1h"],
+    "heat": ["proxy_heat_disturbance_24h"],
+    "cold": ["proxy_cold_disturbance_24h"],
+}
+
+MULTICLASS_TARGETS = {"proxy_heat_disturbance_24h", "proxy_cold_disturbance_24h"}
+
+SEVERITY_TO_CLASS = {"mild": 1, "moderate": 2, "severe": 3}
+
+# Legacy single-select labels from the original HA helper, mapped to a hazard
+# so old feedback rows keep working.
+LEGACY_LABEL_TO_HAZARD = {
+    "thunderstorm_warning": "storm",
+    "thunderstorm_watch": "storm",
+    "winter_storm_warning": "storm",
+    "wind_warning": "wind",
+    "heat_warning": "heat",
+    "cold_warning": "cold",
+}
+
 
 def load_data(path: Path) -> pd.DataFrame:
     LOGGER.info(f"Loading dataset from {path}")
@@ -54,6 +65,22 @@ def _future_window_max(values: pd.Series, hours: int) -> pd.Series:
 
 def _future_window_min(values: pd.Series, hours: int) -> pd.Series:
     return values.shift(-1).iloc[::-1].rolling(window=hours, min_periods=1).min().iloc[::-1]
+
+
+def _two_day_heat_pattern_dates(station_frame: pd.DataFrame) -> set:
+    """Dates that start an ECCC-style two-day heat event.
+
+    ECCC's southern NB heat warning also triggers on two consecutive days with
+    Tmax >= 29 C and Tmin >= 16 C even when humidex stays below 36.
+    """
+    if "temp_c" not in station_frame or station_frame["temp_c"].dropna().empty:
+        return set()
+    timestamps = pd.to_datetime(station_frame["timestamp"])
+    daily = station_frame.assign(_date=timestamps.dt.date).groupby("_date")["temp_c"]
+    tmax = daily.max()
+    tmin = daily.min()
+    hot_day = (tmax >= 29.0) & (tmin >= 16.0)
+    return {date for date, flag in (hot_day & hot_day.shift(-1)).items() if flag}
 
 
 def add_thermal_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
@@ -74,17 +101,104 @@ def add_thermal_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
     future_heat = grouped["_thermal_heat_source"].transform(lambda values: _future_window_max(values, 24))
     future_cold = grouped["_thermal_cold_source"].transform(lambda values: _future_window_min(values, 24))
 
+    # Class tiers mirror ECCC criteria: 36 is the NB humidex warning
+    # criterion; 30 marks "elevated"; 40+ is treated as severe.
     result["proxy_heat_disturbance_24h"] = 0
     result.loc[future_heat >= 30.0, "proxy_heat_disturbance_24h"] = 1
-    result.loc[future_heat >= 35.0, "proxy_heat_disturbance_24h"] = 2
+    result.loc[future_heat >= 36.0, "proxy_heat_disturbance_24h"] = 2
     result.loc[future_heat >= 40.0, "proxy_heat_disturbance_24h"] = 3
 
+    # Two-day Tmax>=29/Tmin>=16 pattern also satisfies the ECCC heat warning:
+    # hours on the pattern's first day (or the day before) have a warning-level
+    # event inside their 24h lookahead window. Needs timestamps to bucket by day.
+    if "timestamp" in result:
+        dates = pd.to_datetime(result["timestamp"]).dt.date
+        for _, station_frame in result.groupby(group_column):
+            pattern_dates = _two_day_heat_pattern_dates(station_frame)
+            if not pattern_dates:
+                continue
+            lead_in_dates = pattern_dates | {
+                date - timedelta(days=1) for date in pattern_dates
+            }
+            mask = result.index.isin(station_frame.index) & dates.isin(lead_in_dates)
+            result.loc[mask, "proxy_heat_disturbance_24h"] = result.loc[
+                mask, "proxy_heat_disturbance_24h"
+            ].clip(lower=2)
+
+    # ECCC-style wind chill tiers: -10 / -20 / -30 (extreme cold warning).
     result["proxy_cold_disturbance_24h"] = 0
     result.loc[future_cold <= -10.0, "proxy_cold_disturbance_24h"] = 1
     result.loc[future_cold <= -20.0, "proxy_cold_disturbance_24h"] = 2
     result.loc[future_cold <= -30.0, "proxy_cold_disturbance_24h"] = 3
 
     return result.drop(columns=["_thermal_heat_source", "_thermal_cold_source", "_thermal_station"], errors="ignore")
+
+
+def apply_feedback(df: pd.DataFrame, feedback_df: pd.DataFrame) -> pd.DataFrame:
+    """Apply HA feedback labels to their own hazard's target column only.
+
+    The original loop set EVERY model's target to 1.0 for any warning label,
+    teaching unrelated models that an event occurred and destroying the
+    multiclass severity classes. Each feedback row now touches only the
+    columns mapped for its hazard, and multiclass targets receive the
+    reported severity class, never a blanket 1.0.
+    """
+    result = df.copy()
+    result["timestamp_dt"] = pd.to_datetime(result["timestamp"], utc=True)
+
+    for _, row in feedback_df.iterrows():
+        label = str(row.get("label", "") or "")
+        hazard = str(row.get("hazard", "") or "").strip().lower()
+        severity = str(row.get("severity", "") or "").strip().lower()
+        if not hazard:
+            hazard = LEGACY_LABEL_TO_HAZARD.get(label, "")
+        if hazard not in HAZARD_TO_TARGET_COLUMNS:
+            LOGGER.warning("Skipping feedback row without a usable hazard: %s", dict(row))
+            continue
+
+        fb_time = pd.to_datetime(row["timestamp"], utc=True)
+        time_diffs = (result["timestamp_dt"] - fb_time).abs()
+        if time_diffs.min() > pd.Timedelta(hours=1):
+            continue
+        closest_idx = time_diffs.idxmin()
+
+        is_false_alarm = label.startswith("false_alarm")
+        for column in HAZARD_TO_TARGET_COLUMNS[hazard]:
+            if column not in result or pd.isna(result.at[closest_idx, column]):
+                continue
+            if column in MULTICLASS_TARGETS:
+                value = 0 if is_false_alarm else SEVERITY_TO_CLASS.get(severity, 2)
+            else:
+                value = 0.0 if is_false_alarm else 1.0
+            LOGGER.info(
+                "Feedback %s/%s at %s -> %s=%s", label, hazard, fb_time, column, value
+            )
+            result.at[closest_idx, column] = value
+
+    return result.drop(columns=["timestamp_dt"])
+
+
+def chronological_split(df: pd.DataFrame, test_fraction: float = TEST_FRACTION) -> pd.Series:
+    """Boolean test mask: the last `test_fraction` of each station's timeline.
+
+    A shuffled random split leaks temporally-autocorrelated rows between train
+    and test and inflates every metric; evaluation must be chronological.
+    (Any future CV should use sklearn's TimeSeriesSplit for the same reason.)
+    """
+    result = df.copy()
+    result["_ts"] = pd.to_datetime(result["timestamp"], utc=True, errors="coerce")
+    group_column = "station_name" if "station_name" in result else None
+    if group_column is None:
+        result["_station"] = "local"
+        group_column = "_station"
+
+    test_mask = pd.Series(False, index=result.index)
+    for _, station_frame in result.groupby(group_column):
+        ordered = station_frame.sort_values("_ts")
+        cutoff = int(len(ordered) * (1.0 - test_fraction))
+        test_mask.loc[ordered.index[cutoff:]] = True
+    return test_mask
+
 
 def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoostingClassifier:
     clf = HistGradientBoostingClassifier(
@@ -96,22 +210,41 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoosti
     clf.fit(X_train, y_train)
     return clf
 
-def evaluate_model(clf, X_test, y_test, name: str):
+
+def multiclass_brier(y_true: pd.Series, probs: np.ndarray, classes: list) -> float:
+    """Mean over samples of sum_k (p_k - onehot_k)^2."""
+    class_index = {cls: idx for idx, cls in enumerate(classes)}
+    onehot = np.zeros_like(probs)
+    for row, value in enumerate(y_true):
+        onehot[row, class_index[value]] = 1.0
+    return float(np.mean(np.sum((probs - onehot) ** 2, axis=1)))
+
+
+def evaluate_model(clf, X_test, y_test, name: str) -> dict:
     preds = clf.predict(X_test)
     probs = clf.predict_proba(X_test)
-    
-    LOGGER.info(f"--- Evaluation for {name} ---")
+    metrics: dict[str, float] = {}
+
+    LOGGER.info(f"--- Chronological holdout evaluation for {name} ---")
     if len(y_test.unique()) > 1:
         if len(clf.classes_) > 2:
-            auc = roc_auc_score(y_test, probs, multi_class="ovr")
+            metrics["roc_auc"] = roc_auc_score(y_test, probs, multi_class="ovr")
         else:
-            auc = roc_auc_score(y_test, probs[:, 1])
-        LOGGER.info(f"ROC AUC: {auc:.3f}")
+            metrics["roc_auc"] = roc_auc_score(y_test, probs[:, 1])
+        LOGGER.info(f"ROC AUC: {metrics['roc_auc']:.3f}")
+    if len(clf.classes_) > 2:
+        metrics["brier"] = multiclass_brier(y_test, probs, list(clf.classes_))
+    else:
+        positive_index = list(clf.classes_).index(1) if 1 in clf.classes_ else -1
+        metrics["brier"] = float(brier_score_loss(y_test, probs[:, positive_index]))
+    LOGGER.info(f"Brier score: {metrics['brier']:.4f}")
     LOGGER.info("\n" + classification_report(y_test, preds))
+    return metrics
+
 
 def main(argv: list[str] = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--models-dir", type=Path, default=DEFAULT_MODELS_DIR)
@@ -123,66 +256,47 @@ def main(argv: list[str] = None) -> int:
 
     df = load_data(args.dataset)
     df = add_thermal_proxy_targets(df)
-    
-    # -------------------------------------------------------------
-    # Autonomous Feedback Loop: Apply HA feedback corrections
-    # -------------------------------------------------------------
+
     feedback_file = args.dataset.parent / "feedback_dataset.csv"
     if feedback_file.exists():
         try:
-            LOGGER.info(f"Applying autonomous feedback corrections from {feedback_file}")
-            feedback_df = pd.read_csv(feedback_file)
-            # Ensure timestamps align
-            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True)
-            for _, row in feedback_df.iterrows():
-                fb_time = pd.to_datetime(row['timestamp'], utc=True)
-                label = row['label']
-                # Find the closest row within 1 hour
-                time_diffs = (df['timestamp_dt'] - fb_time).abs()
-                if time_diffs.min() <= pd.Timedelta(hours=1):
-                    closest_idx = time_diffs.idxmin()
-                    if label == "false_alarm":
-                        LOGGER.info(f"Applying false_alarm correction at {fb_time}")
-                        for target in TARGETS.values():
-                            col = target["target"]
-                            if pd.notna(df.at[closest_idx, col]):
-                                df.at[closest_idx, col] = 0.0
-                    elif label == "correct_prediction" or "warning" in label:
-                        LOGGER.info(f"Applying positive event correction at {fb_time}")
-                        for target in TARGETS.values():
-                            col = target["target"]
-                            if pd.notna(df.at[closest_idx, col]):
-                                df.at[closest_idx, col] = 1.0
+            LOGGER.info(f"Applying feedback corrections from {feedback_file}")
+            df = apply_feedback(df, pd.read_csv(feedback_file))
         except Exception as e:
             LOGGER.error(f"Failed to apply feedback dataset: {e}")
-    # -------------------------------------------------------------
-    
+
     # Drop rows with missing features
     df = df.dropna(subset=FEATURES)
-    
+
     X = df[FEATURES]
-    
+    test_mask = chronological_split(df)
+
     args.models_dir.mkdir(parents=True, exist_ok=True)
-    
+
     for model_name, target in TARGETS.items():
         target_col = target["target"]
         kind = target["kind"]
         LOGGER.info(f"Training model for {model_name}...")
-        
+
         # Filter out missing targets
         valid_idx = df[target_col].notna()
         X_valid = X[valid_idx]
         y_valid = df.loc[valid_idx, target_col].astype(int)
-        
+
         if y_valid.sum() == 0:
             LOGGER.warning(f"No positive samples for {target_col}, skipping.")
             continue
-            
-        X_train, X_test, y_train, y_test = train_test_split(X_valid, y_valid, test_size=0.2, random_state=42)
-        
+
+        model_test_mask = test_mask[valid_idx]
+        X_train, X_test = X_valid[~model_test_mask], X_valid[model_test_mask]
+        y_train, y_test = y_valid[~model_test_mask], y_valid[model_test_mask]
+        if y_train.nunique() < 2 or len(X_test) == 0:
+            LOGGER.warning(f"Not enough chronological train/test data for {target_col}, skipping.")
+            continue
+
         clf = train_model(X_train, y_train)
-        evaluate_model(clf, X_test, y_test, model_name)
-        
+        metrics = evaluate_model(clf, X_test, y_test, model_name)
+
         model_path = args.models_dir / f"{model_name}.pkl"
         with open(model_path, "wb") as f:
             pickle.dump({
@@ -190,7 +304,9 @@ def main(argv: list[str] = None) -> int:
                 "features": FEATURES,
                 "target": target_col,
                 "kind": kind,
-                "version": "1.0"
+                "metrics": metrics,
+                "evaluation": "chronological_holdout",
+                "version": "1.1"
             }, f)
         LOGGER.info(f"Saved {model_name} model to {model_path}\n")
 

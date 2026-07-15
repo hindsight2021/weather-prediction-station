@@ -21,6 +21,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from features.transforms import _MAGNUS_A, _MAGNUS_B  # noqa: E402
+
 
 LOGGER = logging.getLogger("build_weather_ml_dataset")
 
@@ -110,6 +113,15 @@ def normalize_eccc_file(path: Path) -> pd.DataFrame:
             output[column] = np.nan
 
     output["station_pressure_hpa"] = output["station_pressure_kpa"] * 10.0
+    # Derive dew point with the Magnus formula from temp + RH instead of using
+    # ECCC's measured column: live inference has no dew point sensor, so
+    # training on the measured value would create a train/serve skew. The
+    # measured value fills rows where RH is missing.
+    gamma = np.log(output["rel_hum_pct"].clip(lower=0.5, upper=100.0) / 100.0) + (
+        _MAGNUS_A * output["temp_c"]
+    ) / (_MAGNUS_B + output["temp_c"])
+    magnus_dew_point = (_MAGNUS_B * gamma) / (_MAGNUS_A - gamma)
+    output["dew_point_c"] = magnus_dew_point.combine_first(output["dew_point_c"])
     output["dew_point_spread_c"] = output["temp_c"] - output["dew_point_c"]
     output["wind_dir_deg"] = output["wind_dir_10s_deg"] * 10.0
 
@@ -197,8 +209,15 @@ def add_proxy_targets(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
     grouped = result.groupby("station_name", group_keys=False)
 
-    result["proxy_wind_event_1h"] = grouped["wind_speed_kmh"].shift(-1) >= 50.0
+    # ECCC wind warning criterion: sustained >= 70 km/h (gusts >= 90, but the
+    # ECCC hourly archive only carries sustained speed). A secondary >= 50
+    # advisory-level label keeps enough positives for model bootstrapping.
+    result["proxy_wind_event_1h"] = grouped["wind_speed_kmh"].shift(-1) >= 70.0
     result["proxy_wind_event_24h"] = grouped["wind_speed_kmh"].transform(
+        lambda values: values.shift(-1).rolling(window=24, min_periods=1).max()
+    ) >= 70.0
+    result["proxy_wind_advisory_1h"] = grouped["wind_speed_kmh"].shift(-1) >= 50.0
+    result["proxy_wind_advisory_24h"] = grouped["wind_speed_kmh"].transform(
         lambda values: values.shift(-1).rolling(window=24, min_periods=1).max()
     ) >= 50.0
 
