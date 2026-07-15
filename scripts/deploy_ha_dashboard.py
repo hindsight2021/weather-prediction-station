@@ -106,13 +106,24 @@ async def main() -> None:
         auth = json.loads(await ws.recv())
         if auth.get("type") != "auth_ok":
             raise RuntimeError("Home Assistant authentication failed")
-        config = await command(ws, {"type": "lovelace/config", "url_path": "lovelace-weather"}, 1)
+        registry = await command(ws, {"type": "config/entity_registry/list"}, 1)
+        command_id = 2
+        for entity in registry:
+            current = entity.get("entity_id", "")
+            prefix = "sensor.kcr_weather_brain_weather_brain_"
+            if current.startswith(prefix):
+                desired = "sensor.weather_brain_" + current.removeprefix(prefix)
+                await command(ws, {"type": "config/entity_registry/update", "entity_id": current,
+                                   "new_entity_id": desired}, command_id)
+                command_id += 1
+        config = await command(ws, {"type": "lovelace/config", "url_path": "lovelace-weather"}, command_id)
+        command_id += 1
         replacements = {"weather-brain", "weather-brain-lab", "fire-air"}
         views = [view for view in config.get("views", []) if view.get("path") not in replacements]
         # Put command views near the front while preserving every unrelated view.
         views[1:1] = [weather_brain_view(), fire_air_view()]
         config["views"] = views
-        await command(ws, {"type": "lovelace/config/save", "url_path": "lovelace-weather", "config": config}, 2)
+        await command(ws, {"type": "lovelace/config/save", "url_path": "lovelace-weather", "config": config}, command_id)
         print(f"Installed Weather Brain and Fire & Air; preserved {len(views) - 2} existing views")
 
 

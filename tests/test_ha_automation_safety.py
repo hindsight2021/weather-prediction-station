@@ -18,6 +18,6 @@ def test_notifications_only_target_imminent_severe_weather():
     rendered = str(automation)
     assert "weather_brain_alert_level" not in rendered
     assert "severe_weather" in rendered
-    assert "weather_brain_imminent_minutes" in rendered
+    assert "weather_brain_imminent_event_eta" in rendered
     assert "below" in rendered
     assert "61" in rendered

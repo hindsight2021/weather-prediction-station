@@ -35,6 +35,7 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         payload: dict[str, Any] = {
             "name": meta["name"],
             "unique_id": f"weather_brain_{key}",
+            "default_entity_id": f"sensor.weather_brain_{key}",
             "state_topic": settings.state_topic,
             "availability_topic": settings.availability_topic,
             "value_template": f"{{{{ value_json.{key} }}}}",
@@ -61,6 +62,7 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         payload = {
             "name": meta["name"],
             "unique_id": f"weather_brain_{key}",
+            "default_entity_id": f"sensor.weather_brain_{key}",
             "state_topic": settings.state_topic,
             "availability_topic": settings.availability_topic,
             "value_template": f"{{{{ value_json.{key} }}}}",
@@ -73,6 +75,7 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
     payload = {
         "name": "Weather Brain Imminent Event ETA",
         "unique_id": "weather_brain_imminent_minutes",
+        "default_entity_id": "sensor.weather_brain_imminent_event_eta",
         "state_topic": settings.state_topic,
         "availability_topic": settings.availability_topic,
         "value_template": "{{ value_json.imminent_minutes }}",
