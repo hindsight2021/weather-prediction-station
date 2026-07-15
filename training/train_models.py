@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""Train machine learning models for weather prediction using the processed ECCC dataset."""
+"""Train machine learning models for weather prediction using the processed ECCC dataset.
+
+Safety gate: a freshly trained model only replaces the live model file if it
+does not score worse than the model currently in production, evaluated on the
+same chronological holdout. This prevents a single noisy feedback submission
+from pushing a regressed model straight into the live severe-weather sensors.
+The gate compares Brier score (lower is better — the roadmap's headline
+metric); the first model ever trained for a target is accepted as baseline.
+"""
 
 import argparse
+import json
 import logging
 import pickle
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +29,9 @@ DEFAULT_DATASET = Path("data/processed/weather_features.csv.gz")
 DEFAULT_MODELS_DIR = Path("models")
 
 TEST_FRACTION = 0.2
+
+# A candidate must have Brier <= previous Brier + tolerance to be promoted.
+BRIER_REGRESSION_TOLERANCE = 0.005
 
 TARGETS = {
     "convective_risk": {"target": "proxy_convective_risk_now", "kind": "binary"},
@@ -242,6 +254,18 @@ def evaluate_model(clf, X_test, y_test, name: str) -> dict:
     return metrics
 
 
+def load_previous_model(models_dir: Path, model_name: str):
+    model_path = models_dir / f"{model_name}.pkl"
+    if not model_path.exists():
+        return None
+    try:
+        with model_path.open("rb") as f:
+            return pickle.load(f)
+    except (pickle.PickleError, OSError, EOFError) as exc:
+        LOGGER.warning(f"Could not load previous model {model_name}: {exc}")
+        return None
+
+
 def main(argv: list[str] = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -273,6 +297,9 @@ def main(argv: list[str] = None) -> int:
 
     args.models_dir.mkdir(parents=True, exist_ok=True)
 
+    promoted: list[str] = []
+    rejected: list[str] = []
+
     for model_name, target in TARGETS.items():
         target_col = target["target"]
         kind = target["kind"]
@@ -294,13 +321,57 @@ def main(argv: list[str] = None) -> int:
             LOGGER.warning(f"Not enough chronological train/test data for {target_col}, skipping.")
             continue
 
-        clf = train_model(X_train, y_train)
-        metrics = evaluate_model(clf, X_test, y_test, model_name)
+        candidate = train_model(X_train, y_train)
+        metrics = evaluate_model(candidate, X_test, y_test, model_name)
+
+        # Promotion gate: re-score the live model on the same chronological
+        # holdout; keep it if the candidate's Brier regressed beyond tolerance.
+        previous_bundle = load_previous_model(args.models_dir, model_name)
+        previous_metrics = None
+        if previous_bundle is not None:
+            try:
+                previous_metrics = evaluate_model(
+                    previous_bundle["model"],
+                    X_test[previous_bundle["features"]],
+                    y_test,
+                    f"{model_name} (live model, re-scored on new holdout)",
+                )
+            except Exception as exc:  # noqa: BLE001 - old pickles may be incompatible
+                LOGGER.warning(f"Could not re-score previous {model_name} model: {exc}")
+
+        should_promote = True
+        if previous_metrics is not None and previous_metrics.get("brier") is not None:
+            if metrics["brier"] > previous_metrics["brier"] + BRIER_REGRESSION_TOLERANCE:
+                should_promote = False
+                LOGGER.warning(
+                    f"REJECTED candidate for {model_name}: Brier {metrics['brier']:.4f} is worse "
+                    f"than live {previous_metrics['brier']:.4f} beyond tolerance "
+                    f"{BRIER_REGRESSION_TOLERANCE}. Keeping existing live model."
+                )
+
+        metrics_record = {
+            "model": model_name,
+            "target": target_col,
+            "trained_at": datetime.now(timezone.utc).isoformat(),
+            "candidate": metrics,
+            "previous": previous_metrics,
+            "promoted": should_promote,
+            "evaluation": "chronological_holdout",
+            "train_rows": int(len(X_train)),
+            "test_rows": int(len(X_test)),
+        }
+
+        if not should_promote:
+            rejected.append(model_name)
+            (args.models_dir / f"{model_name}.rejected.json").write_text(
+                json.dumps(metrics_record, indent=2), encoding="utf-8"
+            )
+            continue
 
         model_path = args.models_dir / f"{model_name}.pkl"
         with open(model_path, "wb") as f:
             pickle.dump({
-                "model": clf,
+                "model": candidate,
                 "features": FEATURES,
                 "target": target_col,
                 "kind": kind,
@@ -308,8 +379,16 @@ def main(argv: list[str] = None) -> int:
                 "evaluation": "chronological_holdout",
                 "version": "1.1"
             }, f)
-        LOGGER.info(f"Saved {model_name} model to {model_path}\n")
+        (args.models_dir / f"{model_name}.metrics.json").write_text(
+            json.dumps(metrics_record, indent=2), encoding="utf-8"
+        )
+        promoted.append(model_name)
+        LOGGER.info(f"Promoted {model_name} model to {model_path}\n")
 
+    LOGGER.info(
+        f"Training run complete. Promoted: {promoted or 'none'}. "
+        f"Rejected (kept previous live model): {rejected or 'none'}."
+    )
     return 0
 
 if __name__ == "__main__":

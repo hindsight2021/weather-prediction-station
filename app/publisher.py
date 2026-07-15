@@ -58,6 +58,9 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "official_alert_level": {"name": "Weather Brain ECCC Alert Level", "icon": "mdi:shield-alert"},
         "official_alert_summary": {"name": "Weather Brain ECCC Alert", "icon": "mdi:alert-box"},
         "nb_burn_status": {"name": "Weather Brain York County Burn Status", "icon": "mdi:campfire"},
+        "ml_status": {"name": "Weather Brain ML Status", "icon": "mdi:robot"},
+        "model_accuracy": {"name": "Weather Brain Model Accuracy", "icon": "mdi:chart-line"},
+        "last_trained": {"name": "Weather Brain Last Trained", "icon": "mdi:clock-check"},
     }
     for key, meta in text_sensors.items():
         topic = f"{settings.discovery_prefix}/sensor/weather_brain/{key}/config"

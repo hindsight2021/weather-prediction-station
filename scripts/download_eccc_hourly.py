@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Download hourly Environment and Climate Change Canada historical weather data.
+"""SUPERSEDED / UNUSED (2026-07-05): never actually run in production (no data
+under data/raw/eccc/ ever existed). The live pipeline is now
+training/build_station_dataset.py, which pulls the same station's hourly history
+from ECCC's MSC GeoMet JSON API (station 48568, Fredericton Int'l Airport)
+instead of scraping the legacy bulk_data_e.html CSV endpoint this script targets.
+Kept for reference only; safe to delete once confirmed unneeded.
+
+Original docstring below.
+
+Download hourly Environment and Climate Change Canada historical weather data.
 
 This script discovers candidate stations from the public ECCC station inventory,
 filters them to the New Brunswick / Atlantic Canada region by default, and downloads

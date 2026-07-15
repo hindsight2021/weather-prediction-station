@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Build an ML-ready hourly weather feature dataset from downloaded raw files.
+"""SUPERSEDED / UNUSED (2026-07-05): never actually run in production (no raw
+data existed for it to process). The live pipeline is now training/build_features.py,
+fed by training/build_station_dataset.py (MSC GeoMet API, station 48568 Fredericton
+Int'l Airport). Do not run this alongside the new pipeline -- both write to
+data/processed/weather_features.csv.gz and will fight each other. Kept for reference
+only; safe to delete once you have confirmed you do not need its column-alias logic.
+
+Original docstring below.
+
+Build an ML-ready hourly weather feature dataset from downloaded raw files.
 
 The builder currently supports ECCC hourly bulk CSVs. It normalizes columns,
 de-duplicates station timestamps, creates time-window features, and creates proxy

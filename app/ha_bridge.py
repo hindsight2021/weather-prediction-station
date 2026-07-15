@@ -25,21 +25,63 @@ WEATHER_ENTITIES = tuple(
     if entity.strip()
 )
 
+# NOTE on this mapping (2026-07-05 accuracy audit, done live on the Pi):
+#
+# sensor.ihome_atlas_wind_gust and sensor.ihome_atlas_rain_rate referenced in the
+# original mapping DO NOT EXIST in this Home Assistant instance. The Atlas station
+# only exposes instantaneous wind_speed and cumulative rain_total -- no gust, no rate.
+# That silently forced wind_risk_1h and rain_risk_1h to 0 forever, regardless of
+# actual conditions. Fixed below using the closest real, live entities:
+#   - wind gust    -> sensor.fredericton_wind_gust (Environment Canada METAR gust, real km/h)
+#   - rain rate    -> sensor.rain_5_minute_delta (mm/5min) x12 -> approx mm/h
+#   - lightning    -> sensor.lightning_detector_storm_distance (mi) x1.60934 -> km
+#   - radar/precip -> sensor.fredericton_current_condition, text-matched to a 0/1 flag
+#                     (EC's observed condition text, NOT true radar reflectivity -- there
+#                     is no numeric local radar/precip sensor in this HA instance today)
+#
+# local_lightning_count_30m / internet_lightning_count_30m are intentionally left
+# unmapped. The only "count" sensors available (sensor.lightning_map_lightning_counter,
+# sensor.daily_lightning) are cumulative/total_increasing, not 30-minute rolling windows.
+# Wiring a monotonic counter into a "_30m" field would make lightning risk ratchet up
+# and never come back down -- worse for a safety system than leaving the field null,
+# which the risk engine already handles by just not scoring that sub-component.
+
 ENTITY_TO_TOPIC = {
-    "sensor.pws_outdoor_temperature": "ha_bridge/atlas/temperature_c",
+    "sensor.ihome_atlas_temperature": "ha_bridge/atlas/temperature_c",
+    "sensor.ihome_atlas_humidity": "ha_bridge/atlas/humidity_pct",
+    "sensor.ihome_atlas_wind_speed": "ha_bridge/atlas/wind_speed_kmh",
+    "sensor.ihome_atlas_wind_direction": "ha_bridge/atlas/wind_direction",
+    "sensor.ihome_atlas_rain_total": "ha_bridge/atlas/rain_total",
     "sensor.humidex": "ha_bridge/derived/humidex",
     "sensor.wind_chill": "ha_bridge/derived/wind_chill_c",
-    "sensor.pws_outdoor_humidity": "ha_bridge/atlas/humidity_pct",
-    "sensor.ihome_wind_speed": "ha_bridge/atlas/wind_speed_kmh",
-    "sensor.wind_gust_average": "ha_bridge/atlas/wind_gust_kmh",
-    "sensor.daily_rain": "ha_bridge/atlas/rain_total",
-    "sensor.rain_5_minute_delta": "ha_bridge/atlas/rain_rate",
     "sensor.fredericton_barometric_pressure": "ha_bridge/fredericton/pressure_hpa",
+    "sensor.fredericton_wind_gust": "ha_bridge/atlas/wind_gust_kmh",
+    "sensor.rain_5_minute_delta": "ha_bridge/atlas/rain_rate",  # transformed below (x12 -> mm/h)
+    "sensor.lightning_detector_storm_distance": "lightning/local/distance_km",  # transformed (mi -> km)
+    "sensor.fredericton_current_condition": "radar/nearby/precip",  # transformed (text -> 0/1)
 }
 
-ENTITY_MULTIPLIERS = {
-    # Convert a five-minute accumulation to an hourly rate.
-    "sensor.rain_5_minute_delta": 12.0,
+RAIN_CONDITION_KEYWORDS = ("rain", "shower", "drizzle", "snow", "thunder", "storm", "flurr")
+
+
+def _transform_rain_rate(raw_value: str) -> str:
+    # Five-minute accumulation (mm) to an hourly rate (mm/h).
+    return str(float(raw_value) * 12.0)
+
+
+def _transform_lightning_distance(raw_value: str) -> str:
+    return str(float(raw_value) * 1.60934)
+
+
+def _transform_precip_flag(raw_value: str) -> str:
+    text = raw_value.lower()
+    return "1" if any(keyword in text for keyword in RAIN_CONDITION_KEYWORDS) else "0"
+
+
+TOPIC_TRANSFORMS = {
+    "ha_bridge/atlas/rain_rate": _transform_rain_rate,
+    "lightning/local/distance_km": _transform_lightning_distance,
+    "radar/nearby/precip": _transform_precip_flag,
 }
 
 INVALID_STATES = {"unavailable", "unknown", None}
@@ -54,10 +96,12 @@ def mqtt_payload_for_state(state):
 def publish_state(mqtt_client, entity_id, state):
     topic = ENTITY_TO_TOPIC[entity_id]
     payload = mqtt_payload_for_state(state)
-    if state not in INVALID_STATES and entity_id in ENTITY_MULTIPLIERS:
+    transform = TOPIC_TRANSFORMS.get(topic)
+    if state not in INVALID_STATES and transform is not None:
         try:
-            payload = str(float(state) * ENTITY_MULTIPLIERS[entity_id])
-        except (TypeError, ValueError):
+            payload = transform(state)
+        except (TypeError, ValueError) as exc:
+            LOGGER.warning("Transform failed for %s value=%r: %s", topic, state, exc)
             payload = mqtt_payload_for_state(None)
     mqtt_client.publish(topic, payload, retain=True)
 

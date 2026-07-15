@@ -21,6 +21,8 @@ STARTUP_GRACE_SECONDS = float(os.environ.get("STARTUP_GRACE_SECONDS", "5"))
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
 
+STARTUP_WARMUP_SECONDS = 15
+
 
 def parse_float(payload: str) -> float | None:
     try:
@@ -67,6 +69,47 @@ def apply_multiclass_thermal_prediction(prediction, model_result, risk_attr: str
     setattr(prediction, severity_attr, severity)
     prediction.explanation += f" (ML {label}: {severity})"
 
+
+def ml_status_text(predictor: "MLPredictor") -> str:
+    if not predictor.models:
+        return "Rule-engine only (no trained ML model yet)"
+    return f"ML active: {', '.join(sorted(predictor.models.keys()))}"
+
+
+def load_model_metrics(models_dir: Path = Path("models")) -> tuple[str, str]:
+    """Read models/*.metrics.json and summarize accuracy + most recent training time.
+
+    Returns (accuracy_summary, last_trained_iso). Falls back to safe defaults
+    if no metrics files exist yet (nothing trained) or a file is unreadable.
+    """
+    if not models_dir.exists():
+        return "No models trained yet", "never"
+
+    parts: list[str] = []
+    latest_trained_at: str | None = None
+    for metrics_path in sorted(models_dir.glob("*.metrics.json")):
+        try:
+            record = json.loads(metrics_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        # Support both metrics shapes: legacy flat candidate_auc and the
+        # gated-chronological record ({"candidate": {"roc_auc", "brier"}}).
+        candidate = record.get("candidate") or {}
+        auc = record.get("candidate_auc", candidate.get("roc_auc"))
+        brier = candidate.get("brier")
+        name = record.get("model", metrics_path.stem)
+        if brier is not None:
+            parts.append(f"{name}: Brier {brier:.3f}" + (f", AUC {auc:.2f}" if auc is not None else ""))
+        elif auc is not None:
+            parts.append(f"{name}: AUC {auc:.2f}")
+        trained_at = record.get("trained_at")
+        if trained_at and (latest_trained_at is None or trained_at > latest_trained_at):
+            latest_trained_at = trained_at
+
+    accuracy_summary = " | ".join(parts) if parts else "No models trained yet"
+    return accuracy_summary, (latest_trained_at or "never")
+
+
 def main() -> None:
     config = load_config()
     current_values: dict[str, float | None] = {key: None for key in config.input_topics}
@@ -102,6 +145,7 @@ def main() -> None:
                             # hazard's target only (roadmap §4.2).
                             feedback_file = Path("data/processed/feedback_dataset.csv")
                             is_new = not feedback_file.exists()
+                            feedback_file.parent.mkdir(parents=True, exist_ok=True)
                             with feedback_file.open("a", encoding="utf-8") as f:
                                 if is_new:
                                     f.write("timestamp,label,hazard,severity,notes\n")
@@ -111,21 +155,25 @@ def main() -> None:
                                     f"\"{feedback.get('notes', '')}\"\n"
                                 )
 
-                            # 2. Run the training script (it will load the feedback dataset in the future)
+                            # 2. Run the training script. It only overwrites a live
+                            #    model if the new one doesn't score worse than the
+                            #    current one on held-out data (see training/train_models.py).
                             import subprocess
                             subprocess.run(["python", "-m", "training.train_models"], check=True)
-                            
-                            # 3. Reload the predictor models live
+
+                            # 3. Reload the predictor models live. Rejected candidates
+                            #    never touch the .pkl file, so this only ever picks up
+                            #    validated models.
                             predictor._load_models()
                             LOGGER.info("Autonomous retraining complete. New models loaded live.")
                         except Exception as e:
                             LOGGER.error(f"Autonomous retraining failed: {e}")
-                    
+
                     threading.Thread(target=autonomous_retrain, daemon=True).start()
             except json.JSONDecodeError:
                 pass
             return
-            
+
         field = topic_to_field.get(topic)
         if not field:
             return
@@ -137,6 +185,14 @@ def main() -> None:
     if STARTUP_GRACE_SECONDS > 0:
         LOGGER.info("Waiting %.1f seconds for retained MQTT inputs", STARTUP_GRACE_SECONDS)
         time.sleep(STARTUP_GRACE_SECONDS)
+
+    # Give retained MQTT messages (temperature, pressure, wind, etc.) time to
+    # arrive before the first snapshot. Without this, every restart publishes
+    # one prediction with an empty snapshot (confidence 35, all risks 0) --
+    # a misleading "all clear" reading for a few seconds right after startup,
+    # including the weekly cron-triggered retrain restart.
+    LOGGER.info("Warming up MQTT subscriptions for %ds before first snapshot", STARTUP_WARMUP_SECONDS)
+    time.sleep(STARTUP_WARMUP_SECONDS)
 
     last_publish = 0.0
     try:
@@ -157,6 +213,8 @@ def main() -> None:
                 prediction.official_alert_level = str(environmental_values.get("official_alert_level", prediction.official_alert_level))
                 prediction.official_alert_summary = str(environmental_values.get("official_alert_summary", prediction.official_alert_summary))
                 prediction.nb_burn_status = str(environmental_values.get("nb_burn_status", prediction.nb_burn_status))
+                prediction.ml_status = ml_status_text(predictor)
+                prediction.model_accuracy, prediction.last_trained = load_model_metrics()
 
                 if ml_result.degraded:
                     # Some models were skipped for missing/unimputable inputs;

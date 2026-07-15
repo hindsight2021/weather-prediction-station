@@ -20,3 +20,5 @@ __pycache__/
 !/data/README.md
 /models/*
 !/models/.gitkeep
+.venv/
+data/weekly_retrain.log
