@@ -51,3 +51,7 @@ runtime:
   snapshot_history_limit: 2016
   write_snapshots_jsonl: true
   snapshot_path: /app/data/weather_snapshots.jsonl
+  # Every published prediction is logged here so the verification harness
+  # can score it against what actually happened (accuracy roadmap Phase 0).
+  write_predictions_jsonl: true
+  predictions_path: /app/data/predictions.jsonl

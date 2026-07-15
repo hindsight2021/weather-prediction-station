@@ -157,7 +157,14 @@ def main() -> None:
                         prediction, ml_probs.get("cold_disturbance_24h"), "cold_risk_24h", "cold_severity", "cold"
                     )
                 
-                publish_prediction(mqtt_client, config.mqtt, prediction)
+                publish_prediction(
+                    mqtt_client,
+                    config.mqtt,
+                    prediction,
+                    log_path=config.runtime.predictions_path
+                    if config.runtime.write_predictions_jsonl
+                    else None,
+                )
                 LOGGER.info("Published prediction: %s", prediction.as_dict())
                 last_publish = now
             time.sleep(1)

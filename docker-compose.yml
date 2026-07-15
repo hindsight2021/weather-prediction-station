@@ -12,6 +12,19 @@ services:
     networks:
       - weather-brain
 
+  verifier:
+    build: .
+    container_name: kcr-weather-verifier
+    command: python -m verification.runner
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    networks:
+      - weather-brain
+
   ha-bridge:
     build: .
     container_name: kcr-ha-bridge
