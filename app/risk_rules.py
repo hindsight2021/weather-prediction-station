@@ -9,17 +9,25 @@ def clamp_score(value: float) -> int:
 
 
 def _heat_risk(value: float | None, thresholds: dict[str, float]) -> tuple[float, str]:
+    """Map humidex to warning proximity, not raw discomfort.
+
+    Score >= 65 means ECCC warning criteria met or imminent. The NB humidex
+    warning criterion is 36 (plus multi-day temperature criteria handled by
+    training labels), so humidex 35 reads "elevated" (~40), not 65+.
+    """
     if value is None:
         return 0.0, "none"
     mild = thresholds.get("heat_humidex_mild", 30.0)
-    moderate = thresholds.get("heat_humidex_moderate", 35.0)
+    # ECCC heat warning criterion for New Brunswick: humidex >= 36.
+    warning = thresholds.get("heat_humidex_warning", 36.0)
     severe = thresholds.get("heat_humidex_severe", 40.0)
     if value >= severe:
         return min(100.0, 90.0 + (value - severe) * 2.0), "severe"
-    if value >= moderate:
-        return min(89.0, 65.0 + (value - moderate) * 4.0), "moderate"
+    if value >= warning:
+        return min(89.0, 65.0 + (value - warning) * 6.0), "moderate"
     if value >= mild:
-        return min(64.0, 35.0 + (value - mild) * 5.0), "mild"
+        # Elevated but below the warning criterion: humidex 34 -> 36, 35 -> 40.
+        return min(64.0, 20.0 + (value - mild) * 4.0), "mild"
     return max(0.0, (value - 24.0) * 3.0), "none"
 
 

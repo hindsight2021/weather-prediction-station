@@ -12,6 +12,7 @@ COPY app /app/app
 COPY training /app/training
 COPY calibration /app/calibration
 COPY inference /app/inference
+COPY features /app/features
 COPY verification /app/verification
 
 CMD ["python", "-m", "app.main"]

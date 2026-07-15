@@ -44,21 +44,38 @@ automation:
     trigger:
       - platform: state
         entity_id: input_button.weather_brain_submit_feedback
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('input_select.weather_brain_feedback_hazard') != 'none'
+             and states('input_select.weather_brain_feedback_verdict') != 'none' }}
     action:
       - service: mqtt.publish
         data:
           topic: ha_bridge/feedback/weather_brain
           payload: >
             {
-              "label": "{{ states('input_select.weather_brain_feedback_label') }}",
+              "label": "{{ states('input_select.weather_brain_feedback_verdict') }}",
+              "hazard": "{{ states('input_select.weather_brain_feedback_hazard') }}",
+              "severity": "{{ states('input_select.weather_brain_feedback_severity') }}",
               "notes": "{{ states('input_text.weather_brain_feedback_notes') }}",
               "timestamp": "{{ now().isoformat() }}"
             }
       - service: input_select.select_option
         target:
-          entity_id: input_select.weather_brain_feedback_label
+          entity_id: input_select.weather_brain_feedback_hazard
         data:
           option: none
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.weather_brain_feedback_verdict
+        data:
+          option: none
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.weather_brain_feedback_severity
+        data:
+          option: unspecified
       - service: input_text.set_value
         target:
           entity_id: input_text.weather_brain_feedback_notes

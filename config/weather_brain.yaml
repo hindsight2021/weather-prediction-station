@@ -40,7 +40,8 @@ risk_thresholds:
   rain_rate_warning_mm_h: 10
   lightning_nearby_km: 25
   heat_humidex_mild: 30
-  heat_humidex_moderate: 35
+  # ECCC heat warning criterion for New Brunswick: humidex >= 36.
+  heat_humidex_warning: 36
   heat_humidex_severe: 40
   cold_wind_chill_mild_c: -10
   cold_wind_chill_moderate_c: -20
