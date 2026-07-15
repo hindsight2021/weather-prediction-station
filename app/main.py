@@ -14,6 +14,7 @@ from app.models import WeatherSnapshot
 from app.mqtt_client import WeatherMqttClient
 from app.publisher import publish_discovery, publish_prediction
 from app.risk_rules import score_weather
+from app.environmental import EnvironmentalClient
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 STARTUP_GRACE_SECONDS = float(os.environ.get("STARTUP_GRACE_SECONDS", "5"))
@@ -70,6 +71,9 @@ def main() -> None:
     store = SnapshotStore(maxlen=config.runtime.snapshot_history_limit)
     mqtt_client = WeatherMqttClient(config.mqtt)
     predictor = MLPredictor()
+    environment = EnvironmentalClient(float(os.environ.get("WEATHER_LATITUDE", "45.9636")), float(os.environ.get("WEATHER_LONGITUDE", "-66.6431")))
+    environmental_values: dict[str, float | str] = {}
+    last_environment_fetch = 0.0
     running = True
 
     def handle_signal(signum: int, frame: object) -> None:
@@ -130,11 +134,19 @@ def main() -> None:
         while running:
             now = time.time()
             if now - last_publish >= config.runtime.publish_interval_seconds:
-                snapshot = WeatherSnapshot(timestamp=datetime.now(timezone.utc), **current_values)
+                if now - last_environment_fetch >= 600:
+                    environmental_values = environment.fetch()
+                    last_environment_fetch = now
+                fields = dict(current_values)
+                fields.update({k: v for k, v in environmental_values.items() if k in WeatherSnapshot.__dataclass_fields__})
+                snapshot = WeatherSnapshot(timestamp=datetime.now(timezone.utc), **fields)
                 store.add(snapshot)
                 maybe_write_snapshot(config.runtime.snapshot_path, snapshot, config.runtime.write_snapshots_jsonl)
                 ml_probs = predictor.predict(snapshot, store)
                 prediction = score_weather(snapshot, store, config.risk_thresholds)
+                prediction.official_alert_level = str(environmental_values.get("official_alert_level", prediction.official_alert_level))
+                prediction.official_alert_summary = str(environmental_values.get("official_alert_summary", prediction.official_alert_summary))
+                prediction.nb_burn_status = str(environmental_values.get("nb_burn_status", prediction.nb_burn_status))
                 
                 if ml_probs:
                     LOGGER.info(f"ML Model Probabilities: {ml_probs}")

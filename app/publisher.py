@@ -20,6 +20,14 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "heat_risk_24h": {"name": "Weather Brain Heat Risk 24h", "unit": "%", "icon": "mdi:thermometer-alert"},
         "cold_risk_24h": {"name": "Weather Brain Cold Risk 24h", "unit": "%", "icon": "mdi:snowflake-alert"},
         "confidence": {"name": "Weather Brain Confidence", "unit": "%", "icon": "mdi:brain"},
+        "storm_risk_48h": {"name": "Weather Brain Storm Risk 48h", "unit": "%", "icon": "mdi:weather-lightning"},
+        "storm_risk_72h": {"name": "Weather Brain Storm Risk 72h", "unit": "%", "icon": "mdi:weather-lightning"},
+        "air_quality_risk_24h": {"name": "Weather Brain Air Quality Risk 24h", "unit": "%", "icon": "mdi:air-filter"},
+        "air_quality_risk_48h": {"name": "Weather Brain Air Quality Risk 48h", "unit": "%", "icon": "mdi:air-filter"},
+        "smoke_risk_24h": {"name": "Weather Brain Wildfire Smoke Risk", "unit": "%", "icon": "mdi:smoke"},
+        "aqhi_current": {"name": "Weather Brain AQHI Current", "unit": "AQHI", "icon": "mdi:air-filter"},
+        "aqhi_forecast_max_24h": {"name": "Weather Brain AQHI Forecast 24h", "unit": "AQHI", "icon": "mdi:air-filter"},
+        "active_fires_nearby": {"name": "Weather Brain Active Fires Within 150 km", "unit": "fires", "icon": "mdi:fire-alert"},
     }
 
     for key, meta in sensors.items():
@@ -44,6 +52,9 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "cold_severity": {"name": "Weather Brain Cold Severity", "icon": "mdi:snowflake-thermometer"},
         "imminent_event": {"name": "Weather Brain Imminent Event", "icon": "mdi:alert-decagram"},
         "imminent_summary": {"name": "Weather Brain Imminent Summary", "icon": "mdi:timeline-alert"},
+        "official_alert_level": {"name": "Weather Brain ECCC Alert Level", "icon": "mdi:shield-alert"},
+        "official_alert_summary": {"name": "Weather Brain ECCC Alert", "icon": "mdi:alert-box"},
+        "nb_burn_status": {"name": "Weather Brain York County Burn Status", "icon": "mdi:campfire"},
     }
     for key, meta in text_sensors.items():
         topic = f"{settings.discovery_prefix}/sensor/weather_brain/{key}/config"

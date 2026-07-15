@@ -30,6 +30,14 @@ input_topics:
   forecast_next_severe_minutes: ha_bridge/forecast/next_severe_minutes
   forecast_severe_condition_24h: ha_bridge/forecast/severe_condition_24h
   forecast_source_count: ha_bridge/forecast/source_count
+  forecast_temp_min_24h: ha_bridge/forecast/temp_min_24h
+  forecast_temp_max_24h: ha_bridge/forecast/temp_max_24h
+  forecast_precip_probability_48h: ha_bridge/forecast/precip_probability_48h
+  forecast_precip_probability_72h: ha_bridge/forecast/precip_probability_72h
+  forecast_wind_gust_max_48h: ha_bridge/forecast/wind_gust_max_48h
+  forecast_wind_gust_max_72h: ha_bridge/forecast/wind_gust_max_72h
+  forecast_severe_condition_48h: ha_bridge/forecast/severe_condition_48h
+  forecast_severe_condition_72h: ha_bridge/forecast/severe_condition_72h
 
 risk_thresholds:
   pressure_drop_1h_hpa_watch: -1.5

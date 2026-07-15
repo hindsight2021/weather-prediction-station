@@ -37,6 +37,37 @@ views:
               green: 0
               yellow: 40
               red: 80
+      - type: entities
+        title: Official Alerts & Air Quality
+        entities:
+          - sensor.weather_brain_eccc_alert_level
+          - sensor.weather_brain_eccc_alert
+          - sensor.weather_brain_aqhi_current
+          - sensor.weather_brain_aqhi_forecast_24h
+          - sensor.weather_brain_air_quality_risk_24h
+          - sensor.weather_brain_wildfire_smoke_risk
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.weather_brain_storm_risk_48h
+            name: 48h Storm Outlook
+            min: 0
+            max: 100
+          - type: gauge
+            entity: sensor.weather_brain_storm_risk_72h
+            name: 72h Storm Outlook
+            min: 0
+            max: 100
+      - type: entities
+        title: New Brunswick Fire Visibility
+        entities:
+          - sensor.weather_brain_york_county_burn_status
+          - sensor.weather_brain_active_fires_within_150_km
+      - type: markdown
+        title: Live Fire Maps
+        content: >
+          [New Brunswick Fire Watch](https://www.gnb.ca/en/emergency/fire-watch.html) ·
+          [Canada Wildland Fire Map](https://cwfis.cfs.nrcan.gc.ca/interactive-map)
       - type: horizontal-stack
         cards:
           - type: gauge

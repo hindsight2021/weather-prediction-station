@@ -112,11 +112,15 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     if snapshot.radar_precip_nearby is not None and snapshot.radar_precip_nearby > 0:
         radar_score = 35.0
 
-    heat_signal = snapshot.humidex if snapshot.humidex is not None else snapshot.temperature_c
-    max_heat_6h = store.field_max("humidex", 6)
-    if max_heat_6h is not None:
-        heat_signal = max(heat_signal or max_heat_6h, max_heat_6h)
+    heat_signal = snapshot.forecast_temp_max_24h
     heat_risk, heat_severity = _heat_risk(heat_signal, thresholds)
+    current_heat = snapshot.humidex if snapshot.humidex is not None else snapshot.temperature_c
+    current_heat_risk, _current_heat_severity = _heat_risk(current_heat, thresholds)
+    if heat_signal is None and current_heat_risk >= 35:
+        heat_severity = "ongoing"
+    if current_heat is not None and heat_signal is not None and heat_signal <= current_heat + 1.5:
+        heat_risk = min(heat_risk, 25.0)
+        heat_severity = "ongoing" if current_heat >= thresholds.get("heat_humidex_mild", 30.0) else "none"
 
     cold_signal = snapshot.wind_chill_c if snapshot.wind_chill_c is not None else snapshot.temperature_c
     min_cold_6h = store.field_min("wind_chill_c", 6)
@@ -140,6 +144,13 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         + pressure_score * 0.20
         + humidity_score * 0.10,
     ))
+    alert_rank = int(snapshot.official_alert_severity or 0)
+    if alert_rank >= 3:
+        storm_risk_1h, storm_risk_24h = max(storm_risk_1h, 90), max(storm_risk_24h, 90)
+    elif alert_rank == 2:
+        storm_risk_1h, storm_risk_24h = max(storm_risk_1h, 70), max(storm_risk_24h, 75)
+    elif alert_rank == 1:
+        storm_risk_24h = max(storm_risk_24h, 45)
 
     present_fields = sum(
         value is not None
@@ -162,13 +173,13 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     level = "normal"
     imminent_event, imminent_minutes, imminent_summary = _imminent_event(snapshot, rain_rate)
 
-    if (storm_risk_1h >= 80 or wind_risk >= 80 or rain_risk >= 80
+    if (alert_rank >= 3 or storm_risk_1h >= 80 or wind_risk >= 80 or rain_risk >= 80
             or lightning_risk >= 85 or heat_risk >= 90 or cold_risk >= 90
             or (imminent_event != "none" and 0 <= imminent_minutes <= 60)):
         level = "warning"
-    elif storm_risk_1h >= 60 or wind_risk >= 60 or lightning_risk >= 60 or heat_risk >= 65 or cold_risk >= 65:
+    elif alert_rank >= 2 or storm_risk_1h >= 60 or wind_risk >= 60 or lightning_risk >= 60 or heat_risk >= 65 or current_heat_risk >= 65 or cold_risk >= 65:
         level = "watch"
-    elif storm_risk_1h >= 40 or heat_risk >= 35 or cold_risk >= 35:
+    elif storm_risk_1h >= 40 or heat_risk >= 35 or current_heat_risk >= 35 or cold_risk >= 35:
         level = "advisory"
 
     explanation_parts: list[str] = []
@@ -184,6 +195,8 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         explanation_parts.append("lightning signal active")
     if radar_score > 0:
         explanation_parts.append("radar precipitation nearby")
+    if alert_rank:
+        explanation_parts.append(f"active ECCC {('advisory', 'watch', 'warning')[min(3, alert_rank)-1]}")
     if snapshot.forecast_precip_probability_1h is not None:
         explanation_parts.append(
             f"forecast rain chance {snapshot.forecast_precip_probability_1h:.0f}% within 1h"
@@ -201,6 +214,8 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
 
     explanation = "; ".join(explanation_parts) if explanation_parts else "No strong local severe-weather signal detected."
 
+    aqhi_24 = int(round(snapshot.aqhi_forecast_max_24h or snapshot.aqhi_current or 0))
+    aqhi_48 = int(round(snapshot.aqhi_forecast_max_48h or aqhi_24))
     return Prediction(
         storm_risk_1h=storm_risk_1h,
         storm_risk_24h=storm_risk_24h,
@@ -219,6 +234,17 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         imminent_event=imminent_event,
         imminent_minutes=imminent_minutes,
         imminent_summary=imminent_summary,
+        storm_risk_48h=_outlook_risk(snapshot.forecast_precip_probability_48h, snapshot.forecast_wind_gust_max_48h, snapshot.forecast_severe_condition_48h, thresholds),
+        storm_risk_72h=_outlook_risk(snapshot.forecast_precip_probability_72h, snapshot.forecast_wind_gust_max_72h, snapshot.forecast_severe_condition_72h, thresholds),
+        air_quality_risk_24h=clamp_score(aqhi_24 * 10),
+        air_quality_risk_48h=clamp_score(aqhi_48 * 10),
+        smoke_risk_24h=clamp_score(max(snapshot.smoke_risk or 0, (snapshot.active_fires_nearby or 0) * 8)),
+        aqhi_current=int(round(snapshot.aqhi_current or 0)),
+        aqhi_forecast_max_24h=aqhi_24,
+        official_alert_level={0: "none", 1: "advisory", 2: "watch", 3: "warning"}.get(alert_rank, "warning"),
+        official_alert_summary="Official ECCC alert active." if alert_rank else "No active ECCC alert.",
+        nb_burn_status={1: "no_burn", 2: "restricted_20h_to_08h", 3: "burn_permitted"}.get(int(snapshot.nb_burn_category or 0), "unknown"),
+        active_fires_nearby=int(snapshot.active_fires_nearby or 0),
     )
 
 
@@ -238,6 +264,13 @@ def _forecast_rain_risk(probability: float | None, amount_mm: float | None) -> f
     probability_score = max(0.0, min(100.0, probability or 0.0))
     amount_score = 0.0 if amount_mm is None else min(100.0, 40.0 + amount_mm * 10.0)
     return max(probability_score, amount_score)
+
+
+def _outlook_risk(probability: float | None, gust: float | None, severe: float | None, thresholds: dict[str, float]) -> int:
+    """Conservative longer-range outlook; confidence naturally drops with horizon."""
+    if (severe or 0) > 0:
+        return 80
+    return clamp_score((probability or 0) * 0.55 + _wind_risk(gust, thresholds) * 0.45)
 
 
 def _imminent_event(
