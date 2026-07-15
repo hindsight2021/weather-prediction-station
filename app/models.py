@@ -118,6 +118,9 @@ class Prediction:
     official_alert_summary: str = "No active ECCC alert."
     nb_burn_status: str = "unknown"
     active_fires_nearby: int = 0
+    ml_status: str = "Rule-engine only (no trained ML model yet)"
+    model_accuracy: str = "No models trained yet"
+    last_trained: str = "never"
 
     def as_dict(self) -> dict[str, int | str]:
         result = {
@@ -138,6 +141,9 @@ class Prediction:
             "imminent_event": self.imminent_event,
             "imminent_minutes": self.imminent_minutes,
             "imminent_summary": self.imminent_summary,
+            "ml_status": self.ml_status,
+            "model_accuracy": self.model_accuracy,
+            "last_trained": self.last_trained,
         }
         for key in (
             "storm_risk_48h", "storm_risk_72h", "air_quality_risk_24h", "air_quality_risk_48h",

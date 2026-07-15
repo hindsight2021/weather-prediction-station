@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import statistics
 from collections import deque
 from datetime import timedelta
 from statistics import mean, median, pstdev
