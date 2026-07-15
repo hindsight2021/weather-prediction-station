@@ -1,41 +1,24 @@
 automation:
-  - alias: Weather Brain Alert Notification
-    id: weather_brain_alert_notification
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.weather_brain_alert_level
-        to: advisory
-      - platform: state
-        entity_id: sensor.weather_brain_alert_level
-        to: watch
-      - platform: state
-        entity_id: sensor.weather_brain_alert_level
-        to: warning
-    action:
-      - variables:
-          level: "{{ trigger.to_state.state | title }}"
-      - service: notify.pushover
-        data:
-          title: "Weather Brain {{ level }}"
-          message: "{{ states('sensor.weather_brain_explanation') }}"
-
-  - alias: Weather Brain Imminent Event Notification
-    id: weather_brain_imminent_event_notification
+  - alias: Weather Brain Imminent Severe Weather Notification
+    id: weather_brain_imminent_severe_weather_notification
     mode: single
     trigger:
       - platform: state
         entity_id: sensor.weather_brain_imminent_event
+        to: severe_weather
+      - platform: numeric_state
+        entity_id: sensor.weather_brain_imminent_minutes
+        below: 61
+        above: -1
     condition:
       - condition: template
         value_template: >
-          {{ trigger.to_state.state not in ['none', 'unknown', 'unavailable']
-             and trigger.to_state.state != trigger.from_state.state
+          {{ is_state('sensor.weather_brain_imminent_event', 'severe_weather')
              and states('sensor.weather_brain_imminent_minutes') | int(-1) in range(0, 61) }}
     action:
       - service: notify.pushover
         data:
-          title: "Weather Brain: Imminent {{ trigger.to_state.state | replace('_', ' ') | title }}"
+          title: "Weather Brain: Imminent Severe Weather"
           message: "{{ states('sensor.weather_brain_imminent_summary') }}"
 
   - alias: Weather Brain Submit Feedback
