@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kingsclear Atmospheric Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/console.css">
+</head>
+<body>
+<div id="frame">
+
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div>
+        <h1>Kingsclear Atmospheric Intelligence</h1>
+        <span class="brand-sub">weather brain &middot; local prediction engine</span>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="clock-cell"><span class="micro">LOCAL</span><span id="clock" class="mono">—:—:—</span></div>
+      <div class="clock-cell"><span class="micro">UTC</span><span id="clock-utc" class="mono">—:—:—</span></div>
+      <div id="link-chip" class="chip chip-down"><span class="chip-dot"></span><span id="link-label">LINK</span></div>
+    </div>
+  </header>
+
+  <!-- status row -->
+  <section id="status-row">
+    <div id="alert-card" class="card level-normal">
+      <span class="micro">ALERT STATUS</span>
+      <span id="alert-level" class="alert-word">standby</span>
+      <span id="official-alert" class="official">—</span>
+    </div>
+    <div class="card gauge-card">
+      <span class="micro">CONFIDENCE</span>
+      <div class="gauge-wrap">
+        <svg id="confidence-gauge" viewBox="0 0 120 120"></svg>
+        <span id="confidence" class="gauge-num mono">—</span>
+      </div>
+    </div>
+    <div class="card grow">
+      <span class="micro">ANALYSIS</span>
+      <p id="explanation" class="analysis">Awaiting telemetry…</p>
+      <div id="imminent" class="imminent hidden">
+        <span class="imm-dot"></span>
+        <span id="imminent-text"></span>
+        <span id="imminent-eta" class="mono"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- sensors -->
+  <section class="card panel">
+    <h2><span class="tick t-sand"></span>Current conditions</h2>
+    <div class="env-grid" id="env-grid"></div>
+  </section>
+
+  <!-- hazards -->
+  <section class="card panel">
+    <h2><span class="tick t-amber"></span>Hazard analysis</h2>
+    <div class="hazard-cols">
+      <div class="hazard-col">
+        <h3 class="micro">NEXT HOUR</h3>
+        <div id="hazards-1h"></div>
+      </div>
+      <div class="hazard-col">
+        <h3 class="micro">NEXT 24 HOURS</h3>
+        <div id="hazards-24h"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- telemetry -->
+  <section class="card panel">
+    <h2><span class="tick t-blue"></span>Telemetry <span class="h-side">last 24 h</span></h2>
+    <div id="trend-legend" class="legend"></div>
+    <div id="trend-wrap" class="chart-wrap tall"><svg id="trend-svg"></svg><div id="trend-tip" class="tip hidden"></div></div>
+    <div class="env-charts">
+      <div>
+        <h3 class="micro chart-title">BAROMETRIC PRESSURE · hPa</h3>
+        <div class="chart-wrap"><svg id="pressure-svg"></svg><div id="pressure-tip" class="tip hidden"></div></div>
+      </div>
+      <div>
+        <h3 class="micro chart-title">TEMPERATURE · HUMIDEX · °C</h3>
+        <div class="chart-wrap"><svg id="temp-svg"></svg><div id="temp-tip" class="tip hidden"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI forecast -->
+  <section class="card panel">
+    <h2><span class="tick t-teal"></span>Long-range outlook <span class="h-side">24–72 h &middot; AI analysis</span></h2>
+    <div id="forecast-meta" class="micro forecast-meta">no analysis on file — daily briefing pending</div>
+    <div id="forecast-text" class="forecast-text"></div>
+  </section>
+
+  <!-- verification -->
+  <section class="card panel">
+    <h2><span class="tick t-coral"></span>Forecast verification <span class="h-side">rolling 30 days</span></h2>
+    <div id="verify-body" class="verify-body">Calibration in progress.</div>
+  </section>
+
+  <footer id="foot" class="micro">KCR WEATHER BRAIN · REFRESH 30 S · <span id="last-update">—</span></footer>
+</div>
+<script src="/static/console.js"></script>
+</body>
+</html>

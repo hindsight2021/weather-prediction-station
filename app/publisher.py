@@ -73,6 +73,23 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         }
         client.publish_text(topic, json.dumps(payload), retain=True)
 
+    # Daily AI long-range forecast: filed to its own retained topic by the
+    # scheduled analyst run. State = generated_at timestamp; the full 24-72h
+    # text rides in attributes (HA states are capped at 255 chars).
+    topic = f"{settings.discovery_prefix}/sensor/weather_brain/ai_forecast/config"
+    payload = {
+        "name": "Weather Brain AI Long-Range Forecast",
+        "unique_id": "weather_brain_ai_forecast",
+        "default_entity_id": "sensor.weather_brain_ai_forecast",
+        "state_topic": "weather_brain/ai_forecast/state",
+        "value_template": "{{ value_json.generated_at }}",
+        "json_attributes_topic": "weather_brain/ai_forecast/state",
+        "device_class": "timestamp",
+        "icon": "mdi:crystal-ball",
+        "device": _device_payload(),
+    }
+    client.publish_text(topic, json.dumps(payload), retain=True)
+
     topic = f"{settings.discovery_prefix}/sensor/weather_brain/imminent_minutes/config"
     payload = {
         "name": "Weather Brain Imminent Event ETA",

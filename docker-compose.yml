@@ -25,6 +25,20 @@ services:
     networks:
       - weather-brain
 
+  console:
+    build: .
+    container_name: kcr-weather-console
+    command: python -m console.app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8126:8126"
+    volumes:
+      - ./data:/app/data:ro
+    networks:
+      - weather-brain
+
   ha-bridge:
     build: .
     container_name: kcr-ha-bridge
