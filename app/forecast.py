@@ -49,7 +49,7 @@ def summarize_hourly_forecasts(
             if timestamp is None:
                 continue
             minutes = (timestamp.astimezone(timezone.utc) - now).total_seconds() / 60.0
-            if -30 <= minutes <= 24 * 60 + 90:
+            if -30 <= minutes <= 72 * 60 + 90:
                 rows.append((max(0.0, minutes), entry))
         if not rows:
             continue
@@ -61,7 +61,7 @@ def summarize_hourly_forecasts(
             return [(offset, entry) for offset, entry in rows if offset <= limit]
 
         summary: dict[str, float] = {}
-        for label, minutes in (("1h", 60), ("6h", 360), ("24h", 1440)):
+        for label, minutes in (("1h", 60), ("6h", 360), ("24h", 1440), ("48h", 2880), ("72h", 4320)):
             window = within(minutes)
             probabilities = [
                 value
@@ -103,7 +103,9 @@ def summarize_hourly_forecasts(
         ]
         summary["forecast_next_precip_minutes"] = min(precip_offsets, default=-1.0)
         summary["forecast_next_severe_minutes"] = min(severe_offsets, default=-1.0)
-        summary["forecast_severe_condition_24h"] = 1.0 if severe_offsets else 0.0
+        summary["forecast_severe_condition_24h"] = 1.0 if any(offset <= 1440 for offset in severe_offsets) else 0.0
+        summary["forecast_severe_condition_48h"] = 1.0 if any(offset <= 2880 for offset in severe_offsets) else 0.0
+        summary["forecast_severe_condition_72h"] = 1.0 if severe_offsets else 0.0
         provider_summaries.append(summary)
 
     if not provider_summaries:

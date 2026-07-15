@@ -31,9 +31,25 @@ class WeatherSnapshot:
     forecast_next_severe_minutes: float | None = None
     forecast_severe_condition_24h: float | None = None
     forecast_source_count: float | None = None
+    forecast_temp_min_24h: float | None = None
+    forecast_temp_max_24h: float | None = None
+    official_alert_severity: float | None = None
+    official_alert_count: float | None = None
+    aqhi_current: float | None = None
+    aqhi_forecast_max_24h: float | None = None
+    aqhi_forecast_max_48h: float | None = None
+    smoke_risk: float | None = None
+    nb_burn_category: float | None = None
+    active_fires_nearby: float | None = None
+    forecast_precip_probability_48h: float | None = None
+    forecast_precip_probability_72h: float | None = None
+    forecast_wind_gust_max_48h: float | None = None
+    forecast_wind_gust_max_72h: float | None = None
+    forecast_severe_condition_48h: float | None = None
+    forecast_severe_condition_72h: float | None = None
 
     def as_dict(self) -> dict[str, float | str | None]:
-        return {
+        result = {
             "timestamp": self.timestamp.isoformat(),
             "temperature_c": self.temperature_c,
             "humidex": self.humidex,
@@ -60,6 +76,16 @@ class WeatherSnapshot:
             "forecast_severe_condition_24h": self.forecast_severe_condition_24h,
             "forecast_source_count": self.forecast_source_count,
         }
+        for key in (
+            "forecast_temp_min_24h", "forecast_temp_max_24h", "official_alert_severity",
+            "official_alert_count", "aqhi_current", "aqhi_forecast_max_24h",
+            "aqhi_forecast_max_48h", "smoke_risk", "nb_burn_category", "active_fires_nearby",
+            "forecast_precip_probability_48h", "forecast_precip_probability_72h",
+            "forecast_wind_gust_max_48h", "forecast_wind_gust_max_72h",
+            "forecast_severe_condition_48h", "forecast_severe_condition_72h",
+        ):
+            result[key] = getattr(self, key)
+        return result
 
 
 @dataclass
@@ -81,9 +107,20 @@ class Prediction:
     imminent_event: str = "none"
     imminent_minutes: int = -1
     imminent_summary: str = "No imminent weather event detected."
+    storm_risk_48h: int = 0
+    storm_risk_72h: int = 0
+    air_quality_risk_24h: int = 0
+    air_quality_risk_48h: int = 0
+    smoke_risk_24h: int = 0
+    aqhi_current: int = 0
+    aqhi_forecast_max_24h: int = 0
+    official_alert_level: str = "none"
+    official_alert_summary: str = "No active ECCC alert."
+    nb_burn_status: str = "unknown"
+    active_fires_nearby: int = 0
 
     def as_dict(self) -> dict[str, int | str]:
-        return {
+        result = {
             "storm_risk_1h": self.storm_risk_1h,
             "storm_risk_24h": self.storm_risk_24h,
             "wind_risk_1h": self.wind_risk_1h,
@@ -102,3 +139,10 @@ class Prediction:
             "imminent_minutes": self.imminent_minutes,
             "imminent_summary": self.imminent_summary,
         }
+        for key in (
+            "storm_risk_48h", "storm_risk_72h", "air_quality_risk_24h", "air_quality_risk_48h",
+            "smoke_risk_24h", "aqhi_current", "aqhi_forecast_max_24h", "official_alert_level",
+            "official_alert_summary", "nb_burn_status", "active_fires_nearby",
+        ):
+            result[key] = getattr(self, key)
+        return result
