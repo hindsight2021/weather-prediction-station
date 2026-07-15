@@ -14,5 +14,6 @@ COPY calibration /app/calibration
 COPY inference /app/inference
 COPY features /app/features
 COPY verification /app/verification
+COPY console /app/console
 
 CMD ["python", "-m", "app.main"]

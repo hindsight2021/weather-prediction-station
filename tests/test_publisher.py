@@ -45,7 +45,7 @@ def test_publish_discovery_creates_numeric_and_text_sensors() -> None:
     assert "homeassistant/sensor/weather_brain/rain_risk_24h/config" in topics
     assert "homeassistant/sensor/weather_brain/imminent_event/config" in topics
     assert "homeassistant/sensor/weather_brain/imminent_minutes/config" in topics
-    assert len(client.text_messages) == 28
+    assert len(client.text_messages) == 29  # +1: ai_forecast discovery sensor
 
     storm_payload = next(
         json.loads(payload)
