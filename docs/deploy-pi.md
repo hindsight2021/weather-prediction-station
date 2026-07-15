@@ -19,6 +19,7 @@ This rebuilds and restarts three services:
 | `weather-brain` | prediction engine; now also logs every prediction to `data/predictions.jsonl` |
 | `ha-bridge` | HA websocket -> MQTT bridge (unchanged) |
 | `verifier` | **new** — hourly: polls ECCC CAP alerts, scores predictions, writes `data/verification/scoreboard.{json,md}`, publishes to `weather_brain/verification/#` |
+| `console` | **new** — atmospheric command console on `http://<pi>:8126`, embedded in the HA "Weather Command" dashboard |
 
 Optional `.env` additions (defaults shown):
 
