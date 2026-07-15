@@ -26,6 +26,8 @@ class RuntimeSettings:
     snapshot_history_limit: int
     write_snapshots_jsonl: bool
     snapshot_path: str
+    write_predictions_jsonl: bool
+    predictions_path: str
 
 
 @dataclass(frozen=True)
@@ -60,6 +62,8 @@ def load_config() -> AppConfig:
         snapshot_history_limit=int(runtime_raw.get("snapshot_history_limit", 2016)),
         write_snapshots_jsonl=bool(runtime_raw.get("write_snapshots_jsonl", True)),
         snapshot_path=runtime_raw.get("snapshot_path", "/app/data/weather_snapshots.jsonl"),
+        write_predictions_jsonl=bool(runtime_raw.get("write_predictions_jsonl", True)),
+        predictions_path=runtime_raw.get("predictions_path", "/app/data/predictions.jsonl"),
     )
 
     return AppConfig(

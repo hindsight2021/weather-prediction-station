@@ -74,6 +74,28 @@ pytest -q
 
 See `docs/qa-plan.md` for the broader validation checklist.
 
+## Verification scoreboard (accuracy roadmap Phase 0)
+
+Every published prediction is appended to `data/predictions.jsonl`. The
+`verifier` docker service polls ECCC CAP alerts for the configured region
+hourly (archived to `data/alerts/alerts.jsonl`), joins predictions against
+what actually happened (station snapshots + alerts), and writes
+`data/verification/scoreboard.json` / `scoreboard.md` with Brier score,
+reliability bins, and POD/FAR/CSI per hazard — compared against climatology,
+persistence, and the raw HA/ECCC forecast. Headline metrics are published to
+MQTT under `weather_brain/verification/#`.
+
+Run it on demand:
+
+```bash
+make verify
+```
+
+Region matching is configured with `ECCC_CAP_AREA_MATCH` (default
+`Fredericton`) and `ECCC_CAP_OFFICES` (default `CWHX`, the Atlantic Storm
+Prediction Centre) in `.env`. No accuracy claim is valid until this
+scoreboard has ~14 days of live data.
+
 ## Project phases
 
 ### Phase 1: Live rule engine

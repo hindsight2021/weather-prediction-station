@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from app.config import MqttSettings
@@ -73,8 +75,25 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
     client.publish_text(topic, json.dumps(payload), retain=True)
 
 
-def publish_prediction(client: WeatherMqttClient, settings: MqttSettings, prediction: Prediction) -> None:
+def publish_prediction(
+    client: WeatherMqttClient,
+    settings: MqttSettings,
+    prediction: Prediction,
+    log_path: str | None = None,
+) -> None:
     client.publish_json(settings.state_topic, prediction.as_dict(), retain=True)
+    if log_path:
+        log_prediction(prediction, log_path)
+
+
+def log_prediction(prediction: Prediction, log_path: str) -> None:
+    """Append the published prediction to the verification log (roadmap §3.2)."""
+    record: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat()}
+    record.update(prediction.as_dict())
+    target = Path(log_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record) + "\n")
 
 
 def _device_payload() -> dict[str, str]:

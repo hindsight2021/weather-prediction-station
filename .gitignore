@@ -1,4 +1,6 @@
 .env
+.venv/
+.pytest_cache/
 __pycache__/
 *.pyc
 *.pkl
@@ -13,6 +15,8 @@ __pycache__/
 /data/processed/*.csv.gz
 /data/training/
 /data/labels/
+/data/alerts/
+/data/verification/
 !/data/README.md
 /models/*
 !/models/.gitkeep
