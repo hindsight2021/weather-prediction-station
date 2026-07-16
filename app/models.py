@@ -41,6 +41,7 @@ class WeatherSnapshot:
     smoke_risk: float | None = None
     nb_burn_category: float | None = None
     active_fires_nearby: float | None = None
+    nearest_fire_km: float | None = None
     forecast_precip_probability_48h: float | None = None
     forecast_precip_probability_72h: float | None = None
     forecast_wind_gust_max_48h: float | None = None
@@ -80,6 +81,7 @@ class WeatherSnapshot:
             "forecast_temp_min_24h", "forecast_temp_max_24h", "official_alert_severity",
             "official_alert_count", "aqhi_current", "aqhi_forecast_max_24h",
             "aqhi_forecast_max_48h", "smoke_risk", "nb_burn_category", "active_fires_nearby",
+            "nearest_fire_km",
             "forecast_precip_probability_48h", "forecast_precip_probability_72h",
             "forecast_wind_gust_max_48h", "forecast_wind_gust_max_72h",
             "forecast_severe_condition_48h", "forecast_severe_condition_72h",
@@ -118,6 +120,8 @@ class Prediction:
     official_alert_summary: str = "No active ECCC alert."
     nb_burn_status: str = "unknown"
     active_fires_nearby: int = 0
+    nearest_fire_km: float = 999.0
+    nb_burn_category: int = 0
     ml_status: str = "Rule-engine only (no trained ML model yet)"
     model_accuracy: str = "No models trained yet"
     last_trained: str = "never"
@@ -149,6 +153,7 @@ class Prediction:
             "storm_risk_48h", "storm_risk_72h", "air_quality_risk_24h", "air_quality_risk_48h",
             "smoke_risk_24h", "aqhi_current", "aqhi_forecast_max_24h", "official_alert_level",
             "official_alert_summary", "nb_burn_status", "active_fires_nearby",
+            "nearest_fire_km", "nb_burn_category",
         ):
             result[key] = getattr(self, key)
         return result

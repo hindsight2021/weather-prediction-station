@@ -160,23 +160,27 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     elif alert_rank == 1:
         storm_risk_24h = max(storm_risk_24h, 45)
 
-    present_fields = sum(
-        value is not None
-        for value in [
-            snapshot.temperature_c,
-            snapshot.humidity_pct,
-            snapshot.pressure_hpa,
-            snapshot.wind_gust_kmh,
-            snapshot.rain_rate_mm_h,
-            snapshot.humidex,
-            snapshot.wind_chill_c,
-            snapshot.local_lightning_distance_km,
-            snapshot.radar_precip_nearby,
-            snapshot.forecast_precip_probability_24h,
-            snapshot.forecast_wind_gust_max_24h,
-        ]
-    )
-    confidence = clamp_score(35 + present_fields * 8)
+    # Honest confidence: a probabilistic system should never read 100%.
+    # Input availability earns up to 45 pts on a 30-pt base, corroborating
+    # forecast sources up to 10, history depth up to 7 — hard cap 92, and
+    # main.py caps it further at 60 when ML models are skipped as degraded.
+    observed_fields = [
+        snapshot.temperature_c,
+        snapshot.humidity_pct,
+        snapshot.pressure_hpa,
+        snapshot.wind_speed_kmh,
+        snapshot.wind_gust_kmh,
+        snapshot.rain_rate_mm_h,
+        snapshot.humidex,
+        snapshot.local_lightning_distance_km,
+        snapshot.radar_precip_nearby,
+        snapshot.forecast_precip_probability_24h,
+        snapshot.forecast_wind_gust_max_24h,
+    ]
+    present_fraction = sum(value is not None for value in observed_fields) / len(observed_fields)
+    source_bonus = min(10.0, float(snapshot.forecast_source_count or 0) * 5.0)
+    history_bonus = min(7.0, len(store.all()) / 36.0)  # ~3h of 5-min snapshots = full marks
+    confidence = clamp_score(min(92.0, 30.0 + present_fraction * 45.0 + source_bonus + history_bonus))
 
     level = "normal"
     imminent_event, imminent_minutes, imminent_summary = _imminent_event(snapshot, rain_rate)
@@ -253,6 +257,8 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         official_alert_summary="Official ECCC alert active." if alert_rank else "No active ECCC alert.",
         nb_burn_status={1: "no_burn", 2: "restricted_20h_to_08h", 3: "burn_permitted"}.get(int(snapshot.nb_burn_category or 0), "unknown"),
         active_fires_nearby=int(snapshot.active_fires_nearby or 0),
+        nearest_fire_km=float(snapshot.nearest_fire_km if snapshot.nearest_fire_km is not None else 999.0),
+        nb_burn_category=int(snapshot.nb_burn_category or 0),
     )
 
 

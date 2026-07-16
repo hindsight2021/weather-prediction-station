@@ -91,12 +91,78 @@ class EnvironmentalClient:
                 break
         fires = _get(NB_FIRE_API, common)
         nearby = 0
+        nearest_km: float | None = None
         for feature in fires.get("features", []):
             p = feature.get("properties", {})
             if str(p.get("FIELD_STAGE_OF_CONTROL", "")).upper() == "EX":
                 continue
             lat, lon = p.get("FIELD_LAT"), p.get("FIELD_LONG")
-            if lat is not None and lon is not None and _distance_km(self.latitude, self.longitude, float(lat), float(lon)) <= 150:
+            if lat is None or lon is None:
+                continue
+            distance = _distance_km(self.latitude, self.longitude, float(lat), float(lon))
+            if distance <= 150:
                 nearby += 1
+            if nearest_km is None or distance < nearest_km:
+                nearest_km = distance
         labels = {1: "no_burn", 2: "restricted_20h_to_08h", 3: "burn_permitted"}
-        return {"nb_burn_category": float(category), "nb_burn_status": labels.get(category, "unknown"), "active_fires_nearby": float(nearby)}
+        return {
+            "nb_burn_category": float(category),
+            "nb_burn_status": labels.get(category, "unknown"),
+            "active_fires_nearby": float(nearby),
+            # 999 = no active fire anywhere in the NB feed (sentinel keeps the sensor numeric).
+            "nearest_fire_km": round(nearest_km, 1) if nearest_km is not None else 999.0,
+        }
+
+
+BURN_CATEGORY_LABELS = {0: "unknown", 1: "no_burn", 2: "restricted_20h_to_08h", 3: "burn_permitted"}
+
+
+def fetch_fire_map_data(latitude: float, longitude: float) -> dict:
+    """Full NB wildfire picture for the fire-warden console: county burn-category
+    polygons and every active fire with distance from home. Pulled from the same
+    GNB ERD feeds the prediction engine uses — no third-party map embeds."""
+    common = {"where": "1=1", "outFields": "*", "f": "geojson", "outSR": 4326}
+    burn = _get(NB_BURN_API, common)
+    counties = []
+    for feature in burn.get("features", []):
+        properties = feature.get("properties", {})
+        counties.append(
+            {
+                "name": str(properties.get("NAME", "")).title(),
+                "category": int(properties.get("PUBLICCATEGORY") or 0),
+                "geometry": feature.get("geometry"),
+            }
+        )
+
+    fires_raw = _get(NB_FIRE_API, common)
+    fires = []
+    for feature in fires_raw.get("features", []):
+        p = feature.get("properties", {})
+        lat, lon = p.get("FIELD_LAT"), p.get("FIELD_LONG")
+        if lat is None or lon is None:
+            continue
+        stage = str(p.get("FIELD_STAGE_OF_CONTROL", "")).upper()
+        fires.append(
+            {
+                "name": str(p.get("FIELD_FIRE_NAME") or p.get("FIRE_NAME") or p.get("FIELD_FIRE_NUMBER") or "Fire"),
+                "lat": float(lat),
+                "lon": float(lon),
+                "stage": stage,
+                "size_ha": p.get("FIELD_FIRE_SIZE") or p.get("FIELD_CURRENT_SIZE"),
+                "detected": p.get("FIELD_DETECTED_DATE") or p.get("FIELD_REPORT_DATE"),
+                "distance_km": round(_distance_km(latitude, longitude, float(lat), float(lon)), 1),
+            }
+        )
+    fires.sort(key=lambda fire: fire["distance_km"])
+
+    york = next((c for c in counties if "YORK" in c["name"].upper()), None)
+    return {
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "home": {"lat": latitude, "lon": longitude},
+        "counties": counties,
+        "fires": fires,
+        "york_burn_category": york["category"] if york else 0,
+        "york_burn_status": BURN_CATEGORY_LABELS.get(york["category"] if york else 0, "unknown"),
+        "active_fire_count": sum(1 for fire in fires if fire["stage"] != "EX"),
+        "nearest_active_km": next((fire["distance_km"] for fire in fires if fire["stage"] != "EX"), None),
+    }
