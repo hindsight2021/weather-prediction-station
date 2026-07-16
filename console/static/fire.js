@@ -137,7 +137,10 @@ function renderBanner(data, weather) {
 
 function renderList(data) {
   const list = $("fire-list");
-  const fires = (data.fires || []).slice(0, 30);
+  // Active incidents first (by distance), extinguished afterwards.
+  const fires = [...(data.fires || [])]
+    .sort((a, b) => (a.stage === "EX") - (b.stage === "EX") || a.distance_km - b.distance_km)
+    .slice(0, 30);
   if (!fires.length) {
     list.innerHTML = `<div class="fire-row"><span class="fr-name">No incidents in the provincial feed.</span></div>`;
     return;
