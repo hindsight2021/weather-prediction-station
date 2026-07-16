@@ -1,0 +1,6670 @@
+{
+ "wallpanel": {
+  "cards": [
+   {
+    "type": "custom:meteoalarm-card",
+    "integration": "env_canada",
+    "entities": [
+     {
+      "entity": "sensor.fredericton_watches"
+     },
+     {
+      "entity": "sensor.fredericton_warnings"
+     }
+    ],
+    "override_headline": false,
+    "hide_when_no_warning": true
+   }
+  ],
+  "enabled": false,
+  "enabled_on_views": [
+   "default_view"
+  ],
+  "profiles": {
+   "user.wallpanel": {
+    "enabled": true
+   },
+   "user.admin": {
+    "enabled": false
+   },
+   "user.chrisw1": {
+    "enabled": false
+   }
+  },
+  "profile_entity": "input_text.wallpanel_profile",
+  "debug": false,
+  "hide_toolbar": false,
+  "hide_sidebar": false,
+  "fullscreen": false,
+  "idle_time": 256,
+  "keep_screen_on_time": 86400,
+  "black_screen_after_time": 86400,
+  "control_reactivation_time": 0.5,
+  "screensaver_start_navigation_path": "/lovelace/default_view",
+  "image_url": "/media/nas_pics/",
+  "image_fit_landscape": "cover",
+  "display_time": 30,
+  "media_list_update_interval": 8500,
+  "media_order": "random",
+  "exclude_filenames": [],
+  "show_image_info": false,
+  "fetch_address_data": false,
+  "image_info_template": "${address.town|address.city!prefix=!suffix= // }${DateTimeOriginal!options=year:numeric,month:long}",
+  "screensaver_entity": "input_boolean.wallpanel_screensaver",
+  "style": {
+   "wallpanel-screensaver-info-box": {
+    "--wp-card-width": "450px"
+   },
+   "wallpanel-screensaver-info-box-content": {
+    "--ha-card-background": "none",
+    "--ha-card-box-shadow": "none",
+    "text-shadow": "-0.5px -0.5px 0 rgb(17, 17, 17), 0.5px -0.5px 0 rgb(17, 17, 17), -0.5px 0.5px 0 rgb(17, 17, 17), 0.5px 0.5px 0 rgb(17, 17, 17)",
+    "--primary-text-color": "#ffffff",
+    "--secondary-text-color": "#dddddd"
+   }
+  }
+ },
+ "resources": [
+  {
+   "url": "/hacsfiles/lovelace-state-switch/state-switch.js",
+   "type": "module"
+  },
+  {
+   "url": "/local/community/day-countdown/day-countdown.js",
+   "type": "js"
+  }
+ ],
+ "title": "iHome",
+ "views": [
+  {
+   "path": "default_view",
+   "title": "Home",
+   "theme": "Frosted Glass",
+   "cards": [
+    {
+     "type": "custom:mushroom-chips-card",
+     "chips": [
+      {
+       "type": "entity",
+       "entity": "input_boolean.talking_house_enabled",
+       "name": "Talking House",
+       "icon": "mdi:home-sound-in",
+       "tap_action": {
+        "action": "toggle"
+       },
+       "hold_action": {
+        "action": "navigate",
+        "navigation_path": "/network-control/talking-house"
+       }
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: rgba(15,23,42,.38) !important; border-radius: 16px !important; width: fit-content; margin-left: auto; padding: 4px 8px !important; }"
+     }
+    },
+    {
+     "type": "custom:mushroom-entity-card",
+     "entity": "input_boolean.beauregard_house",
+     "name": "Is Beauregard in his house?",
+     "fill_container": true,
+     "primary_info": "name",
+     "secondary_info": "state",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "icon_color": "deep-purple",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "input_boolean.beauregard_house",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "type": "custom:mushroom-entity-card",
+     "entity": "sensor.average_main_floor_temp",
+     "name": "Upstairs",
+     "icon": "mdi:home-thermometer",
+     "icon_color": "deep-orange"
+    },
+    {
+     "type": "custom:mushroom-entity-card",
+     "entity": "sensor.pws_main_floor_humidity"
+    },
+    {
+     "type": "tile",
+     "entity": "todo.shopping_list",
+     "state_content": "state",
+     "tap_action": {
+      "action": "navigate",
+      "navigation_path": "/todo"
+     },
+     "color": "cyan",
+     "icon": "mdi:clipboard-list",
+     "show_entity_picture": true,
+     "visibility": [
+      {
+       "condition": "numeric_state",
+       "entity": "todo.shopping_list",
+       "above": 1
+      }
+     ]
+    },
+    {
+     "type": "custom:mod-card",
+     "card": {
+      "type": "weather-forecast",
+      "entity": "weather.home_weather_station",
+      "name": "Current Weather",
+      "show_forecast": false
+     },
+     "style": {
+      ".": "ha-card {\n  --card-mod-font-size: 3em;\n  text-align: center;\n  padding: 16px;\n}\n.icon-container {\n  margin-top: -10px;\n}\n.main {\n  font-size: 5em;\n  font-weight: bold;\n}\n.secondary {\n  font-size: 1.5em;\n  color: var(--secondary-text-color);\n}\n"
+     }
+    },
+    {
+     "type": "custom:mushroom-template-card",
+     "primary": "Today's Forecast",
+     "secondary": "{{ states('sensor.fredericton_current_condition') }}",
+     "icon": "{% if is_state('sensor.fredericton_current_condition', 'Sunny') %}\n  mdi:weather-sunny\n{% elif is_state('sensor.fredericton_current_condition', 'Rainy') %}\n  mdi:weather-rainy\n{% elif is_state('sensor.fredericton_current_condition', 'Cloudy') %}\n  mdi:weather-cloudy\n{% elif is_state('sensor.fredericton_current_condition', 'Snowy') %}\n  mdi:weather-snowy\n{% elif is_state('sensor.fredericton_current_condition', 'Windy') %}\n  mdi:weather-windy\n{% else %}\n  mdi:weather-partly-cloudy\n{% endif %}\n",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "multiline_secondary": true,
+     "color": "{% if is_state('sensor.fredericton_current_condition', 'Sunny') %}\n  yellow\n{% elif is_state('sensor.fredericton_current_condition', 'Rainy') %}\n  blue\n{% elif is_state('sensor.fredericton_current_condition', 'Cloudy') %}\n  gray\n{% elif is_state('sensor.fredericton_current_condition', 'Snowy') %}\n  white\n{% elif is_state('sensor.fredericton_current_condition', 'Windy') %}\n  green\n{% else %}\n  lightgray\n{% endif %}\n",
+     "vertical": true,
+     "features_position": "bottom"
+    },
+    {
+     "type": "custom:meteoalarm-card",
+     "integration": "env_canada",
+     "entities": [
+      {
+       "entity": "sensor.fredericton_watches"
+      },
+      {
+       "entity": "sensor.fredericton_warnings"
+      }
+     ],
+     "override_headline": false,
+     "hide_when_no_warning": true,
+     "visibility": [
+      {
+       "condition": "numeric_state",
+       "entity": "sensor.fredericton_warnings",
+       "above": 0,
+       "below": 5
+      }
+     ]
+    },
+    {
+     "type": "custom:digital-clock",
+     "dateFormat": {
+      "weekday": "long",
+      "day": "2-digit",
+      "month": "short"
+     },
+     "timeFormat": {
+      "hour": "2-digit",
+      "minute": "2-digit"
+     }
+    },
+    {
+     "type": "conditional",
+     "conditions": [
+      {
+       "condition": "state",
+       "entity": "media_player.android_4",
+       "state": "playing"
+      }
+     ],
+     "card": {
+      "type": "custom:mini-media-player",
+      "entity": "media_player.android_4",
+      "artwork": "full-cover",
+      "source": "full",
+      "sound_mode": "full",
+      "info": "scroll",
+      "replace_mute": "stop"
+     }
+    },
+    {
+     "type": "custom:mushroom-entity-card",
+     "name": "Gas Price",
+     "icon": "mdi:gas-station",
+     "entity": "sensor.wulastukw_regular_gas"
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:mushroom-template-card",
+       "primary": "Main Floor",
+       "secondary": "{{ states('sensor.average_main_floor_temp') }}\u00b0C / {{ states('sensor.pws_main_floor_humidity') }}%H",
+       "icon": "",
+       "features_position": "bottom"
+      },
+      {
+       "type": "custom:mushroom-template-card",
+       "primary": "Basement",
+       "secondary": "{{ states('sensor.basement_ac_current_temperature') }}\u00b0C / {{ states('sensor.pws_basement_humidity') }}%H",
+       "icon": "",
+       "features_position": "bottom"
+      },
+      {
+       "type": "custom:mushroom-template-card",
+       "primary": "Bedroom",
+       "secondary": "{{ states('sensor.acurite_606tx_1_148_temperature') }}\u00b0C",
+       "icon": "",
+       "features_position": "bottom"
+      }
+     ]
+    },
+    {
+     "type": "custom:atomic-calendar-revive",
+     "enableModeChange": true,
+     "firstDayOfWeek": 1,
+     "maxDaysToShow": 7,
+     "maxEventCount": 7,
+     "disableEventLink": true,
+     "disableLocationLink": true,
+     "refreshInterval": 60,
+     "showWeekDay": true,
+     "entities": [
+      "calendar.m_boudreau87_gmail_com",
+      "calendar.mikes_events",
+      "calendar.calendar_2",
+      "calendar.calendar_3"
+     ],
+     "showLastCalendarWeek": false,
+     "disableCalEventLink": false,
+     "disableCalLocationLink": false,
+     "calShowDescription": false,
+     "disableCalLink": false
+    },
+    {
+     "type": "custom:mushroom-alarm-control-panel-card",
+     "entity": "alarm_control_panel.blink_ihomecamera",
+     "states": [
+      "armed_away"
+     ],
+     "name": "Blink Cameras",
+     "layout": "horizontal"
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:mushroom-person-card",
+       "name": "Mike",
+       "icon": "mdi:horse-human",
+       "entity": "device_tracker.mikes_iphone",
+       "icon_type": "icon",
+       "tap_action": {
+        "action": "more-info"
+       },
+       "hold_action": {
+        "action": "perform-action",
+        "perform_action": ""
+       }
+      },
+      {
+       "type": "custom:mushroom-person-card",
+       "entity": "device_tracker.chris_iphone",
+       "name": "Chris",
+       "icon": "mdi:chef-hat",
+       "tap_action": {
+        "action": "more-info"
+       }
+      }
+     ]
+    },
+    {
+     "show_state": false,
+     "show_name": false,
+     "camera_view": "auto",
+     "type": "picture-entity",
+     "entity": "camera.weather_gpt_image"
+    },
+    {
+     "type": "conditional",
+     "conditions": [
+      {
+       "entity": "input_boolean.christmasmode",
+       "state": "on"
+      }
+     ],
+     "card": {
+      "type": "custom:html-card",
+      "card_mod": {
+       "style": ".type-custom-html-card, htmlCard {\n  position: absolute;\n  top: -20px!important;\n  background:none!important;\n  }\n"
+      },
+      "content": "<style>\n  .snowflakes {\n    position: fixed;\n    top: -10%;\n    left: 0;\n    width: 100%;\n    height: 110%;\n    pointer-events: none;\n    z-index: 9999;\n    overflow: hidden;\n  }\n\n  i,\n  i:after,\n  i:before {\n    background: white;\n  }\n\n  i {\n    display: inline-block;\n    -webkit-animation: snowflakes 6s linear 4s infinite;\n    -moz-animation: snowflakes 6s linear 4s infinite;\n    position: relative;\n  }\n\n  i:after,\n  i:before {\n    height: 100%;\n    width: 100%;\n    content: \".\";\n    position: absolute;\n    top: 0px;\n    left: 0px;\n    -webkit-transform: rotate(120deg);\n  }\n\n  i:before {\n    -webkit-transform: rotate(240deg);\n  }\n\n  @-webkit-keyframes snowflakes {\n    0% {\n      -webkit-transform: translate3d(0, 0, 0) rotate(0deg) scale(0.6);\n    }\n\n    100% {\n      -webkit-transform: translate3d(15px, 1200px, 0px) rotate(360deg) scale(0.6);\n    }\n  }\n\n  .snowflakes i:nth-child(3n) {\n    width: 16px;\n    height: 4px;\n    -webkit-animation-duration: 8s;\n    -webkit-animation-iteration-count: infinite;\n    -webkit-transform-origin: right -45px;\n  }\n\n  .snowflakes i:nth-child(3n+1) {\n    width: 24px;\n    height: 6px;\n    -webkit-animation-duration: 15s;\n    -webkit-animation-iteration-count: infinite;\n    -webkit-transform-origin: right -30px;\n  }\n\n  .snowflakes i:nth-child(3n+2) {\n    width: 32px;\n    height: 8px;\n    -webkit-animation-duration: 20s;\n    -webkit-animation-iteration-count: infinite;\n    -webkit-transform-origin: right -15px;\n  }\n\n  /* different delays so they don't all start at the same time */\n  .snowflakes i:nth-child(7n) {\n    opacity: .1;\n    -webkit-animation-delay: 1s;\n    -webkit-animation-timing-function: ease-in;\n  }\n\n  .snowflakes i:nth-child(7n+1) {\n    opacity: .2;\n    -webkit-animation-delay: 1s;\n    -webkit-animation-timing-function: ease-out;\n  }\n\n  .snowflakes i:nth-child(7n+2) {\n    opacity: .3;\n    -webkit-animation-delay: 1.5s;\n    -webkit-animation-timing-function: linear;\n  }\n\n  .snowflakes i:nth-child(7n+3) {\n    opacity: .4;\n    -webkit-animation-delay: 2s;\n    -webkit-animation-timing-function: ease-in;\n  }\n\n  .snowflakes i:nth-child(7n+4) {\n    opacity: .5;\n    -webkit-animation-delay: 2.5s;\n    -webkit-animation-timing-function: linear;\n  }\n\n  .snowflakes i:nth-child(7n+5) {\n    opacity: .6;\n    -webkit-animation-delay: 3s;\n    -webkit-animation-timing-function: ease-out;\n  }\n\n  .snowflakes i:nth-child(7n+6) {\n    opacity: .7;\n    -webkit-animation-delay: 3.5s;\n    -webkit-animation-timing-function: ease-in;\n  }\n</style>\n<div class=\"snowflakes\">\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n  <i></i>\n</div>\n"
+     }
+    },
+    {
+     "type": "custom:tabbed-card",
+     "styles": {
+      "--mdc-theme-primary": "white",
+      "--mdc-tab-text-label-color-default": "grey",
+      "--mdc-typography-button-font-size": "10px"
+     },
+     "tabs": [
+      {
+       "attributes": {
+        "label": "Doorbell"
+       },
+       "card": {
+        "type": "vertical-stack",
+        "cards": [
+         {
+          "type": "horizontal-stack",
+          "cards": [
+           {
+            "type": "picture-entity",
+            "entity": "camera.front_door"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "attributes": {
+        "label": "Front Door"
+       },
+       "card": {
+        "type": "vertical-stack",
+        "cards": [
+         {
+          "type": "horizontal-stack",
+          "cards": [
+           {
+            "type": "picture-entity",
+            "entity": "camera.blink_front_door"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "attributes": {
+        "label": "Driveway"
+       },
+       "card": {
+        "type": "vertical-stack",
+        "cards": [
+         {
+          "type": "horizontal-stack",
+          "cards": [
+           {
+            "type": "picture-entity",
+            "entity": "camera.blink_driveway"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "attributes": {
+        "label": "Back Yard"
+       },
+       "card": {
+        "type": "vertical-stack",
+        "cards": [
+         {
+          "type": "horizontal-stack",
+          "cards": [
+           {
+            "type": "picture-entity",
+            "entity": "camera.blink_back_door"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "button",
+       "entity": "input_boolean.washing_machine_running",
+       "name": "Washer",
+       "icon": "mdi:washing-machine",
+       "show_state": true,
+       "state": [
+        {
+         "value": "on",
+         "color": "green",
+         "name": "Washer Running"
+        },
+        {
+         "value": "off",
+         "color": "grey",
+         "name": "Washer Idle"
+        }
+       ]
+      },
+      {
+       "type": "button",
+       "entity": "input_boolean.is_the_dryer_running",
+       "name": "Dryer",
+       "icon": "mdi:tumble-dryer",
+       "show_state": true,
+       "state": [
+        {
+         "value": "on",
+         "color": "orange",
+         "name": "Dryer Running"
+        },
+        {
+         "value": "off",
+         "color": "grey",
+         "name": "Dryer Idle"
+        }
+       ]
+      }
+     ],
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "input_boolean.is_the_dryer_running",
+       "state": "on"
+      },
+      {
+       "condition": "state",
+       "entity": "input_boolean.washing_machine_running",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "type": "vertical-stack",
+     "cards": [
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.mike_harry_potter_clock_status",
+         "name": "Mike",
+         "show_name": true,
+         "show_state": true,
+         "show_icon": true,
+         "show_label": true,
+         "tap_action": {
+          "action": "more-info"
+         },
+         "hold_action": {
+          "action": "more-info"
+         },
+         "icon": "[[[\n  const s = entity.state;\n  if (s === 'In the Common Room') return 'mdi:fireplace';\n  if (s === 'Diagon Alley') return 'mdi:shopping';\n  if (s === 'Forbidden Forest') return 'mdi:pine-tree';\n  if (s === 'Quidditch Practice') return 'mdi:creation';\n  if (s === 'Dragon Feeding') return 'mdi:dragon';\n  if (s === 'Seaside Sorcery') return 'mdi:waves';\n  if (s === 'Beyond the Kingdom') return 'mdi:castle';\n  if (s === 'Ministry Business') return 'mdi:briefcase';\n  if (s === 'Mortal Peril') return 'mdi:skull-crossbones';\n  return 'mdi:compass';\n]]]\n",
+         "label": "[[[\n  const p = states['person.admin'];\n  return p ? `Raw zone: ${p.state}` : 'Raw zone: unavailable';\n]]]\n",
+         "styles": {
+          "grid": [
+           {
+            "grid-template-areas": "\"i n\" \"s s\" \"l l\""
+           },
+           {
+            "grid-template-columns": "46px 1fr"
+           },
+           {
+            "grid-template-rows": "min-content min-content min-content"
+           }
+          ],
+          "card": [
+           {
+            "padding": "14px 14px 12px 14px"
+           },
+           {
+            "border-radius": "22px"
+           },
+           {
+            "border": "1px solid rgba(212, 175, 55, 0.14)"
+           },
+           {
+            "background": "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.025) 100%)"
+           },
+           {
+            "box-shadow": "inset 0 0 14px rgba(255,255,255,0.025), 0 4px 14px rgba(0,0,0,0.18)"
+           },
+           {
+            "overflow": "hidden"
+           }
+          ],
+          "icon": [
+           {
+            "width": "30px"
+           },
+           {
+            "align-self": "center"
+           },
+           {
+            "justify-self": "center"
+           }
+          ],
+          "name": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "align-self": "center"
+           },
+           {
+            "font-size": "15px"
+           },
+           {
+            "font-weight": 600
+           },
+           {
+            "letter-spacing": "0.02em"
+           },
+           {
+            "color": "rgba(245, 232, 197, 0.85)"
+           }
+          ],
+          "state": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "font-size": "20px"
+           },
+           {
+            "font-weight": 700
+           },
+           {
+            "line-height": 1.25
+           },
+           {
+            "padding-top": "4px"
+           },
+           {
+            "letter-spacing": "0.01em"
+           },
+           {
+            "text-shadow": "0 1px 2px rgba(0,0,0,0.4)"
+           }
+          ],
+          "label": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "font-size": "11px"
+           },
+           {
+            "color": "rgba(220, 220, 220, 0.5)"
+           },
+           {
+            "padding-top": "6px"
+           },
+           {
+            "letter-spacing": "0.03em"
+           }
+          ]
+         },
+         "state": [
+          {
+           "value": "In the Common Room",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 183, 77, 0.18) 0%, rgba(80, 53, 20, 0.96) 45%, rgba(26, 18, 12, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 196, 94, 0.30)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 191, 73, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 226, 163, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Diagon Alley",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(156, 114, 255, 0.18) 0%, rgba(54, 34, 72, 0.96) 46%, rgba(24, 16, 30, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(178, 140, 255, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(198, 169, 255, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(231, 220, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Forbidden Forest",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(81, 168, 108, 0.17) 0%, rgba(22, 60, 34, 0.96) 48%, rgba(12, 25, 15, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(99, 189, 126, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(131, 216, 154, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(212, 246, 220, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Quidditch Practice",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(122, 181, 255, 0.20) 0%, rgba(29, 54, 82, 0.96) 48%, rgba(14, 21, 31, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(135, 196, 255, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(154, 204, 255, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(223, 239, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Dragon Feeding",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 108, 72, 0.22) 0%, rgba(88, 32, 19, 0.96) 44%, rgba(36, 13, 9, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 136, 103, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 154, 120, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 219, 205, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Seaside Sorcery",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(95, 201, 221, 0.20) 0%, rgba(21, 64, 72, 0.96) 48%, rgba(9, 23, 26, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(119, 218, 237, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(148, 229, 245, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(220, 248, 252, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Ministry Business",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(153, 138, 255, 0.18) 0%, rgba(44, 38, 76, 0.96) 48%, rgba(19, 16, 31, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(171, 156, 255, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(189, 179, 255, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(231, 227, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Beyond the Kingdom",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(210, 171, 84, 0.20) 0%, rgba(74, 54, 22, 0.96) 45%, rgba(26, 18, 9, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(218, 186, 112, 0.26)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(228, 201, 137, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(247, 236, 203, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Mortal Peril",
+           "spin": true,
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 74, 74, 0.30) 0%, rgba(88, 12, 18, 0.96) 42%, rgba(24, 5, 8, 0.99) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 99, 99, 0.45)"
+             },
+             {
+              "box-shadow": "0 0 22px rgba(255, 60, 60, 0.18), inset 0 0 20px rgba(255, 90, 90, 0.06)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 120, 120, 1)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 214, 214, 1)"
+             }
+            ],
+            "name": [
+             {
+              "color": "rgba(255, 232, 232, 0.96)"
+             }
+            ]
+           }
+          },
+          {
+           "operator": "default",
+           "styles": {
+            "card": [
+             {
+              "background": "linear-gradient(180deg, rgba(46, 35, 26, 0.96) 0%, rgba(20, 15, 11, 0.98) 100%)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(212, 175, 55, 0.92)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(244, 231, 194, 0.96)"
+             }
+            ]
+           }
+          }
+         ]
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.chris_harry_potter_clock_status",
+         "name": "Chris",
+         "show_name": true,
+         "show_state": true,
+         "show_icon": true,
+         "show_label": true,
+         "tap_action": {
+          "action": "more-info"
+         },
+         "hold_action": {
+          "action": "more-info"
+         },
+         "icon": "[[[\n  const s = entity.state;\n  if (s === 'In the Common Room') return 'mdi:fireplace';\n  if (s === 'Diagon Alley') return 'mdi:shopping';\n  if (s === 'Forbidden Forest') return 'mdi:pine-tree';\n  if (s === 'Quidditch Practice') return 'mdi:creation';\n  if (s === 'Dragon Feeding') return 'mdi:dragon';\n  if (s === 'Seaside Sorcery') return 'mdi:waves';\n  if (s === 'Beyond the Kingdom') return 'mdi:castle';\n  if (s === 'Ministry Business') return 'mdi:briefcase';\n  if (s === 'Mortal Peril') return 'mdi:skull-crossbones';\n  return 'mdi:compass';\n]]]\n",
+         "label": "[[[\n  const p = states['person.chris'];\n  return p ? `Raw zone: ${p.state}` : 'Raw zone: unavailable';\n]]]\n",
+         "styles": {
+          "grid": [
+           {
+            "grid-template-areas": "\"i n\" \"s s\" \"l l\""
+           },
+           {
+            "grid-template-columns": "46px 1fr"
+           },
+           {
+            "grid-template-rows": "min-content min-content min-content"
+           }
+          ],
+          "card": [
+           {
+            "padding": "14px 14px 12px 14px"
+           },
+           {
+            "border-radius": "22px"
+           },
+           {
+            "border": "1px solid rgba(212, 175, 55, 0.14)"
+           },
+           {
+            "background": "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.025) 100%)"
+           },
+           {
+            "box-shadow": "inset 0 0 14px rgba(255,255,255,0.025), 0 4px 14px rgba(0,0,0,0.18)"
+           },
+           {
+            "overflow": "hidden"
+           }
+          ],
+          "icon": [
+           {
+            "width": "30px"
+           },
+           {
+            "align-self": "center"
+           },
+           {
+            "justify-self": "center"
+           }
+          ],
+          "name": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "align-self": "center"
+           },
+           {
+            "font-size": "15px"
+           },
+           {
+            "font-weight": 600
+           },
+           {
+            "letter-spacing": "0.02em"
+           },
+           {
+            "color": "rgba(245, 232, 197, 0.85)"
+           }
+          ],
+          "state": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "font-size": "20px"
+           },
+           {
+            "font-weight": 700
+           },
+           {
+            "line-height": 1.25
+           },
+           {
+            "padding-top": "4px"
+           },
+           {
+            "letter-spacing": "0.01em"
+           },
+           {
+            "text-shadow": "0 1px 2px rgba(0,0,0,0.4)"
+           }
+          ],
+          "label": [
+           {
+            "justify-self": "start"
+           },
+           {
+            "font-size": "11px"
+           },
+           {
+            "color": "rgba(220, 220, 220, 0.5)"
+           },
+           {
+            "padding-top": "6px"
+           },
+           {
+            "letter-spacing": "0.03em"
+           }
+          ]
+         },
+         "state": [
+          {
+           "value": "In the Common Room",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 183, 77, 0.18) 0%, rgba(80, 53, 20, 0.96) 45%, rgba(26, 18, 12, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 196, 94, 0.30)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 191, 73, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 226, 163, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Diagon Alley",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(156, 114, 255, 0.18) 0%, rgba(54, 34, 72, 0.96) 46%, rgba(24, 16, 30, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(178, 140, 255, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(198, 169, 255, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(231, 220, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Forbidden Forest",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(81, 168, 108, 0.17) 0%, rgba(22, 60, 34, 0.96) 48%, rgba(12, 25, 15, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(99, 189, 126, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(131, 216, 154, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(212, 246, 220, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Quidditch Practice",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(122, 181, 255, 0.20) 0%, rgba(29, 54, 82, 0.96) 48%, rgba(14, 21, 31, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(135, 196, 255, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(154, 204, 255, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(223, 239, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Dragon Feeding",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 108, 72, 0.22) 0%, rgba(88, 32, 19, 0.96) 44%, rgba(36, 13, 9, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 136, 103, 0.28)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 154, 120, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 219, 205, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Seaside Sorcery",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(95, 201, 221, 0.20) 0%, rgba(21, 64, 72, 0.96) 48%, rgba(9, 23, 26, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(119, 218, 237, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(148, 229, 245, 0.98)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(220, 248, 252, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Ministry Business",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(153, 138, 255, 0.18) 0%, rgba(44, 38, 76, 0.96) 48%, rgba(19, 16, 31, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(171, 156, 255, 0.24)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(189, 179, 255, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(231, 227, 255, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Beyond the Kingdom",
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(210, 171, 84, 0.20) 0%, rgba(74, 54, 22, 0.96) 45%, rgba(26, 18, 9, 0.98) 100%)"
+             },
+             {
+              "border": "1px solid rgba(218, 186, 112, 0.26)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(228, 201, 137, 0.96)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(247, 236, 203, 0.98)"
+             }
+            ]
+           }
+          },
+          {
+           "value": "Mortal Peril",
+           "spin": true,
+           "styles": {
+            "card": [
+             {
+              "background": "radial-gradient(circle at top left, rgba(255, 74, 74, 0.30) 0%, rgba(88, 12, 18, 0.96) 42%, rgba(24, 5, 8, 0.99) 100%)"
+             },
+             {
+              "border": "1px solid rgba(255, 99, 99, 0.45)"
+             },
+             {
+              "box-shadow": "0 0 22px rgba(255, 60, 60, 0.18), inset 0 0 20px rgba(255, 90, 90, 0.06)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(255, 120, 120, 1)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(255, 214, 214, 1)"
+             }
+            ],
+            "name": [
+             {
+              "color": "rgba(255, 232, 232, 0.96)"
+             }
+            ]
+           }
+          },
+          {
+           "operator": "default",
+           "styles": {
+            "card": [
+             {
+              "background": "linear-gradient(180deg, rgba(46, 35, 26, 0.96) 0%, rgba(20, 15, 11, 0.98) 100%)"
+             }
+            ],
+            "icon": [
+             {
+              "color": "rgba(212, 175, 55, 0.92)"
+             }
+            ],
+            "state": [
+             {
+              "color": "rgba(244, 231, 194, 0.96)"
+             }
+            ]
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "custom:mushroom-vacuum-card",
+     "entity": "vacuum.gilbert_of_avonclean",
+     "icon_animation": true,
+     "fill_container": true,
+     "commands": [
+      "start_pause",
+      "stop",
+      "clean_spot",
+      "return_home",
+      "locate"
+     ]
+    },
+    {
+     "type": "custom:mushroom-vacuum-card",
+     "icon_animation": true,
+     "fill_container": true,
+     "entity": "vacuum.niles_2",
+     "commands": [
+      "start_pause",
+      "stop",
+      "clean_spot",
+      "locate",
+      "return_home"
+     ]
+    }
+   ],
+   "type": "masonry",
+   "background": {
+    "opacity": 50,
+    "alignment": "center",
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "scroll"
+   }
+  },
+  {
+   "title": "Weather Brain",
+   "path": "weather-brain-admin",
+   "icon": "mdi:brain",
+   "cards": [
+    {
+     "type": "markdown",
+     "title": "KCR Weather Brain \u2014 Prediction Engine Control",
+     "content": "Local rule-based severe-weather prediction engine (Phase 1). Live sensor feed shown below. Use **Fine-Tune & Feedback** to flag false alarms or confirm real events \u2014 this retrains the engine automatically, but a new model only goes live if it doesn't score worse than the current one on held-out data."
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_1h",
+       "name": "Storm 1h",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_24h",
+       "name": "Storm 24h",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_confidence",
+       "name": "Confidence",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 60,
+        "yellow": 30,
+        "red": 0
+       }
+      }
+     ]
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_wind_risk_1h",
+       "name": "Wind Risk",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_rain_risk_1h",
+       "name": "Rain Risk",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_lightning_risk_1h",
+       "name": "Lightning Risk",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+       "name": "Heat Risk",
+       "min": 0,
+       "max": 100,
+       "severity": {
+        "green": 0,
+        "yellow": 35,
+        "red": 70
+       }
+      }
+     ]
+    },
+    {
+     "type": "entities",
+     "title": "Current Assessment",
+     "entities": [
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_alert_level",
+       "name": "Alert Level"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_explanation",
+       "name": "Explanation"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_ml_status",
+       "name": "Prediction Engine Mode"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_model_accuracy",
+       "name": "Model Accuracy (AUC)"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_last_trained",
+       "name": "Last Trained"
+      }
+     ]
+    },
+    {
+     "type": "history-graph",
+     "title": "Risk History (24h)",
+     "hours_to_show": 24,
+     "entities": [
+      "sensor.kcr_weather_brain_weather_brain_storm_risk_1h",
+      "sensor.kcr_weather_brain_weather_brain_wind_risk_1h",
+      "sensor.kcr_weather_brain_weather_brain_rain_risk_1h",
+      "sensor.kcr_weather_brain_weather_brain_lightning_risk_1h",
+      "sensor.kcr_weather_brain_weather_brain_heat_risk_24h"
+     ]
+    },
+    {
+     "type": "history-graph",
+     "title": "Heat & Comfort History (24h)",
+     "hours_to_show": 24,
+     "entities": [
+      "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+      "sensor.humidex",
+      "sensor.wind_chill"
+     ]
+    },
+    {
+     "type": "entities",
+     "title": "\ud83c\udfaf Fine-Tune & Feedback",
+     "entities": [
+      {
+       "entity": "input_select.weather_brain_feedback_label",
+       "name": "Label this prediction"
+      },
+      {
+       "entity": "input_text.weather_brain_feedback_notes",
+       "name": "Notes"
+      },
+      {
+       "entity": "input_button.weather_brain_submit_feedback",
+       "name": "Submit feedback (triggers validated retrain)"
+      }
+     ]
+    },
+    {
+     "type": "entities",
+     "title": "Live Sensor Feed (accuracy check)",
+     "entities": [
+      {
+       "entity": "sensor.ihome_atlas_temperature",
+       "name": "Temperature"
+      },
+      {
+       "entity": "sensor.ihome_atlas_humidity",
+       "name": "Humidity"
+      },
+      {
+       "entity": "sensor.fredericton_barometric_pressure",
+       "name": "Pressure"
+      },
+      {
+       "entity": "sensor.ihome_atlas_wind_speed",
+       "name": "Wind Speed"
+      },
+      {
+       "entity": "sensor.fredericton_wind_gust",
+       "name": "Wind Gust (EC regional)"
+      },
+      {
+       "entity": "sensor.rain_5_minute_delta",
+       "name": "Rain 5-min (\u2192 rate x12)"
+      },
+      {
+       "entity": "sensor.lightning_detector_storm_distance",
+       "name": "Lightning Distance (mi, \u2192 km)"
+      },
+      {
+       "entity": "sensor.fredericton_current_condition",
+       "name": "EC Condition (\u2192 precip flag)"
+      }
+     ]
+    },
+    {
+     "type": "entities",
+     "title": "Automations",
+     "entities": [
+      "automation.weather_brain_alert_notification",
+      "automation.weather_brain_submit_feedback"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Home V2",
+   "theme": "noctis",
+   "type": "sections",
+   "max_columns": 3,
+   "badges": [],
+   "sections": [
+    {
+     "type": "grid",
+     "column_span": 1,
+     "cards": [
+      {
+       "type": "custom:mushroom-chips-card",
+       "alignment": "justify",
+       "chips": [
+        {
+         "type": "template",
+         "entity": "sensor.weather_brain_alert_level",
+         "content": "{{ states('sensor.weather_brain_alert_level') | upper }}",
+         "icon": "mdi:shield-alert",
+         "icon_color": "{% set l = states('sensor.weather_brain_alert_level') %}{% if l == 'warning' %}red{% elif l == 'watch' %}orange{% elif l == 'advisory' %}amber{% else %}teal{% endif %}",
+         "tap_action": {
+          "action": "more-info"
+         }
+        },
+        {
+         "type": "template",
+         "entity": "sensor.weather_brain_confidence",
+         "content": "{{ states('sensor.weather_brain_confidence') }}% conf",
+         "icon": "mdi:brain",
+         "icon_color": "brown"
+        },
+        {
+         "type": "template",
+         "entity": "sensor.fredericton_warnings",
+         "content": "EC {{ states('sensor.fredericton_warnings') }}\u26a0",
+         "icon": "mdi:alert",
+         "icon_color": "{% if states('sensor.fredericton_warnings')|int(0) > 0 %}red{% else %}grey{% endif %}"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "weather-forecast",
+       "entity": "weather.home_weather_station",
+       "name": "Kingsclear",
+       "show_forecast": false,
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "alignment": "justify",
+       "chips": [
+        {
+         "type": "template",
+         "content": "Storm {{ states('sensor.weather_brain_storm_risk_24h') }}%",
+         "icon": "mdi:weather-lightning",
+         "icon_color": "orange",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_storm_risk_24h"
+        },
+        {
+         "type": "template",
+         "content": "Rain {{ states('sensor.weather_brain_rain_risk_24h') }}%",
+         "icon": "mdi:weather-pouring",
+         "icon_color": "blue",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_rain_risk_24h"
+        },
+        {
+         "type": "template",
+         "content": "Wind {{ states('sensor.weather_brain_wind_risk_24h') }}%",
+         "icon": "mdi:weather-windy",
+         "icon_color": "green",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_wind_risk_24h"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-template-card",
+       "entity": "sensor.weather_brain_ai_forecast",
+       "primary": "Weather Brain outlook (24\u201372h)",
+       "secondary": "{{ (state_attr('sensor.weather_brain_ai_forecast','forecast') or 'Daily briefing pending.') | replace('SYNOPSIS:','') | trim | truncate(180, true, '\u2026') }}",
+       "icon": "mdi:crystal-ball",
+       "icon_color": "teal",
+       "multiline_secondary": true,
+       "tap_action": {
+        "action": "more-info"
+       },
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "conditional",
+       "conditions": [
+        {
+         "condition": "state",
+         "entity": "sensor.weather_brain_imminent_event",
+         "state_not": "none"
+        }
+       ],
+       "card": {
+        "type": "custom:mushroom-template-card",
+        "entity": "sensor.weather_brain_imminent_summary",
+        "primary": "\u26a0 {{ states('sensor.weather_brain_imminent_summary') }}",
+        "icon": "mdi:clock-alert",
+        "icon_color": "red"
+       },
+       "grid_options": {
+        "columns": 12
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "column_span": 1,
+     "cards": [
+      {
+       "type": "custom:mushroom-template-card",
+       "entity": "sensor.weather_brain_nb_burn_category",
+       "primary": "{% set c = states('sensor.weather_brain_nb_burn_category')|int(0) %}{% if c == 1 %}Burning prohibited{% elif c == 2 %}Evening burns only{% elif c == 3 %}Burning permitted{% else %}Burn status unknown{% endif %}",
+       "secondary": "{{ states('sensor.weather_brain_active_fires_within_150_km') }} fires \u2264150 km \u00b7 nearest {{ states('sensor.weather_brain_nearest_active_fire') }} km",
+       "icon": "mdi:fire-alert",
+       "icon_color": "{% set c = states('sensor.weather_brain_nb_burn_category')|int(0) %}{% if c == 1 %}red{% elif c == 2 %}amber{% elif c == 3 %}green{% else %}grey{% endif %}",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/lovelace-weather/fire-air"
+       },
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "alignment": "justify",
+       "chips": [
+        {
+         "type": "template",
+         "content": "AQHI {{ states('sensor.weather_brain_aqhi_current') }}",
+         "icon": "mdi:lungs",
+         "icon_color": "{% if states('sensor.weather_brain_aqhi_current')|int(0) >= 7 %}red{% elif states('sensor.weather_brain_aqhi_current')|int(0) >= 4 %}amber{% else %}green{% endif %}",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_aqhi_current"
+        },
+        {
+         "type": "template",
+         "content": "Smoke {{ states('sensor.weather_brain_wildfire_smoke_risk') }}%",
+         "icon": "mdi:smoke",
+         "icon_color": "grey",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_wildfire_smoke_risk"
+        },
+        {
+         "type": "template",
+         "content": "Air 24h {{ states('sensor.weather_brain_air_quality_risk_24h') }}%",
+         "icon": "mdi:air-filter",
+         "icon_color": "blue-grey",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.weather_brain_air_quality_risk_24h"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "horizontal-stack",
+       "cards": [
+        {
+         "type": "custom:mushroom-person-card",
+         "name": "Mike",
+         "icon": "mdi:horse-human",
+         "entity": "device_tracker.mikes_iphone"
+        },
+        {
+         "type": "custom:mushroom-person-card",
+         "entity": "device_tracker.chris_iphone",
+         "name": "Chris",
+         "icon": "mdi:chef-hat"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "horizontal-stack",
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Main",
+         "secondary": "{{ states('sensor.average_main_floor_temp') }}\u00b0C \u00b7 {{ states('sensor.pws_main_floor_humidity') }}%",
+         "icon": ""
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Bsmt",
+         "secondary": "{{ states('sensor.average_basement_temp') }}\u00b0C \u00b7 {{ states('sensor.pws_basement_humidity') }}%",
+         "icon": ""
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Bed",
+         "secondary": "{{ states('sensor.average_bedroom_temperature') }}\u00b0C",
+         "icon": ""
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-alarm-control-panel-card",
+       "entity": "alarm_control_panel.blink_ihomecamera",
+       "states": [
+        "armed_away"
+       ],
+       "name": "Blink Cameras",
+       "layout": "horizontal",
+       "grid_options": {
+        "columns": 12
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "column_span": 1,
+     "cards": [
+      {
+       "type": "custom:tabbed-card",
+       "styles": {
+        "--mdc-theme-primary": "orange",
+        "--mdc-tab-text-label-color-default": "white",
+        "--mdc-typography-button-font-size": "10px"
+       },
+       "tabs": [
+        {
+         "attributes": {
+          "label": "Main"
+         },
+         "card": {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.main_floor_ac",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "collapsible_controls": true,
+          "hvac_modes": [
+           "auto",
+           "heat",
+           "cool",
+           "fan_only",
+           "dry",
+           "off"
+          ],
+          "show_temperature_control": true
+         }
+        },
+        {
+         "attributes": {
+          "label": "Bed"
+         },
+         "card": {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.bedroom_ac",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "collapsible_controls": true,
+          "hvac_modes": [
+           "auto",
+           "heat",
+           "cool",
+           "fan_only",
+           "dry",
+           "off"
+          ],
+          "show_temperature_control": true
+         }
+        },
+        {
+         "attributes": {
+          "label": "Bsmt"
+         },
+         "card": {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.basement_ac",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "collapsible_controls": true,
+          "hvac_modes": [
+           "auto",
+           "heat",
+           "cool",
+           "fan_only",
+           "dry",
+           "off"
+          ],
+          "show_temperature_control": true
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "alignment": "justify",
+       "chips": [
+        {
+         "type": "template",
+         "content": "Amazn {{ states('sensor.mail_amazon_packages_delivered') }}",
+         "icon": "mdi:package-variant",
+         "icon_color": "{% if states('sensor.mail_amazon_packages_delivered')|int(0) > 0 %}green{% else %}grey{% endif %}",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.mail_amazon_packages_delivered"
+        },
+        {
+         "type": "template",
+         "content": "IntCom {{ states('sensor.mail_intelcom_delivered') }}",
+         "icon": "mdi:truck-delivery",
+         "icon_color": "{% if states('sensor.mail_intelcom_delivered')|int(0) > 0 %}green{% else %}grey{% endif %}",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.mail_intelcom_delivered"
+        },
+        {
+         "type": "template",
+         "content": "Post {{ states('sensor.mail_canada_post_delivered') }}",
+         "icon": "mdi:mailbox",
+         "icon_color": "{% if states('sensor.mail_canada_post_delivered')|int(0) > 0 %}green{% else %}grey{% endif %}",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.mail_canada_post_delivered"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "alignment": "justify",
+       "chips": [
+        {
+         "type": "template",
+         "content": "Gas {{ states('sensor.gas_station_regular_gas_2') }}",
+         "icon": "mdi:gas-station",
+         "icon_color": "amber",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.gas_station_regular_gas_2"
+        },
+        {
+         "type": "entity",
+         "entity": "input_boolean.enhanced_security",
+         "icon": "mdi:home-lock"
+        },
+        {
+         "type": "template",
+         "content": "\u2193{{ states('sensor.speedtest_download') | round(0) }} \u2191{{ states('sensor.speedtest_upload') | round(0) }}",
+         "icon": "mdi:speedometer",
+         "icon_color": "blue",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "entity": "sensor.speedtest_download"
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "conditional",
+       "conditions": [
+        {
+         "condition": "state",
+         "entity": "media_player.android_4",
+         "state": "playing"
+        }
+       ],
+       "card": {
+        "type": "custom:mini-media-player",
+        "entity": "media_player.android_4",
+        "artwork": "full-cover",
+        "info": "scroll",
+        "replace_mute": "stop"
+       },
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:tabbed-card",
+       "styles": {
+        "--mdc-theme-primary": "white",
+        "--mdc-tab-text-label-color-default": "grey",
+        "--mdc-typography-button-font-size": "10px"
+       },
+       "tabs": [
+        {
+         "attributes": {
+          "label": "Door"
+         },
+         "card": {
+          "type": "picture-entity",
+          "entity": "camera.blink_front_door"
+         }
+        },
+        {
+         "attributes": {
+          "label": "Drive"
+         },
+         "card": {
+          "type": "picture-entity",
+          "entity": "camera.blink_driveway"
+         }
+        },
+        {
+         "attributes": {
+          "label": "Yard"
+         },
+         "card": {
+          "type": "picture-entity",
+          "entity": "camera.blink_back_door"
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      },
+      {
+       "type": "custom:atomic-calendar-revive",
+       "firstDayOfWeek": 1,
+       "maxDaysToShow": 3,
+       "maxEventCount": 4,
+       "disableEventLink": true,
+       "disableLocationLink": true,
+       "refreshInterval": 60,
+       "showWeekDay": true,
+       "entities": [
+        "calendar.m_boudreau87_gmail_com",
+        "calendar.mikes_events",
+        "calendar.calendar_2",
+        "calendar.calendar_3",
+        "calendar.work"
+       ],
+       "grid_options": {
+        "columns": 12
+       }
+      }
+     ]
+    }
+   ],
+   "cards": [
+    {
+     "type": "custom:meteoalarm-card",
+     "integration": "env_canada",
+     "entities": [
+      {
+       "entity": "sensor.fredericton_watches"
+      },
+      {
+       "entity": "sensor.fredericton_warnings"
+      }
+     ],
+     "override_headline": false,
+     "hide_when_no_warning": true
+    }
+   ]
+  },
+  {
+   "title": "Nexus",
+   "path": "wall-nexus",
+   "icon": "mdi:hexagon-multiple",
+   "type": "masonry",
+   "background": "radial-gradient(ellipse at 25% 15%, #0F1D3C 0%, #080E20 60%, #05091A 100%)",
+   "badges": [],
+   "cards": [
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-living",
+     "name": "Living Room",
+     "icon": "mdi:sofa",
+     "cards": [
+      {
+       "type": "custom:mushroom-light-card",
+       "entity": "light.living_room",
+       "name": "Living Room",
+       "show_brightness_control": true,
+       "show_color_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-light-card",
+       "entity": "light.office",
+       "name": "Office",
+       "show_brightness_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "sensor.iairquality_temperature",
+         "icon": "mdi:thermometer"
+        },
+        {
+         "type": "entity",
+         "entity": "fan.fan",
+         "icon": "mdi:fan",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "type": "entity",
+         "entity": "fan.air_purifier",
+         "icon": "mdi:air-purifier",
+         "tap_action": {
+          "action": "toggle"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-kitchen",
+     "name": "Kitchen",
+     "icon": "mdi:silverware-fork-knife",
+     "cards": [
+      {
+       "type": "custom:mushroom-light-card",
+       "entity": "light.kitchen",
+       "name": "Kitchen",
+       "show_brightness_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "binary_sensor.nest_protect_kitchen_smoke_status",
+         "name": "Smoke"
+        },
+        {
+         "type": "entity",
+         "entity": "binary_sensor.nest_protect_kitchen_co_status",
+         "name": "CO"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-family",
+     "name": "Family Room",
+     "icon": "mdi:television-play",
+     "cards": [
+      {
+       "type": "custom:mini-media-player",
+       "entity": "media_player.shield",
+       "name": "SHIELD TV",
+       "artwork": "cover",
+       "toggle_power": true,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-light-card",
+       "entity": "light.family_room",
+       "name": "Family Lights",
+       "show_brightness_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-bedroom",
+     "name": "Bedroom",
+     "icon": "mdi:bed-king",
+     "cards": [
+      {
+       "type": "custom:mushroom-climate-card",
+       "entity": "climate.bedroom_ac",
+       "name": "Bedroom AC",
+       "show_temperature_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-light-card",
+       "entity": "light.bedroom",
+       "name": "Bedroom Lights",
+       "show_brightness_control": true,
+       "show_color_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "Bedroom 12h",
+       "entities": [
+        {
+         "entity": "sensor.bedroom_ac_current_temperature",
+         "name": "AC"
+        },
+        {
+         "entity": "sensor.average_bedroom_temperature",
+         "name": "Avg"
+        }
+       ],
+       "hours_to_show": 12,
+       "line_width": 2,
+       "show": {
+        "legend": true
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-basement",
+     "name": "Basement",
+     "icon": "mdi:home-floor-b",
+     "cards": [
+      {
+       "type": "custom:mushroom-climate-card",
+       "entity": "climate.basement_ac",
+       "name": "Basement AC",
+       "show_temperature_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "Basement 12h",
+       "entities": [
+        {
+         "entity": "sensor.basement_ac_current_temperature",
+         "name": "AC"
+        }
+       ],
+       "hours_to_show": 12,
+       "line_width": 2,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-security",
+     "name": "Security",
+     "icon": "mdi:shield-home",
+     "cards": [
+      {
+       "type": "custom:mushroom-alarm-control-panel-card",
+       "entity": "alarm_control_panel.ha_alarm",
+       "name": "Home Alarm",
+       "states": [
+        "armed_away",
+        "armed_home",
+        "disarmed"
+       ],
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "custom:mushroom-entity-card",
+         "entity": "alarm_control_panel.blink_ihomecamera",
+         "name": "iHome Cam",
+         "card_mod": {
+          "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+         }
+        },
+        {
+         "type": "custom:mushroom-entity-card",
+         "entity": "alarm_control_panel.blink_idoorbell",
+         "name": "Doorbell",
+         "card_mod": {
+          "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+         }
+        },
+        {
+         "type": "custom:mushroom-entity-card",
+         "entity": "binary_sensor.nest_protect_kitchen_smoke_status",
+         "name": "Kitchen",
+         "card_mod": {
+          "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+         }
+        },
+        {
+         "type": "custom:mushroom-entity-card",
+         "entity": "binary_sensor.nest_protect_family_room_smoke_status",
+         "name": "Family Room",
+         "card_mod": {
+          "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-vacuums",
+     "name": "Vacuums",
+     "icon": "mdi:robot-vacuum",
+     "cards": [
+      {
+       "type": "custom:mushroom-vacuum-card",
+       "entity": "vacuum.gilbert_of_avonclean",
+       "name": "Gilbert",
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-vacuum-card",
+       "entity": "vacuum.anne_of_clean_gables",
+       "name": "Anne",
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      }
+     ]
+    },
+    {
+     "type": "custom:bubble-card",
+     "card_type": "pop-up",
+     "hash": "#nexus-climate",
+     "name": "All Climate",
+     "icon": "mdi:thermostat",
+     "cards": [
+      {
+       "type": "custom:mushroom-climate-card",
+       "entity": "climate.main_floor_ac",
+       "name": "Main Floor",
+       "show_temperature_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-climate-card",
+       "entity": "climate.bedroom_ac",
+       "name": "Bedroom",
+       "show_temperature_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-climate-card",
+       "entity": "climate.basement_ac",
+       "name": "Basement",
+       "show_temperature_control": true,
+       "collapsible_controls": false,
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,48,0.98)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.14)!important;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      }
+     ]
+    },
+    {
+     "type": "custom:layout-card",
+     "layout_type": "custom:grid-layout",
+     "layout": {
+      "grid-template-columns": "repeat(12, 1fr)",
+      "grid-auto-rows": "minmax(90px, auto)",
+      "gap": "12px",
+      "padding": "14px 16px"
+     },
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "entity": "sensor.time",
+       "show_name": false,
+       "show_state": false,
+       "show_icon": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "custom_fields": {
+        "time": "[[[ return states['sensor.time']?states['sensor.time'].state:''; ]]]",
+        "day": "[[[ const d=new Date(); return ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][d.getDay()]; ]]]",
+        "date": "[[[ const d=new Date(),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return m[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear(); ]]]",
+        "outdr": "[[[ const t=states['sensor.fredericton_temperature']; if(!t||t.state==='unavailable')return ''; const v=parseFloat(t.state); return isNaN(v)?'':'Outside  '+v.toFixed(1)+'\u00b0C'; ]]]"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "linear-gradient(145deg,rgba(12,20,42,0.97),rgba(16,26,52,0.92))"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "1px solid rgba(56,189,248,0.07)"
+         },
+         {
+          "box-shadow": "0 4px 24px rgba(0,0,0,0.55)"
+         },
+         {
+          "padding": "22px 26px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "justify-content": "center"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "custom_fields": {
+         "time": [
+          {
+           "font-size": "66px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "#EDF2FF"
+          },
+          {
+           "letter-spacing": "-3px"
+          },
+          {
+           "line-height": "1"
+          }
+         ],
+         "day": [
+          {
+           "font-size": "9px"
+          },
+          {
+           "color": "#60A5FA"
+          },
+          {
+           "letter-spacing": "5px"
+          },
+          {
+           "font-weight": "800"
+          },
+          {
+           "margin-top": "12px"
+          }
+         ],
+         "date": [
+          {
+           "font-size": "13px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "margin-top": "3px"
+          }
+         ],
+         "outdr": [
+          {
+           "font-size": "11px"
+          },
+          {
+           "color": "rgba(61,82,128,0.7)"
+          },
+          {
+           "margin-top": "8px"
+          },
+          {
+           "letter-spacing": "0.5px"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "weather.home_weather_station",
+       "show_name": false,
+       "show_state": false,
+       "show_icon": false,
+       "view_layout": {
+        "grid-column": "span 5",
+        "grid-row": "span 2"
+       },
+       "custom_fields": {
+        "wicon": "[[[ const s=entity?entity.state:'';const m={'sunny':'\u2600\ufe0f','partlycloudy':'\u26c5','cloudy':'\u2601\ufe0f','rainy':'\ud83c\udf27','snowy':'\u2744\ufe0f','windy':'\ud83d\udca8','fog':'\ud83c\udf2b','lightning-rainy':'\u26c8','clear-night':'\ud83c\udf19','exceptional':'\u26a0\ufe0f'};return Object.keys(m).find(k=>s.includes(k))?m[Object.keys(m).find(k=>s.includes(k))]:'\ud83c\udf21'; ]]]",
+        "cond": "[[[ return entity?entity.state.replace(/_/g,' ').toUpperCase():''; ]]]",
+        "temp": "[[[ const t=entity&&entity.attributes.temperature; return t!=null?t+'\u00b0C':''; ]]]",
+        "detail": "[[[ const a=entity&&entity.attributes; if(!a)return ''; const h=a.humidity,w=a.wind_speed; const parts=[]; if(h)parts.push(h+'% humidity'); if(w)parts.push(w+' km/h wind'); return parts.join('  \u00b7  '); ]]]",
+        "fcst": "[[[ const f=entity&&entity.attributes&&entity.attributes.forecast; if(!f||!f[0])return ''; const hi=Math.round(f[0].temperature||0),lo=Math.round(f[0].templow||0); return 'Tomorrow  '+lo+'\u00b0 \u2013 '+hi+'\u00b0'; ]]]"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "linear-gradient(145deg,rgba(7,26,58,0.90),rgba(14,22,50,0.96))"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "1px solid rgba(56,189,248,0.14)"
+         },
+         {
+          "box-shadow": "0 4px 24px rgba(0,0,0,0.55)"
+         },
+         {
+          "padding": "20px 24px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "justify-content": "center"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "custom_fields": {
+         "wicon": [
+          {
+           "font-size": "38px"
+          },
+          {
+           "line-height": "1"
+          }
+         ],
+         "cond": [
+          {
+           "font-size": "9px"
+          },
+          {
+           "color": "#60A5FA"
+          },
+          {
+           "letter-spacing": "3px"
+          },
+          {
+           "font-weight": "700"
+          },
+          {
+           "margin-top": "6px"
+          }
+         ],
+         "temp": [
+          {
+           "font-size": "52px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "#EDF2FF"
+          },
+          {
+           "letter-spacing": "-2px"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "margin-top": "2px"
+          }
+         ],
+         "detail": [
+          {
+           "font-size": "11px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "margin-top": "7px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "fcst": [
+          {
+           "font-size": "11px"
+          },
+          {
+           "color": "rgba(61,82,128,0.6)"
+          },
+          {
+           "margin-top": "4px"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "alarm_control_panel.ha_alarm",
+       "show_name": false,
+       "show_state": false,
+       "show_icon": false,
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-security"
+       },
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 2"
+       },
+       "custom_fields": {
+        "alarm": "[[[ if(!entity)return ''; const m={disarmed:'\ud83d\udd13  DISARMED',armed_home:'\ud83c\udfe0  ARMED HOME',armed_away:'\ud83d\udd12  ARMED AWAY',triggered:'\ud83d\udea8  TRIGGERED',arming:'\u2699  ARMING'}; return m[entity.state]||(entity.state||'').toUpperCase(); ]]]",
+        "pres": "[[[ const p=[{id:'person.michael',n:'Mike'},{id:'person.mike',n:'Mike 2'}];return p.map(({id,n})=>{  const s=states[id],home=s&&s.state==='home';  return '<span style=\"color:'+(home?'#4ADE80':'#334155')+'\">&#9679;</span>  '+n;}).join('<br>'); ]]]",
+        "ai": "[[[ const t=states['input_text.ai_main_floor_climate_last_decision']; const v=t&&t.state&&t.state!=='unknown'&&t.state!=='unavailable'?t.state:''; return v.length>52?v.slice(0,52)+'\u2026':v; ]]]",
+        "vacs": "[[[ const g=states['vacuum.gilbert_of_avonclean'],a=states['vacuum.anne_of_clean_gables'];const gs=g?g.state:'?',as_=a?a.state:'?';return '\ud83e\udd16  '+gs+'  \u00b7  \ud83e\udd16  '+as_; ]]]"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return s==='triggered'?'rgba(80,5,5,0.96)':s==='armed_home'||s==='armed_away'?'rgba(5,40,20,0.90)':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return s==='triggered'?'1px solid rgba(239,68,68,0.6)':s==='armed_home'||s==='armed_away'?'1px solid rgba(74,222,128,0.25)':'1px solid rgba(56,189,248,0.08)'; ]]]"
+         },
+         {
+          "box-shadow": "0 4px 24px rgba(0,0,0,0.5)"
+         },
+         {
+          "padding": "18px 20px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "justify-content": "space-between"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "custom_fields": {
+         "alarm": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "font-weight": "800"
+          },
+          {
+           "letter-spacing": "2px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='triggered'?'#EF4444':s==='armed_home'||s==='armed_away'?'#4ADE80':'#3D5280'; ]]]"
+          }
+         ],
+         "pres": [
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "2"
+          },
+          {
+           "color": "#94A3B8"
+          }
+         ],
+         "ai": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "color": "#4A6090"
+          },
+          {
+           "font-style": "italic"
+          },
+          {
+           "line-height": "1.5"
+          },
+          {
+           "overflow": "hidden"
+          }
+         ],
+         "vacs": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "color": "#2D3F6A"
+          },
+          {
+           "letter-spacing": "0.5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "text-overflow": "ellipsis"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "light.living_room",
+       "name": "Living Room",
+       "icon": "mdi:sofa",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-living"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "show_state": false,
+       "custom_fields": {
+        "temp": "[[[ const e=states['sensor.iairquality_temperature']; if(!e||e.state==='unavailable'||e.state==='unknown')return ''; const v=parseFloat(e.state); return isNaN(v)?'':v.toFixed(1)+'\u00b0'; ]]]",
+        "info": "[[[ if(!entity)return 'Unavailable';const s=entity.state,d=entity.domain,a=entity.attributes||{};if(d==='light'&&s==='on'){  const b=Math.round((a.brightness||255)/2.55);  return '<span style=\"color:#FBBF24;font-weight:600\">'+b+'%</span> brightness';}if(d==='media_player'&&(s==='playing'||s==='paused')){  const t=(a.media_title||'').slice(0,26);  return t||(s==='paused'?'Paused':'Playing');}if(d==='climate'&&s!=='off'&&s!=='unavailable'){  const c=a.current_temperature,tg=a.temperature;  return c&&tg?c+'\u00b0 \u2192 '+tg+'\u00b0':s;}if(s==='on'||s==='home')return 'Active';if(s==='unavailable')return '<span style=\"color:#EF4444\">Unavailable</span>';return 'Idle'; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'linear-gradient(145deg,rgba(70,45,5,0.88),rgba(14,22,46,0.97))':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'1px solid rgba(251,191,36,0.36)':'1px solid rgba(56,189,248,0.09)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'0 0 40px rgba(251,191,36,0.12),0 4px 24px rgba(0,0,0,0.55)':'0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "20px 18px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "align-items": "flex-start"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'rgb(251,191,36)':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "30px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing')?'drop-shadow(0 0 8px rgba(251,191,36,0.7))':'none'; ]]]"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "2.5px"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "margin-top": "auto"
+         }
+        ],
+        "custom_fields": {
+         "temp": [
+          {
+           "font-size": "36px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(226,232,240,0.88)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-1px"
+          },
+          {
+           "margin-top": "6px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "info": [
+          {
+           "font-size": "12px"
+          },
+          {
+           "color": "rgba(100,116,139,0.85)"
+          },
+          {
+           "margin-top": "5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       },
+       "sub-button": [
+        {
+         "entity": "light.living_room",
+         "icon": "mdi:lightbulb",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "entity": "light.office",
+         "icon": "mdi:desk-lamp",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "entity": "fan.fan",
+         "icon": "mdi:fan",
+         "tap_action": {
+          "action": "toggle"
+         }
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "light.kitchen",
+       "name": "Kitchen",
+       "icon": "mdi:silverware-fork-knife",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-kitchen"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "show_state": false,
+       "custom_fields": {
+        "temp": "[[[ return ''; ]]]",
+        "info": "[[[ if(!entity)return 'Unavailable';const s=entity.state,d=entity.domain,a=entity.attributes||{};if(d==='light'&&s==='on'){  const b=Math.round((a.brightness||255)/2.55);  return '<span style=\"color:#FBBF24;font-weight:600\">'+b+'%</span> brightness';}if(d==='media_player'&&(s==='playing'||s==='paused')){  const t=(a.media_title||'').slice(0,26);  return t||(s==='paused'?'Paused':'Playing');}if(d==='climate'&&s!=='off'&&s!=='unavailable'){  const c=a.current_temperature,tg=a.temperature;  return c&&tg?c+'\u00b0 \u2192 '+tg+'\u00b0':s;}if(s==='on'||s==='home')return 'Active';if(s==='unavailable')return '<span style=\"color:#EF4444\">Unavailable</span>';return 'Idle'; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'linear-gradient(145deg,rgba(70,35,5,0.88),rgba(14,22,46,0.97))':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'1px solid rgba(251,146,60,0.36)':'1px solid rgba(56,189,248,0.09)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'0 0 40px rgba(251,146,60,0.12),0 4px 24px rgba(0,0,0,0.55)':'0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "20px 18px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "align-items": "flex-start"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'rgb(251,146,60)':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "30px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing')?'drop-shadow(0 0 8px rgba(251,146,60,0.7))':'none'; ]]]"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "2.5px"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "margin-top": "auto"
+         }
+        ],
+        "custom_fields": {
+         "temp": [
+          {
+           "font-size": "36px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(226,232,240,0.88)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-1px"
+          },
+          {
+           "margin-top": "6px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "info": [
+          {
+           "font-size": "12px"
+          },
+          {
+           "color": "rgba(100,116,139,0.85)"
+          },
+          {
+           "margin-top": "5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       },
+       "sub-button": [
+        {
+         "entity": "light.kitchen",
+         "icon": "mdi:lightbulb",
+         "tap_action": {
+          "action": "toggle"
+         }
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "media_player.shield",
+       "name": "Family Room",
+       "icon": "mdi:television-play",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-family"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "show_state": false,
+       "custom_fields": {
+        "temp": "[[[ return ''; ]]]",
+        "info": "[[[ if(!entity)return 'Unavailable';const s=entity.state,d=entity.domain,a=entity.attributes||{};if(d==='light'&&s==='on'){  const b=Math.round((a.brightness||255)/2.55);  return '<span style=\"color:#FBBF24;font-weight:600\">'+b+'%</span> brightness';}if(d==='media_player'&&(s==='playing'||s==='paused')){  const t=(a.media_title||'').slice(0,26);  return t||(s==='paused'?'Paused':'Playing');}if(d==='climate'&&s!=='off'&&s!=='unavailable'){  const c=a.current_temperature,tg=a.temperature;  return c&&tg?c+'\u00b0 \u2192 '+tg+'\u00b0':s;}if(s==='on'||s==='home')return 'Active';if(s==='unavailable')return '<span style=\"color:#EF4444\">Unavailable</span>';return 'Idle'; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'linear-gradient(145deg,rgba(45,15,80,0.88),rgba(14,22,46,0.97))':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'1px solid rgba(167,139,250,0.36)':'1px solid rgba(56,189,248,0.09)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'0 0 40px rgba(167,139,250,0.12),0 4px 24px rgba(0,0,0,0.55)':'0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "20px 18px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "align-items": "flex-start"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'rgb(167,139,250)':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "30px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing')?'drop-shadow(0 0 8px rgba(167,139,250,0.7))':'none'; ]]]"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "2.5px"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "margin-top": "auto"
+         }
+        ],
+        "custom_fields": {
+         "temp": [
+          {
+           "font-size": "36px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(226,232,240,0.88)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-1px"
+          },
+          {
+           "margin-top": "6px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "info": [
+          {
+           "font-size": "12px"
+          },
+          {
+           "color": "rgba(100,116,139,0.85)"
+          },
+          {
+           "margin-top": "5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       },
+       "sub-button": [
+        {
+         "entity": "light.family_room",
+         "icon": "mdi:lightbulb",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "entity": "media_player.shield",
+         "icon": "mdi:television",
+         "tap_action": {
+          "action": "toggle"
+         }
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "light.bedroom",
+       "name": "Bedroom",
+       "icon": "mdi:bed-king",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-bedroom"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "show_state": false,
+       "custom_fields": {
+        "temp": "[[[ const e=states['sensor.average_bedroom_temperature']; if(!e||e.state==='unavailable'||e.state==='unknown')return ''; const v=parseFloat(e.state); return isNaN(v)?'':v.toFixed(1)+'\u00b0'; ]]]",
+        "info": "[[[ if(!entity)return 'Unavailable';const s=entity.state,d=entity.domain,a=entity.attributes||{};if(d==='light'&&s==='on'){  const b=Math.round((a.brightness||255)/2.55);  return '<span style=\"color:#FBBF24;font-weight:600\">'+b+'%</span> brightness';}if(d==='media_player'&&(s==='playing'||s==='paused')){  const t=(a.media_title||'').slice(0,26);  return t||(s==='paused'?'Paused':'Playing');}if(d==='climate'&&s!=='off'&&s!=='unavailable'){  const c=a.current_temperature,tg=a.temperature;  return c&&tg?c+'\u00b0 \u2192 '+tg+'\u00b0':s;}if(s==='on'||s==='home')return 'Active';if(s==='unavailable')return '<span style=\"color:#EF4444\">Unavailable</span>';return 'Idle'; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'linear-gradient(145deg,rgba(50,15,75,0.88),rgba(14,22,46,0.97))':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'1px solid rgba(192,132,252,0.36)':'1px solid rgba(56,189,248,0.09)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'0 0 40px rgba(192,132,252,0.12),0 4px 24px rgba(0,0,0,0.55)':'0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "20px 18px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "align-items": "flex-start"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'rgb(192,132,252)':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "30px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing')?'drop-shadow(0 0 8px rgba(192,132,252,0.7))':'none'; ]]]"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "2.5px"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "margin-top": "auto"
+         }
+        ],
+        "custom_fields": {
+         "temp": [
+          {
+           "font-size": "36px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(226,232,240,0.88)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-1px"
+          },
+          {
+           "margin-top": "6px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "info": [
+          {
+           "font-size": "12px"
+          },
+          {
+           "color": "rgba(100,116,139,0.85)"
+          },
+          {
+           "margin-top": "5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       },
+       "sub-button": [
+        {
+         "entity": "light.bedroom",
+         "icon": "mdi:lightbulb",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "entity": "climate.bedroom_ac",
+         "icon": "mdi:air-conditioner"
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "climate.basement_ac",
+       "name": "Basement",
+       "icon": "mdi:home-floor-b",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-basement"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "show_state": false,
+       "custom_fields": {
+        "temp": "[[[ const e=states['sensor.average_basement_temperature']; if(!e||e.state==='unavailable'||e.state==='unknown')return ''; const v=parseFloat(e.state); return isNaN(v)?'':v.toFixed(1)+'\u00b0'; ]]]",
+        "info": "[[[ if(!entity)return 'Unavailable';const s=entity.state,d=entity.domain,a=entity.attributes||{};if(d==='light'&&s==='on'){  const b=Math.round((a.brightness||255)/2.55);  return '<span style=\"color:#FBBF24;font-weight:600\">'+b+'%</span> brightness';}if(d==='media_player'&&(s==='playing'||s==='paused')){  const t=(a.media_title||'').slice(0,26);  return t||(s==='paused'?'Paused':'Playing');}if(d==='climate'&&s!=='off'&&s!=='unavailable'){  const c=a.current_temperature,tg=a.temperature;  return c&&tg?c+'\u00b0 \u2192 '+tg+'\u00b0':s;}if(s==='on'||s==='home')return 'Active';if(s==='unavailable')return '<span style=\"color:#EF4444\">Unavailable</span>';return 'Idle'; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'linear-gradient(145deg,rgba(5,40,70,0.88),rgba(14,22,46,0.97))':'rgba(16,26,52,0.92)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'1px solid rgba(56,189,248,0.36)':'1px solid rgba(56,189,248,0.09)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'0 0 40px rgba(56,189,248,0.12),0 4px 24px rgba(0,0,0,0.55)':'0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "20px 18px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "align-items": "flex-start"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing'||s==='heat'||s==='cool'||s==='auto')?'rgb(56,189,248)':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "30px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; return (s==='on'||s==='playing')?'drop-shadow(0 0 8px rgba(56,189,248,0.7))':'none'; ]]]"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "2.5px"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "margin-top": "auto"
+         }
+        ],
+        "custom_fields": {
+         "temp": [
+          {
+           "font-size": "36px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(226,232,240,0.88)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-1px"
+          },
+          {
+           "margin-top": "6px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ],
+         "info": [
+          {
+           "font-size": "12px"
+          },
+          {
+           "color": "rgba(100,116,139,0.85)"
+          },
+          {
+           "margin-top": "5px"
+          },
+          {
+           "overflow": "hidden"
+          },
+          {
+           "text-overflow": "ellipsis"
+          },
+          {
+           "white-space": "nowrap"
+          },
+          {
+           "max-width": "100%"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       },
+       "sub-button": [
+        {
+         "entity": "climate.basement_ac",
+         "icon": "mdi:thermostat"
+        }
+       ]
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "action",
+         "icon": "mdi:weather-night",
+         "name": "Bedtime",
+         "tap_action": {
+          "action": "call-service",
+          "service": "input_button.press",
+          "target": {
+           "entity_id": "input_button.bedtime_routine_button"
+          }
+         }
+        },
+        {
+         "type": "action",
+         "icon": "mdi:music",
+         "name": "Music",
+         "tap_action": {
+          "action": "call-service",
+          "service": "input_button.press",
+          "target": {
+           "entity_id": "input_button.music_mode"
+          }
+         }
+        },
+        {
+         "type": "entity",
+         "entity": "binary_sensor.garbage_out",
+         "icon": "mdi:trash-can-outline"
+        },
+        {
+         "type": "entity",
+         "entity": "fan.air_purifier",
+         "icon": "mdi:air-purifier",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "type": "action",
+         "icon": "mdi:robot-vacuum",
+         "name": "Vacuums",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "#nexus-vacuums"
+         }
+        }
+       ],
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 3"
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(14,22,46,0.80)!important;border-radius:20px!important;border:1px solid rgba(56,189,248,0.07)!important;box-shadow:0 4px 24px rgba(0,0,0,0.45)!important;height:100%;display:flex;align-items:center;justify-content:center;padding:12px 8px}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "climate.main_floor_ac",
+       "name": "Main Floor",
+       "icon": "mdi:home-floor-1",
+       "show_state": false,
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-climate"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "custom_fields": {
+        "cur": "[[[ if(!entity||entity.state==='unavailable')return '\u2013'; const v=entity.attributes.current_temperature; return v!=null?v+'\u00b0':'\u2013'; ]]]",
+        "arrow": "[[[ const s=entity&&entity.state; return s==='cool'?'\u25bc':s==='heat'?'\u25b2':'\u2013'; ]]]",
+        "target": "[[[ if(!entity||entity.state==='unavailable')return ''; const v=entity.attributes.temperature; return v!=null?'\u2192 '+v+'\u00b0':''; ]]]",
+        "mode": "[[[ if(!entity)return ''; const m={heat:'\u2668 HEAT',cool:'\u2744 COOL',auto:'\u27f3 AUTO',dry:'\ud83d\udca7 DRY',fan_only:'\ud83d\udca8 FAN',off:'\u00b7 OFF'}; return m[entity.state]||(entity.state?entity.state.toUpperCase():''); ]]]",
+        "fan": "[[[ const f=entity&&entity.attributes&&entity.attributes.fan_mode; return f?f.toUpperCase():''; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; if(s==='cool')return 'linear-gradient(145deg,rgba(5,40,80,0.92),rgba(14,22,46,0.98))'; if(s==='heat')return 'linear-gradient(145deg,rgba(80,30,5,0.92),rgba(14,22,46,0.98))'; if(s==='fan_only')return 'linear-gradient(145deg,rgba(5,55,45,0.88),rgba(14,22,46,0.98))'; return 'rgba(14,22,46,0.88)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; if(s==='cool')return '1px solid rgba(56,189,248,0.32)'; if(s==='heat')return '1px solid rgba(249,115,22,0.32)'; if(s==='fan_only')return '1px solid rgba(52,211,153,0.28)'; return '1px solid rgba(56,189,248,0.07)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; if(s==='cool')return '0 0 38px rgba(56,189,248,0.1),0 4px 24px rgba(0,0,0,0.55)'; if(s==='heat')return '0 0 38px rgba(249,115,22,0.12),0 4px 24px rgba(0,0,0,0.55)'; return '0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "18px 22px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "3px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "20px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; if(s==='cool')return 'drop-shadow(0 0 6px #67E8F988)'; if(s==='heat')return 'drop-shadow(0 0 6px #FB923C88)'; return 'none'; ]]]"
+         }
+        ],
+        "custom_fields": {
+         "cur": [
+          {
+           "font-size": "52px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(225,232,245,0.95)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-2px"
+          },
+          {
+           "margin-top": "4px"
+          }
+         ],
+         "arrow": [
+          {
+           "font-size": "14px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "margin-top": "2px"
+          }
+         ],
+         "target": [
+          {
+           "font-size": "20px"
+          },
+          {
+           "font-weight": "300"
+          },
+          {
+           "letter-spacing": "-0.5px"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':'#4A6090'; ]]]"
+          }
+         ],
+         "mode": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "font-weight": "800"
+          },
+          {
+           "letter-spacing": "2.5px"
+          },
+          {
+           "margin-top": "auto"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#3D5280'; ]]]"
+          }
+         ],
+         "fan": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "letter-spacing": "1.5px"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "climate.bedroom_ac",
+       "name": "Bed AC",
+       "icon": "mdi:bed-king-outline",
+       "show_state": false,
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-climate"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "custom_fields": {
+        "cur": "[[[ if(!entity||entity.state==='unavailable')return '\u2013'; const v=entity.attributes.current_temperature; return v!=null?v+'\u00b0':'\u2013'; ]]]",
+        "arrow": "[[[ const s=entity&&entity.state; return s==='cool'?'\u25bc':s==='heat'?'\u25b2':'\u2013'; ]]]",
+        "target": "[[[ if(!entity||entity.state==='unavailable')return ''; const v=entity.attributes.temperature; return v!=null?'\u2192 '+v+'\u00b0':''; ]]]",
+        "mode": "[[[ if(!entity)return ''; const m={heat:'\u2668 HEAT',cool:'\u2744 COOL',auto:'\u27f3 AUTO',dry:'\ud83d\udca7 DRY',fan_only:'\ud83d\udca8 FAN',off:'\u00b7 OFF'}; return m[entity.state]||(entity.state?entity.state.toUpperCase():''); ]]]",
+        "fan": "[[[ const f=entity&&entity.attributes&&entity.attributes.fan_mode; return f?f.toUpperCase():''; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; if(s==='cool')return 'linear-gradient(145deg,rgba(5,40,80,0.92),rgba(14,22,46,0.98))'; if(s==='heat')return 'linear-gradient(145deg,rgba(80,30,5,0.92),rgba(14,22,46,0.98))'; if(s==='fan_only')return 'linear-gradient(145deg,rgba(5,55,45,0.88),rgba(14,22,46,0.98))'; return 'rgba(14,22,46,0.88)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; if(s==='cool')return '1px solid rgba(56,189,248,0.32)'; if(s==='heat')return '1px solid rgba(249,115,22,0.32)'; if(s==='fan_only')return '1px solid rgba(52,211,153,0.28)'; return '1px solid rgba(56,189,248,0.07)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; if(s==='cool')return '0 0 38px rgba(56,189,248,0.1),0 4px 24px rgba(0,0,0,0.55)'; if(s==='heat')return '0 0 38px rgba(249,115,22,0.12),0 4px 24px rgba(0,0,0,0.55)'; return '0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "18px 22px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "3px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "20px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; if(s==='cool')return 'drop-shadow(0 0 6px #67E8F988)'; if(s==='heat')return 'drop-shadow(0 0 6px #FB923C88)'; return 'none'; ]]]"
+         }
+        ],
+        "custom_fields": {
+         "cur": [
+          {
+           "font-size": "52px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(225,232,245,0.95)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-2px"
+          },
+          {
+           "margin-top": "4px"
+          }
+         ],
+         "arrow": [
+          {
+           "font-size": "14px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "margin-top": "2px"
+          }
+         ],
+         "target": [
+          {
+           "font-size": "20px"
+          },
+          {
+           "font-weight": "300"
+          },
+          {
+           "letter-spacing": "-0.5px"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':'#4A6090'; ]]]"
+          }
+         ],
+         "mode": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "font-weight": "800"
+          },
+          {
+           "letter-spacing": "2.5px"
+          },
+          {
+           "margin-top": "auto"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#3D5280'; ]]]"
+          }
+         ],
+         "fan": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "letter-spacing": "1.5px"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "climate.basement_ac",
+       "name": "Basement AC",
+       "icon": "mdi:home-floor-b",
+       "show_state": false,
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-climate"
+       },
+       "hold_action": {
+        "action": "more-info"
+       },
+       "custom_fields": {
+        "cur": "[[[ if(!entity||entity.state==='unavailable')return '\u2013'; const v=entity.attributes.current_temperature; return v!=null?v+'\u00b0':'\u2013'; ]]]",
+        "arrow": "[[[ const s=entity&&entity.state; return s==='cool'?'\u25bc':s==='heat'?'\u25b2':'\u2013'; ]]]",
+        "target": "[[[ if(!entity||entity.state==='unavailable')return ''; const v=entity.attributes.temperature; return v!=null?'\u2192 '+v+'\u00b0':''; ]]]",
+        "mode": "[[[ if(!entity)return ''; const m={heat:'\u2668 HEAT',cool:'\u2744 COOL',auto:'\u27f3 AUTO',dry:'\ud83d\udca7 DRY',fan_only:'\ud83d\udca8 FAN',off:'\u00b7 OFF'}; return m[entity.state]||(entity.state?entity.state.toUpperCase():''); ]]]",
+        "fan": "[[[ const f=entity&&entity.attributes&&entity.attributes.fan_mode; return f?f.toUpperCase():''; ]]]"
+       },
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "[[[ const s=entity&&entity.state; if(s==='cool')return 'linear-gradient(145deg,rgba(5,40,80,0.92),rgba(14,22,46,0.98))'; if(s==='heat')return 'linear-gradient(145deg,rgba(80,30,5,0.92),rgba(14,22,46,0.98))'; if(s==='fan_only')return 'linear-gradient(145deg,rgba(5,55,45,0.88),rgba(14,22,46,0.98))'; return 'rgba(14,22,46,0.88)'; ]]]"
+         },
+         {
+          "border-radius": "20px"
+         },
+         {
+          "border": "[[[ const s=entity&&entity.state; if(s==='cool')return '1px solid rgba(56,189,248,0.32)'; if(s==='heat')return '1px solid rgba(249,115,22,0.32)'; if(s==='fan_only')return '1px solid rgba(52,211,153,0.28)'; return '1px solid rgba(56,189,248,0.07)'; ]]]"
+         },
+         {
+          "box-shadow": "[[[ const s=entity&&entity.state; if(s==='cool')return '0 0 38px rgba(56,189,248,0.1),0 4px 24px rgba(0,0,0,0.55)'; if(s==='heat')return '0 0 38px rgba(249,115,22,0.12),0 4px 24px rgba(0,0,0,0.55)'; return '0 4px 24px rgba(0,0,0,0.5)'; ]]]"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "padding": "18px 22px"
+         },
+         {
+          "display": "flex"
+         },
+         {
+          "flex-direction": "column"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "10px"
+         },
+         {
+          "color": "#3D5280"
+         },
+         {
+          "font-weight": "700"
+         },
+         {
+          "text-transform": "uppercase"
+         },
+         {
+          "letter-spacing": "3px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#2D3F6A'; ]]]"
+         },
+         {
+          "width": "20px"
+         },
+         {
+          "filter": "[[[ const s=entity&&entity.state; if(s==='cool')return 'drop-shadow(0 0 6px #67E8F988)'; if(s==='heat')return 'drop-shadow(0 0 6px #FB923C88)'; return 'none'; ]]]"
+         }
+        ],
+        "custom_fields": {
+         "cur": [
+          {
+           "font-size": "52px"
+          },
+          {
+           "font-weight": "200"
+          },
+          {
+           "color": "rgba(225,232,245,0.95)"
+          },
+          {
+           "line-height": "1"
+          },
+          {
+           "letter-spacing": "-2px"
+          },
+          {
+           "margin-top": "4px"
+          }
+         ],
+         "arrow": [
+          {
+           "font-size": "14px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "margin-top": "2px"
+          }
+         ],
+         "target": [
+          {
+           "font-size": "20px"
+          },
+          {
+           "font-weight": "300"
+          },
+          {
+           "letter-spacing": "-0.5px"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':'#4A6090'; ]]]"
+          }
+         ],
+         "mode": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "font-weight": "800"
+          },
+          {
+           "letter-spacing": "2.5px"
+          },
+          {
+           "margin-top": "auto"
+          },
+          {
+           "color": "[[[ const s=entity&&entity.state; return s==='cool'?'#67E8F9':s==='heat'?'#FB923C':s==='fan_only'?'#34D399':'#3D5280'; ]]]"
+          }
+         ],
+         "fan": [
+          {
+           "font-size": "10px"
+          },
+          {
+           "color": "#3D5280"
+          },
+          {
+           "letter-spacing": "1.5px"
+          }
+         ]
+        }
+       },
+       "card_mod": {
+        "style": "ha-card{overflow:hidden}"
+       }
+      },
+      {
+       "type": "custom:mini-media-player",
+       "entity": "media_player.shield",
+       "name": "SHIELD TV",
+       "artwork": "cover",
+       "toggle_power": true,
+       "hide": {
+        "source": false,
+        "controls": false,
+        "info": false,
+        "power": false,
+        "volume": false,
+        "progress": false
+       },
+       "view_layout": {
+        "grid-column": "span 7",
+        "grid-row": "span 2"
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(16,26,52,0.92)!important;border-radius:20px!important;border:1px solid rgba(167,139,250,0.15)!important;box-shadow:0 4px 24px rgba(0,0,0,0.5)!important;height:100%;overflow:hidden;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "custom:mushroom-alarm-control-panel-card",
+       "entity": "alarm_control_panel.ha_alarm",
+       "name": "Security",
+       "states": [
+        "armed_away",
+        "armed_home",
+        "disarmed"
+       ],
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "#nexus-security"
+       },
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 2"
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(16,26,52,0.92)!important;border-radius:20px!important;border:1px solid rgba(239,68,68,0.22)!important;box-shadow:0 4px 24px rgba(0,0,0,0.5)!important;height:100%;overflow:hidden;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 1,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 2"
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(16,26,52,0.92)!important;border-radius:20px!important;border:1px solid rgba(56,189,248,0.09)!important;box-shadow:0 4px 24px rgba(0,0,0,0.5)!important;height:100%;overflow:hidden;--primary-text-color:#E2E8F0;--secondary-text-color:#64748B}"
+       },
+       "cards": [
+        {
+         "type": "custom:mushroom-vacuum-card",
+         "entity": "vacuum.gilbert_of_avonclean",
+         "name": "Gilbert",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "#nexus-vacuums"
+         },
+         "card_mod": {
+          "style": "ha-card{background:transparent!important;border:none!important;box-shadow:none!important;--primary-text-color:#E2E8F0}"
+         }
+        },
+        {
+         "type": "custom:mushroom-vacuum-card",
+         "entity": "vacuum.anne_of_clean_gables",
+         "name": "Anne",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "#nexus-vacuums"
+         },
+         "card_mod": {
+          "style": "ha-card{background:transparent!important;border:none!important;box-shadow:none!important;--primary-text-color:#E2E8F0}"
+         }
+        }
+       ]
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "sensor.iairquality_co2",
+         "name": "CO\u2082",
+         "icon": "mdi:molecule-co2"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.iairquality_voc",
+         "name": "VOC"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.air_purifier_ap304_pm2_5",
+         "name": "PM2.5"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.humidity_15m_average",
+         "icon": "mdi:water-percent"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.iairquality_temperature",
+         "name": "Indoor",
+         "icon": "mdi:home-thermometer"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.fredericton_temperature",
+         "name": "Outside",
+         "icon": "mdi:thermometer-lines"
+        },
+        {
+         "type": "entity",
+         "entity": "sensor.average_main_floor_temperature",
+         "name": "Floor",
+         "icon": "mdi:thermometer"
+        }
+       ],
+       "view_layout": {
+        "grid-column": "span 12",
+        "grid-row": "span 1"
+       },
+       "card_mod": {
+        "style": "ha-card{background:rgba(12,20,40,0.80)!important;border-radius:16px!important;border:1px solid rgba(56,189,248,0.07)!important;padding:0 16px!important;--primary-text-color:#4A6090}"
+       }
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important}"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Weather Reactor",
+   "path": "weather-reactor",
+   "icon": "mdi:weather-lightning",
+   "type": "panel",
+   "badges": [],
+   "cards": [
+    {
+     "type": "custom:layout-card",
+     "layout_type": "custom:grid-layout",
+     "layout": {
+      "grid-template-columns": "repeat(12, minmax(0, 1fr))",
+      "grid-auto-rows": "minmax(70px, auto)",
+      "grid-gap": "12px",
+      "margin": "0",
+      "padding": "10px",
+      "mediaquery": {
+       "(max-width: 700px)": {
+        "grid-template-columns": "minmax(0, 1fr)",
+        "grid-gap": "10px",
+        "padding": "8px"
+       },
+       "(min-width: 701px) and (max-width: 1180px)": {
+        "grid-template-columns": "repeat(8, minmax(0, 1fr))",
+        "grid-gap": "10px",
+        "padding": "8px"
+       }
+      }
+     },
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "name": "REACTOR",
+       "icon": "mdi:weather-hurricane",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "height": "164px"
+         },
+         {
+          "border-radius": "26px"
+         },
+         {
+          "padding": "18px"
+         },
+         {
+          "background": "radial-gradient(circle at 18% 20%, rgba(34,211,238,.45), transparent 34%), linear-gradient(135deg, #111827, #3b0764 56%, #020617)"
+         },
+         {
+          "box-shadow": "0 18px 42px rgba(0,0,0,.42)"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "30px"
+         },
+         {
+          "font-weight": "900"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "60px"
+         },
+         {
+          "color": "#fef08a"
+         },
+         {
+          "filter": "drop-shadow(0 0 18px rgba(254,240,138,.8))"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "position": "absolute"
+          },
+          {
+           "left": "18px"
+          },
+          {
+           "right": "18px"
+          },
+          {
+           "bottom": "16px"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.4"
+          },
+          {
+           "text-align": "left"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ return `Rain ${states[\"sensor.daily_rain\"]?.state ?? \"--\"} mm | Lightning ${states[\"sensor.weekly_lightning\"]?.state ?? \"--\"} | Wind ${states[\"sensor.ihome_wind_speed\"]?.state ?? \"--\"}`; ]]]"
+       }
+      },
+      {
+       "type": "weather-forecast",
+       "entity": "weather.fredericton",
+       "show_current": true,
+       "show_forecast": true,
+       "forecast_type": "daily",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; overflow: hidden; background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(2,6,23,.94)); }"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_name": false,
+       "show_state": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "card_mod": {
+        "style": "ha-card { height: 330px; border-radius: 26px; overflow: hidden; background: #020617; box-shadow: 0 18px 45px rgba(0,0,0,.36); }"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 8",
+        "grid-row": "span 2"
+       },
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Storm",
+         "secondary": "{{ states(\"sensor.storm_probability\") }}%",
+         "icon": "mdi:weather-lightning",
+         "icon_color": "{{ \"red\" if (states(\"sensor.storm_probability\")|float(0)) > 50 else \"amber\" }}"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Rain",
+         "secondary": "{{ states(\"sensor.daily_rain\") }} mm today",
+         "icon": "mdi:weather-pouring",
+         "icon_color": "blue"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "UV",
+         "secondary": "{{ states(\"sensor.fredericton_uv_index\") }}",
+         "icon": "mdi:white-balance-sunny",
+         "icon_color": "orange"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "AQHI",
+         "secondary": "{{ states(\"sensor.fredericton_aqhi\") }}",
+         "icon": "mdi:air-filter",
+         "icon_color": "green"
+        }
+       ]
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "view_layout": {
+        "grid-column": "span 8",
+        "grid-row": "span 4"
+       },
+       "header": {
+        "show": true,
+        "title": "Forecast Pressure Chamber",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "graph_span": "36h",
+       "apex_config": {
+        "chart": {
+         "height": 290,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "width": 3,
+         "curve": "smooth"
+        },
+        "fill": {
+         "type": "gradient",
+         "gradient": {
+          "shadeIntensity": 0.25,
+          "opacityFrom": 0.35,
+          "opacityTo": 0.05
+         }
+        },
+        "legend": {
+         "show": false
+        },
+        "grid": {
+         "show": false
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.fredericton_temperature",
+         "name": "Outside",
+         "type": "area",
+         "color": "#38bdf8"
+        },
+        {
+         "entity": "sensor.ihome_realfeel_temperature",
+         "name": "RealFeel",
+         "type": "line",
+         "color": "#fb7185"
+        },
+        {
+         "entity": "sensor.dew_point",
+         "name": "Dew point",
+         "type": "line",
+         "color": "#a78bfa"
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Climate Autopilot",
+       "icon": "mdi:brain",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "styles": {
+        "card": [
+         {
+          "min-height": "300px"
+         },
+         {
+          "border-radius": "26px"
+         },
+         {
+          "padding": "18px"
+         },
+         {
+          "background": "linear-gradient(160deg, rgba(6,78,59,.96), rgba(2,6,23,.96))"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "23px"
+         },
+         {
+          "font-weight": "850"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "48px"
+         },
+         {
+          "color": "#67e8f9"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "text-align": "left"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const m=states[\"input_boolean.ai_main_floor_climate_monitoring\"]?.state ?? \"off\"; const b=states[\"input_boolean.ai_bedroom_climate_monitoring\"]?.state ?? \"off\"; const mt=states[\"sensor.main_floor_ac_current_temperature\"]?.state ?? \"--\"; const bt=states[\"sensor.bedroom_ac_current_temperature\"]?.state ?? \"--\"; const md=states[\"input_text.ai_main_floor_climate_last_decision\"]?.state ?? \"\"; const bd=states[\"input_text.ai_bedroom_climate_last_decision\"]?.state ?? \"\"; return `<b>Main:</b> ${m} at ${mt} C<br>${md}<br><br><b>Bedroom:</b> ${b} at ${bt} C<br>${bd}`; ]]]"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 3"
+       },
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "input_boolean.ai_main_floor_climate_monitoring",
+         "name": "Main AI",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "input_boolean.ai_bedroom_climate_monitoring",
+         "name": "Bedroom AI",
+         "tap_action": {
+          "action": "toggle"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "climate.main_floor_ac",
+         "name": "Main Floor"
+        },
+        {
+         "type": "tile",
+         "entity": "climate.bedroom_ac",
+         "name": "Bedroom"
+        }
+       ]
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "House Comfort Drift",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 3"
+       },
+       "hours_to_show": 12,
+       "points_per_hour": 4,
+       "show": {
+        "legend": false,
+        "fill": "fade"
+       },
+       "entities": [
+        {
+         "entity": "sensor.average_main_floor_temperature",
+         "name": "Main"
+        },
+        {
+         "entity": "sensor.average_bedroom_temperature",
+         "name": "Bedroom"
+        },
+        {
+         "entity": "sensor.average_outdoor_temperature",
+         "name": "Outside"
+        }
+       ]
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 12",
+        "grid-row": "span 2"
+       },
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Warnings",
+         "secondary": "{{ states(\"sensor.fredericton_warnings\") }}",
+         "icon": "mdi:alert-decagram",
+         "icon_color": "{{ \"red\" if states(\"sensor.fredericton_warnings\") not in [\"0\", \"none\", \"unknown\", \"unavailable\"] else \"green\" }}"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Watches",
+         "secondary": "{{ states(\"sensor.fredericton_watches\") }}",
+         "icon": "mdi:eye-alert",
+         "icon_color": "amber"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Internet",
+         "secondary": "{{ states(\"binary_sensor.your_home_internet\") }}",
+         "icon": "mdi:wan",
+         "icon_color": "{{ \"green\" if is_state(\"binary_sensor.your_home_internet\", \"on\") else \"red\" }}"
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Backups",
+         "secondary": "{{ states(\"sensor.backup_last_successful_automatic_backup\") }}",
+         "icon": "mdi:cloud-check",
+         "icon_color": "{{ \"red\" if is_state(\"binary_sensor.backups_stale\", \"on\") else \"green\" }}"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Wizard Clock",
+   "path": "wizard-clock",
+   "icon": "mdi:clock-time-eight-outline",
+   "theme": "Frosted Glass",
+   "type": "panel",
+   "background": {
+    "image": "radial-gradient(circle at 50% 12%, rgba(244,197,66,.20), transparent 28%), linear-gradient(135deg, #100b07 0%, #211408 48%, #0d0804 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "cards": [
+    {
+     "type": "custom:wizard-family-clock-card-v4"
+    }
+   ]
+  },
+  {
+   "title": "Vacuum Command",
+   "path": "niles-vacuum-v2",
+   "icon": "mdi:robot-vacuum",
+   "theme": "Frosted Glass",
+   "type": "sections",
+   "max_columns": 2,
+   "background": {
+    "image": "linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.86) 45%, rgba(8,47,73,.92))",
+    "opacity": 100
+   },
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Anne \u00b7 Upstairs Loft",
+       "icon": "mdi:robot-vacuum-variant"
+      },
+      {
+       "type": "custom:mushroom-vacuum-card",
+       "entity": "vacuum.niles_2",
+       "name": "Anne of Clean Gables",
+       "icon_animation": true,
+       "fill_container": true,
+       "commands": [
+        "start_pause",
+        "stop",
+        "clean_spot",
+        "return_home",
+        "locate"
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.niles_battery",
+         "name": "Battery"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_area_cleaned",
+         "name": "Area"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_cleaning_duration",
+         "name": "Duration"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_error",
+         "name": "Error"
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "image.niles_map",
+       "show_name": false,
+       "show_state": false,
+       "camera_view": "auto",
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 3,
+       "square": false,
+       "cards": [
+        {
+         "type": "button",
+         "name": "Start Loft",
+         "icon": "mdi:play",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.start",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "confirmation": {
+           "text": "Start Anne upstairs?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Pause",
+         "icon": "mdi:pause",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.pause",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Dock",
+         "icon": "mdi:home-import-outline",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.return_to_base",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Room 2",
+         "icon": "mdi:floor-plan",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.clean_area",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "cleaning_area_id": [
+            2
+           ]
+          },
+          "confirmation": {
+           "text": "Start Anne room ID 2?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Room 5",
+         "icon": "mdi:floor-plan",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.clean_area",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "cleaning_area_id": [
+            5
+           ]
+          },
+          "confirmation": {
+           "text": "Start Anne room ID 5?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Room 4",
+         "icon": "mdi:floor-plan",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.clean_area",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "cleaning_area_id": [
+            4
+           ]
+          },
+          "confirmation": {
+           "text": "Start Anne room ID 4?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Spot",
+         "icon": "mdi:crosshairs-gps",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.clean_spot",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "confirmation": {
+           "text": "Start Anne spot clean?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Locate",
+         "icon": "mdi:map-marker-question",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.locate",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Stop",
+         "icon": "mdi:stop",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.stop",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "confirmation": {
+           "text": "Stop Anne?"
+          }
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "button",
+         "name": "Quiet",
+         "icon": "mdi:fan-speed-1",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "fan_speed": "quiet"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Normal",
+         "icon": "mdi:fan-speed-2",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "fan_speed": "normal"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Max",
+         "icon": "mdi:fan-speed-3",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "fan_speed": "max"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Max+",
+         "icon": "mdi:turbine",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.niles_2"
+          },
+          "data": {
+           "fan_speed": "max_plus"
+          }
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Anne Settings",
+       "entities": [
+        "select.niles_work_mode",
+        "select.niles_water_flow_level",
+        "select.anne_of_clean_gables_active_map",
+        "binary_sensor.niles_mop_attached",
+        "switch.niles_true_detect",
+        "switch.niles_clean_preference"
+       ],
+       "state_color": true,
+       "grid_options": {
+        "columns": 12,
+        "rows": 5
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Gilbert \u00b7 Main Floor",
+       "icon": "mdi:robot-vacuum"
+      },
+      {
+       "type": "custom:mushroom-vacuum-card",
+       "entity": "vacuum.gilbert_of_avonclean",
+       "name": "Gilbert of Avonclean",
+       "icon_animation": true,
+       "fill_container": true,
+       "commands": [
+        "start_pause",
+        "stop",
+        "clean_spot",
+        "return_home",
+        "locate"
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_battery",
+         "name": "Battery"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_area_cleaned",
+         "name": "Area"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_cleaning_duration",
+         "name": "Duration"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_error",
+         "name": "Error"
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "image.gilbert_of_avonclean_map",
+       "show_name": false,
+       "show_state": false,
+       "camera_view": "auto",
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 3,
+       "square": false,
+       "cards": [
+        {
+         "type": "button",
+         "name": "Start Main Floor",
+         "icon": "mdi:play",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.start",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "confirmation": {
+           "text": "Start Gilbert on the main floor?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Pause",
+         "icon": "mdi:pause",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.pause",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Dock",
+         "icon": "mdi:home-import-outline",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.return_to_base",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Spot",
+         "icon": "mdi:crosshairs-gps",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.clean_spot",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "confirmation": {
+           "text": "Start Gilbert spot clean?"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Locate",
+         "icon": "mdi:map-marker-question",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.locate",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Stop",
+         "icon": "mdi:stop",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.stop",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "confirmation": {
+           "text": "Stop Gilbert?"
+          }
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "button",
+         "name": "Quiet",
+         "icon": "mdi:fan-speed-1",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "data": {
+           "fan_speed": "quiet"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Normal",
+         "icon": "mdi:fan-speed-2",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "data": {
+           "fan_speed": "normal"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Max",
+         "icon": "mdi:fan-speed-3",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "data": {
+           "fan_speed": "max"
+          }
+         }
+        },
+        {
+         "type": "button",
+         "name": "Max+",
+         "icon": "mdi:turbine",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.set_fan_speed",
+          "target": {
+           "entity_id": "vacuum.gilbert_of_avonclean"
+          },
+          "data": {
+           "fan_speed": "max_plus"
+          }
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Gilbert Settings",
+       "entities": [
+        "select.gilbert_of_avonclean_work_mode",
+        "select.gilbert_of_avonclean_water_flow_level",
+        "select.gilbert_of_avonclean_active_map",
+        "binary_sensor.gilbert_of_avonclean_mop_attached",
+        "switch.gilbert_of_avonclean_carpet_auto_boost_suction",
+        "switch.gilbert_of_avonclean_true_detect",
+        "switch.gilbert_of_avonclean_clean_preference"
+       ],
+       "state_color": true,
+       "grid_options": {
+        "columns": 12,
+        "rows": 5
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Fleet Summary",
+       "icon": "mdi:chart-donut"
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_total_cleanings",
+         "name": "Gilbert Jobs"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_total_cleanings",
+         "name": "Anne Jobs"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_total_area_cleaned",
+         "name": "Gilbert Total Area"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_total_area_cleaned",
+         "name": "Anne Total Area"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.gilbert_of_avonclean_total_cleaning_duration",
+         "name": "Gilbert Runtime"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.niles_total_cleaning_duration",
+         "name": "Anne Runtime"
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Start Both",
+         "secondary": "Requires confirmation",
+         "icon": "mdi:play-circle",
+         "icon_color": "green",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.start",
+          "target": {
+           "entity_id": [
+            "vacuum.gilbert_of_avonclean",
+            "vacuum.niles_2"
+           ]
+          },
+          "confirmation": {
+           "text": "Start both vacuums now?"
+          }
+         }
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Dock Both",
+         "secondary": "Send the fleet home",
+         "icon": "mdi:home-import-outline",
+         "icon_color": "blue",
+         "tap_action": {
+          "action": "call-service",
+          "service": "vacuum.return_to_base",
+          "target": {
+           "entity_id": [
+            "vacuum.gilbert_of_avonclean",
+            "vacuum.niles_2"
+           ]
+          },
+          "confirmation": {
+           "text": "Return both vacuums to base?"
+          }
+         }
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Vacuum Command",
+       "icon": "mdi:robot-vacuum"
+      },
+      {
+       "type": "markdown",
+       "content": "<div style=\"padding:18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.07)); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(18px);\"><div style=\"font-size:.75rem; letter-spacing:.18em; text-transform:uppercase; opacity:.62;\">Ecovacs Fleet</div><div style=\"font-size:2rem; line-height:1; font-weight:800; margin-top:8px;\">Gilbert main floor \u00b7 Anne upstairs loft</div><div style=\"margin-top:10px; opacity:.72;\">Away cleaning now requires Beauregard House recent vibration activity within the last hour.</div></div>",
+       "card_mod": {
+        "style": "ha-card { background: transparent; border: 0; box-shadow: none; }"
+       },
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "input_boolean.beauregard_house",
+         "name": "Beauregard House",
+         "icon": "mdi:home-heart"
+        },
+        {
+         "type": "entity",
+         "entity": "binary_sensor.beauregard_house_vibration",
+         "name": "Vibration",
+         "icon": "mdi:vibrate"
+        },
+        {
+         "type": "entity",
+         "entity": "timer.beauregard_house_recent_activity",
+         "name": "Activity Timer",
+         "icon": "mdi:timer-sand"
+        },
+        {
+         "type": "entity",
+         "entity": "automation.iphone_away_start_vacuuming",
+         "name": "Away Clean",
+         "icon": "mdi:home-export-outline"
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 1
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Away Cleaning Gate",
+       "icon": "mdi:home-export-outline"
+      },
+      {
+       "type": "markdown",
+       "content": "<div style=\"padding:16px; border-radius:22px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16);\"><b>Rule:</b> the away-vacuum automation only starts the fleet when both phones are away, vacation mode is off, and <b>Beauregard House</b> is on. Beauregard House turns on after two vibration events inside 30 seconds, then turns off after one hour with no vibration.</div>",
+       "card_mod": {
+        "style": "ha-card { background: transparent; border: 0; box-shadow: none; }"
+       },
+       "grid_options": {
+        "columns": 12,
+        "rows": 2
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "input_boolean.beauregard_house",
+       "name": "Beauregard House Gate",
+       "tap_action": {
+        "action": "more-info"
+       },
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "timer.beauregard_house_recent_activity",
+       "name": "Recent Activity Timer",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "binary_sensor.beauregard_house_vibration",
+       "name": "Vibration Sensor",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.beauregard_house_battery",
+       "name": "Sensor Battery",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "automation.beauregard_house_recent_vibration_occupancy",
+       "name": "Vibration Logic",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "automation.iphone_away_start_vacuuming",
+       "name": "Away Vacuum Automation",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Vacation Control",
+   "path": "vacation-control",
+   "icon": "mdi:palm-tree",
+   "theme": "Frosted Glass",
+   "type": "panel",
+   "background": {
+    "image": "linear-gradient(135deg, #071b2f 0%, #102f4f 42%, #153d4c 68%, #0f172a 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "cards": [
+    {
+     "type": "custom:layout-card",
+     "layout_type": "custom:grid-layout",
+     "layout": {
+      "grid-template-columns": "repeat(12, minmax(0, 1fr))",
+      "grid-auto-rows": "minmax(74px, auto)",
+      "grid-gap": "14px",
+      "margin": "0",
+      "padding": "16px",
+      "mediaquery": {
+       "(max-width: 700px)": {
+        "grid-template-columns": "minmax(0, 1fr)",
+        "grid-gap": "10px",
+        "padding": "10px"
+       },
+       "(min-width: 701px) and (max-width: 1180px)": {
+        "grid-template-columns": "repeat(8, minmax(0, 1fr))",
+        "grid-gap": "12px",
+        "padding": "12px"
+       }
+      }
+     },
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "name": "VACATION CONTROL",
+       "icon": "mdi:palm-tree",
+       "view_layout": {
+        "grid-column": "span 5",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "min-height": "230px"
+         },
+         {
+          "border-radius": "26px"
+         },
+         {
+          "padding": "22px"
+         },
+         {
+          "background": "radial-gradient(circle at 18% 18%, rgba(34,211,238,.34), transparent 34%), linear-gradient(135deg, rgba(15,23,42,.96), rgba(14,116,144,.60) 58%, rgba(20,83,45,.72))"
+         },
+         {
+          "box-shadow": "0 18px 42px rgba(0,0,0,.42)"
+         },
+         {
+          "border": "1px solid rgba(125,211,252,.20)"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "32px"
+         },
+         {
+          "font-weight": "900"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "72px"
+         },
+         {
+          "color": "#FDE68A"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "position": "absolute"
+          },
+          {
+           "left": "22px"
+          },
+          {
+           "right": "22px"
+          },
+          {
+           "bottom": "20px"
+          },
+          {
+           "font-size": "15px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "color": "rgba(226,232,240,.92)"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const v=states[\"input_boolean.vacation_mode\"]?.state; const blink=states[\"alarm_control_panel.blink_ihomecamera\"]?.state ?? \"unknown\"; const backup=states[\"binary_sensor.backups_stale\"]?.state === \"on\" ? \"stale\" : \"healthy\"; return `<b>Mode:</b> ${v === \"on\" ? \"VACATION ACTIVE\" : \"Home normal\"}<br><b>Blink:</b> ${blink}<br><b>Backups:</b> ${backup}<br><b>Mexico:</b> June 6, 2026`; ]]]"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 3"
+       },
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Enable Vacation",
+         "secondary": "Guard normal routines",
+         "icon": "mdi:shield-home",
+         "icon_color": "green",
+         "tap_action": {
+          "action": "call-service",
+          "service": "input_boolean.turn_on",
+          "target": {
+           "entity_id": "input_boolean.vacation_mode"
+          },
+          "confirmation": {
+           "text": "Enable vacation mode? This suppresses normal daily automations and allows vacation routines."
+          }
+         }
+        },
+        {
+         "type": "custom:mushroom-template-card",
+         "primary": "Disable Vacation",
+         "secondary": "Return to normal",
+         "icon": "mdi:home-import-outline",
+         "icon_color": "amber",
+         "tap_action": {
+          "action": "call-service",
+          "service": "input_boolean.turn_off",
+          "target": {
+           "entity_id": "input_boolean.vacation_mode"
+          },
+          "confirmation": {
+           "text": "Disable vacation mode and return to normal home automation behavior?"
+          }
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "input_boolean.vacation_mode",
+         "name": "Vacation Mode",
+         "tap_action": {
+          "action": "more-info"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "automation.vacation_mode_lighting_simulation",
+         "name": "Lighting Simulation"
+        }
+       ]
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "input_boolean.vacation_mode",
+         "name": "Vacation",
+         "icon": "mdi:palm-tree"
+        },
+        {
+         "type": "entity",
+         "entity": "alarm_control_panel.blink_ihomecamera",
+         "name": "Blink",
+         "icon": "mdi:cctv"
+        },
+        {
+         "type": "entity",
+         "entity": "alarm_control_panel.ha_alarm",
+         "name": "HA Alarm",
+         "icon": "mdi:shield-home"
+        },
+        {
+         "type": "entity",
+         "entity": "binary_sensor.your_home_internet",
+         "name": "Internet",
+         "icon": "mdi:wan"
+        },
+        {
+         "type": "entity",
+         "entity": "binary_sensor.backups_stale",
+         "name": "Backups",
+         "icon": "mdi:cloud-check"
+        }
+       ],
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 1"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "AWAY HEALTH",
+       "icon": "mdi:shield-check",
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "min-height": "230px"
+         },
+         {
+          "border-radius": "24px"
+         },
+         {
+          "padding": "18px"
+         },
+         {
+          "background": "linear-gradient(160deg, rgba(8,47,73,.94), rgba(15,23,42,.96))"
+         },
+         {
+          "border": "1px solid rgba(56,189,248,.16)"
+         },
+         {
+          "box-shadow": "0 12px 34px rgba(0,0,0,.38)"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "22px"
+         },
+         {
+          "font-weight": "850"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "48px"
+         },
+         {
+          "color": "#67E8F9"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.55"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "color": "#CBD5E1"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const disk=states[\"sensor.disk_use_percent_config\"]?.state ?? \"--\"; const mem=states[\"sensor.memory_use_percent\"]?.state ?? \"--\"; const zig=states[\"binary_sensor.zigbee2mqtt_bridge_connection_state\"]?.state ?? \"unknown\"; const warn=states[\"sensor.fredericton_warnings\"]?.state ?? \"--\"; const watch=states[\"sensor.fredericton_watches\"]?.state ?? \"--\"; return `<b>Disk:</b> ${disk}%<br><b>Memory:</b> ${mem}%<br><b>Zigbee:</b> ${zig}<br><b>Weather:</b> ${warn} warnings / ${watch} watches`; ]]]"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 9",
+        "grid-row": "span 2"
+       },
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "binary_sensor.your_home_internet",
+         "name": "Internet"
+        },
+        {
+         "type": "tile",
+         "entity": "binary_sensor.zigbee2mqtt_bridge_connection_state",
+         "name": "Zigbee2MQTT"
+        },
+        {
+         "type": "tile",
+         "entity": "binary_sensor.backups_stale",
+         "name": "Backups Stale"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.backup_last_successful_automatic_backup",
+         "name": "Last Backup"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.disk_use_percent_config",
+         "name": "Disk Use"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.memory_use_percent",
+         "name": "Memory Use"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_warnings",
+         "name": "Warnings"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_watches",
+         "name": "Watches"
+        }
+       ]
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.blink_front_door",
+       "camera_view": "auto",
+       "show_state": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "card_mod": {
+        "style": "ha-card{height:310px;border-radius:24px!important;overflow:hidden;background:#020617!important;border:1px solid rgba(125,211,252,.16)!important;box-shadow:0 18px 45px rgba(0,0,0,.38)!important}"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.blink_driveway",
+       "camera_view": "auto",
+       "show_state": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "card_mod": {
+        "style": "ha-card{height:310px;border-radius:24px!important;overflow:hidden;background:#020617!important;border:1px solid rgba(125,211,252,.16)!important;box-shadow:0 18px 45px rgba(0,0,0,.38)!important}"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.blink_back_door",
+       "camera_view": "auto",
+       "show_state": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 4"
+       },
+       "card_mod": {
+        "style": "ha-card{height:310px;border-radius:24px!important;overflow:hidden;background:#020617!important;border:1px solid rgba(125,211,252,.16)!important;box-shadow:0 18px 45px rgba(0,0,0,.38)!important}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "VACATION AUTOMATIONS",
+       "icon": "mdi:calendar-star",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "min-height": "220px"
+         },
+         {
+          "border-radius": "24px"
+         },
+         {
+          "padding": "18px"
+         },
+         {
+          "background": "linear-gradient(160deg, rgba(30,41,59,.96), rgba(8,47,73,.92))"
+         },
+         {
+          "border": "1px solid rgba(167,139,250,.16)"
+         },
+         {
+          "box-shadow": "0 12px 34px rgba(0,0,0,.36)"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "22px"
+         },
+         {
+          "font-weight": "850"
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "46px"
+         },
+         {
+          "color": "#C4B5FD"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "color": "#CBD5E1"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "Lighting simulation is repaired to v2. Vacation mode is scheduled June 6-14, 2026. The 04:00/04:05 vacation briefings now use that same Mexico trip date window."
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 8",
+        "grid-row": "span 3"
+       },
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "automation.talking_house_mayan_riviera_vacation_countdown",
+         "name": "Mayan Riviera Countdown"
+        },
+        {
+         "type": "tile",
+         "entity": "script.vacation_mode_lighting_simulation_v2",
+         "name": "Run Simulation",
+         "tap_action": {
+          "action": "call-service",
+          "service": "script.turn_on",
+          "target": {
+           "entity_id": "script.vacation_mode_lighting_simulation_v2"
+          },
+          "confirmation": {
+           "text": "Run the vacation lighting simulation script now?"
+          }
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "automation.turn_vacation_mode_on_april_13_2024",
+         "name": "Vacation On - Jun 6"
+        },
+        {
+         "type": "tile",
+         "entity": "automation.turn_vacation_mode_off_may_1_2024",
+         "name": "Vacation Off - Jun 14"
+        },
+        {
+         "type": "tile",
+         "entity": "automation.chatgtp_vacation_briefing",
+         "name": "Vacation Briefing 04:00"
+        },
+        {
+         "type": "tile",
+         "entity": "automation.chatgpt_vacation_random_reach_out",
+         "name": "Vacation Briefing 04:05"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Wall Home",
+   "path": "wall-home",
+   "icon": "mdi:tablet-dashboard",
+   "theme": "Frosted Glass",
+   "type": "panel",
+   "background": {
+    "image": "linear-gradient(135deg, #020617 0%, #0f172a 42%, #172554 74%, #0f766e 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "cards": [
+    {
+     "type": "custom:layout-card",
+     "layout_type": "custom:grid-layout",
+     "layout": {
+      "grid-template-columns": "repeat(12, minmax(0, 1fr))",
+      "grid-auto-rows": "72px",
+      "grid-gap": "10px",
+      "margin": "0",
+      "padding": "10px",
+      "mediaquery": {
+       "(max-width: 700px)": {
+        "grid-template-columns": "1fr",
+        "grid-auto-rows": "minmax(72px, auto)",
+        "grid-gap": "10px",
+        "padding": "8px"
+       }
+      }
+     },
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "name": "iHOME",
+       "icon": "mdi:home-heart",
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 3"
+       },
+       "styles": {
+        "card": [
+         {
+          "height": "100%"
+         },
+         {
+          "border-radius": "22px"
+         },
+         {
+          "padding": "18px"
+         },
+         {
+          "background": "radial-gradient(circle at 14% 12%, rgba(125,211,252,.30), transparent 34%), linear-gradient(150deg, rgba(15,23,42,.98), rgba(30,64,175,.55))"
+         },
+         {
+          "border": "1px solid rgba(186,230,253,.24)"
+         },
+         {
+          "box-shadow": "0 18px 42px rgba(0,0,0,.34)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "30px"
+         },
+         {
+          "font-weight": "900"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "56px"
+         },
+         {
+          "color": "#FDE68A"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.5"
+          },
+          {
+           "color": "#E2E8F0"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const d=new Date(); const day=d.toLocaleDateString([], {weekday:\"long\", month:\"short\", day:\"numeric\"}); const time=d.toLocaleTimeString([], {hour:\"2-digit\", minute:\"2-digit\"}); const temp=states[\"sensor.average_main_floor_temperature\"]?.state ?? \"--\"; const hum=states[\"sensor.pws_main_floor_humidity\"]?.state ?? \"--\"; return `<div style=\"font-size:48px;font-weight:900;line-height:1;\">${time}</div><div style=\"margin-top:8px;opacity:.82;\">${day}</div><div style=\"margin-top:14px;\"><b>Main floor</b> ${temp} C / ${hum}%</div>`; ]]]"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.front_door",
+       "name": "Doorbell",
+       "camera_view": "auto",
+       "show_state": false,
+       "aspect_ratio": "16:9",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/lovelace-security/security-command"
+       },
+       "view_layout": {
+        "grid-column": "span 5",
+        "grid-row": "span 3"
+       },
+       "card_mod": {
+        "style": "ha-card{height:100%;border-radius:22px!important;overflow:hidden;background:#020617!important;border:1px solid rgba(148,163,184,.22)!important;box-shadow:0 18px 42px rgba(0,0,0,.34)!important}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Weather",
+       "icon": "mdi:weather-partly-cloudy",
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "border-radius": "18px"
+         },
+         {
+          "padding": "14px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "background": "linear-gradient(150deg, rgba(15,23,42,.92), rgba(30,41,59,.74))"
+         },
+         {
+          "border": "1px solid rgba(148,163,184,.20)"
+         },
+         {
+          "box-shadow": "0 14px 34px rgba(0,0,0,.26)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "18px"
+         },
+         {
+          "font-weight": "800"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "38px"
+         },
+         {
+          "color": "#7DD3FC"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "color": "#CBD5E1"
+          },
+          {
+           "width": "100%"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const t=states[\"sensor.fredericton_temperature\"]?.state ?? \"--\"; const c=states[\"sensor.fredericton_current_condition\"]?.state ?? states[\"weather.home_weather_station\"]?.state ?? \"--\"; const w=states[\"sensor.fredericton_warnings\"]?.state ?? \"0\"; const s=states[\"sensor.storm_probability\"]?.state ?? \"--\"; return `<div style=\"font-size:30px;font-weight:900;\">${t} C</div>${c}<br>${w} warnings / ${s}% storm`; ]]]"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Status",
+       "icon": "mdi:heart-pulse",
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "border-radius": "18px"
+         },
+         {
+          "padding": "14px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "background": "linear-gradient(150deg, rgba(15,23,42,.92), rgba(30,41,59,.74))"
+         },
+         {
+          "border": "1px solid rgba(148,163,184,.20)"
+         },
+         {
+          "box-shadow": "0 14px 34px rgba(0,0,0,.26)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "18px"
+         },
+         {
+          "font-weight": "800"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "38px"
+         },
+         {
+          "color": "#7DD3FC"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "color": "#CBD5E1"
+          },
+          {
+           "width": "100%"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const net=states[\"binary_sensor.your_home_internet\"]?.state === \"on\" ? \"online\" : \"check\"; const backup=states[\"binary_sensor.backups_stale\"]?.state === \"on\" ? \"stale\" : \"fresh\"; const zig=states[\"binary_sensor.zigbee2mqtt_bridge_connection_state\"]?.state === \"on\" ? \"online\" : \"check\"; const mem=states[\"sensor.memory_use_percent\"]?.state ?? \"--\"; return `<b>Internet</b> ${net}<br><b>Backups</b> ${backup}<br><b>Zigbee</b> ${zig}<br><b>Memory</b> ${mem}%`; ]]]"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 1"
+       },
+       "cards": [
+        {
+         "type": "button",
+         "name": "Media",
+         "icon": "mdi:television-play",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "/media-central"
+         }
+        },
+        {
+         "type": "button",
+         "name": "Security",
+         "icon": "mdi:shield-home",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "/lovelace-security/security-command"
+         }
+        },
+        {
+         "type": "button",
+         "name": "Weather",
+         "icon": "mdi:weather-partly-cloudy",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "/lovelace-weather"
+         }
+        },
+        {
+         "type": "button",
+         "name": "Climate",
+         "icon": "mdi:air-conditioner",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "/climate-and-ac"
+         }
+        }
+       ]
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Comfort",
+       "icon": "mdi:home-thermometer",
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "border-radius": "18px"
+         },
+         {
+          "padding": "14px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "background": "linear-gradient(150deg, rgba(15,23,42,.92), rgba(30,41,59,.74))"
+         },
+         {
+          "border": "1px solid rgba(148,163,184,.20)"
+         },
+         {
+          "box-shadow": "0 14px 34px rgba(0,0,0,.26)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "18px"
+         },
+         {
+          "font-weight": "800"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "38px"
+         },
+         {
+          "color": "#7DD3FC"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "color": "#CBD5E1"
+          },
+          {
+           "width": "100%"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const main=states[\"climate.main_floor_ac\"]?.state ?? \"--\"; const bed=states[\"climate.bedroom_ac\"]?.state ?? \"--\"; const mt=states[\"sensor.average_main_floor_temperature\"]?.state ?? \"--\"; const bt=states[\"sensor.average_bedroom_temperature\"]?.state ?? \"--\"; return `<b>Main</b> ${mt} C \u00b7 ${main}<br><b>Bedroom</b> ${bt} C \u00b7 ${bed}<br><span style=\"opacity:.72\">Tap for controls</span>`; ]]]"
+       },
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/climate-and-ac"
+       }
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "12 Hour Drift",
+       "hours_to_show": 12,
+       "points_per_hour": 4,
+       "show": {
+        "legend": false,
+        "fill": "fade",
+        "points": false
+       },
+       "entities": [
+        {
+         "entity": "sensor.average_main_floor_temperature",
+         "name": "Main"
+        },
+        {
+         "entity": "sensor.average_bedroom_temperature",
+         "name": "Bedroom"
+        },
+        {
+         "entity": "sensor.fredericton_temperature",
+         "name": "Outside"
+        }
+       ],
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 2"
+       },
+       "card_mod": {
+        "style": "ha-card{height:100%;border-radius:18px!important;background:linear-gradient(150deg,rgba(15,23,42,.90),rgba(51,65,85,.62))!important;border:1px solid rgba(148,163,184,.20)!important}"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "People",
+       "icon": "mdi:account-group",
+       "view_layout": {
+        "grid-column": "span 2",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "border-radius": "18px"
+         },
+         {
+          "padding": "14px"
+         },
+         {
+          "height": "100%"
+         },
+         {
+          "background": "linear-gradient(150deg, rgba(15,23,42,.92), rgba(30,41,59,.74))"
+         },
+         {
+          "border": "1px solid rgba(148,163,184,.20)"
+         },
+         {
+          "box-shadow": "0 14px 34px rgba(0,0,0,.26)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "18px"
+         },
+         {
+          "font-weight": "800"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "38px"
+         },
+         {
+          "color": "#7DD3FC"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "color": "#CBD5E1"
+          },
+          {
+           "width": "100%"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const mike=states[\"device_tracker.mikes_iphone\"]?.state ?? \"--\"; const chris=states[\"device_tracker.chris_iphone\"]?.state ?? \"--\"; return `<b>Mike</b> ${mike}<br><b>Chris</b> ${chris}<br><span style=\"opacity:.72\">Presence summary</span>`; ]]]"
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Today",
+       "icon": "mdi:clipboard-list-outline",
+       "view_layout": {
+        "grid-column": "span 4",
+        "grid-row": "span 2"
+       },
+       "styles": {
+        "card": [
+         {
+          "height": "100%"
+         },
+         {
+          "border-radius": "18px"
+         },
+         {
+          "padding": "14px"
+         },
+         {
+          "background": "linear-gradient(150deg, rgba(15,23,42,.92), rgba(30,41,59,.74))"
+         },
+         {
+          "border": "1px solid rgba(148,163,184,.20)"
+         },
+         {
+          "box-shadow": "0 14px 34px rgba(0,0,0,.26)"
+         },
+         {
+          "overflow": "hidden"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "18px"
+         },
+         {
+          "font-weight": "800"
+         },
+         {
+          "letter-spacing": "0px"
+         },
+         {
+          "color": "#F8FAFC"
+         }
+        ],
+        "icon": [
+         {
+          "width": "38px"
+         },
+         {
+          "color": "#FDE68A"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "start"
+          },
+          {
+           "align-self": "end"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "13px"
+          },
+          {
+           "line-height": "1.45"
+          },
+          {
+           "color": "#F8FAFC"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ const beau=states[\"input_boolean.beauregard_house\"]?.state === \"on\" ? \"Beau house on\" : \"Beau house off\"; const list=states[\"todo.shopping_list\"]?.state ?? \"0\"; const media=states[\"media_player.android_4\"]?.state ?? \"off\"; return `<b>${beau}</b><br>${list} shopping items \u00b7 media ${media}`; ]]]"
+       },
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/todo"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.blink_driveway",
+       "name": "Driveway",
+       "camera_view": "auto",
+       "show_state": false,
+       "aspect_ratio": "16:9",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/lovelace-security/security-command"
+       },
+       "view_layout": {
+        "grid-column": "span 3",
+        "grid-row": "span 2"
+       },
+       "card_mod": {
+        "style": "ha-card{height:100%;border-radius:18px!important;overflow:hidden;background:#020617!important;border:1px solid rgba(148,163,184,.22)!important}"
+       }
+      },
+      {
+       "type": "custom:mushroom-chips-card",
+       "chips": [
+        {
+         "type": "entity",
+         "entity": "alarm_control_panel.blink_ihomecamera",
+         "name": "Blink",
+         "icon": "mdi:cctv"
+        },
+        {
+         "type": "entity",
+         "entity": "alarm_control_panel.blink_idoorbell",
+         "name": "Doorbell",
+         "icon": "mdi:doorbell-video"
+        },
+        {
+         "type": "entity",
+         "entity": "input_boolean.talking_house_enabled",
+         "name": "Voice",
+         "icon": "mdi:home-sound-in"
+        },
+        {
+         "type": "entity",
+         "entity": "input_boolean.beauregard_house",
+         "name": "Beau",
+         "icon": "mdi:home-heart"
+        }
+       ],
+       "view_layout": {
+        "grid-column": "span 5",
+        "grid-row": "span 1"
+       },
+       "card_mod": {
+        "style": "ha-card{height:100%;display:flex;align-items:center;border-radius:18px!important;background:rgba(15,23,42,.72)!important;border:1px solid rgba(148,163,184,.20)!important}"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

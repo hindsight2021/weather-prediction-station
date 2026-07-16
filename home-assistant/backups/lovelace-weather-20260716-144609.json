@@ -1,0 +1,4807 @@
+{
+ "resources": [
+  {
+   "url": "/hacsfiles/lovelace-lightning-detector-card/lightning-detector-card.js",
+   "type": "module"
+  }
+ ],
+ "decluttering_templates": {
+  "header_live_weather_background": {
+   "card": {
+    "type": "custom:vertical-stack-in-card",
+    "cards": [
+     {
+      "type": "picture-glance",
+      "entities": [],
+      "camera_image": "camera.blink_front_door",
+      "camera_view": "auto",
+      "style": "ha-card {\n  position: absolute;\n  width: 1500px;\n  filter: blur(2px);\n  border-radius: 0 !important;\n}\nha-card:before {\n  content: '';\n  display: block;\n  position: absolute;\n  left: -180px;\n  height: 170px;\n  width: 100%;\n  background: radial-gradient(ellipse at 50% -100%, rgba(35, 46, 66, 0) 25%, rgba(35, 46, 66, 0.8) 55%, rgba(35, 46, 66, 1) 67%);\n}\n"
+     }
+    ],
+    "style": "ha-card {\n  position: relative !important;\n  margin-bottom: -164px;\n  height: 164px;\n  margin-top: -8px;\n  margin-left: -8px;\n  margin-right: -8px;\n  background: none;\n  animation: opacity 2s ease-in;\n}\n@media only screen and (max-width: 768px) {\n  ha-card {\n    border-radius: 0 !important;\n  }\n}\n@keyframes opacity {\n  0% { opacity: 0; }\n  40% { opacity: 0; }\n  100% { opacity: 1; }\n}\n"
+   }
+  },
+  "header_temperature_graph": {
+   "card": {
+    "type": "custom:mini-graph-card",
+    "entities": [
+     {
+      "entity": "sensor.average_main_floor_temp",
+      "color": null
+     }
+    ],
+    "hours_to_show": 24,
+    "hour24": true,
+    "animate": true,
+    "update_interval": 30,
+    "aggregate_func": "avg",
+    "line_width": 1,
+    "bar_spacing": 10,
+    "height": 40,
+    "group": true,
+    "show": {
+     "labels": false,
+     "fill": false,
+     "state": false,
+     "name": false,
+     "icon": false
+    },
+    "style": "ha-card {\n  height: 84px;\n  position: absolute;\n  box-shadow: none;\n  background: none;\n  border-radius: 0;\n  opacity: 0.3;\n  margin-bottom: -90px;\n  margin-left: -0.6em;\n  margin-right: -0.6em;\n}\n"
+   }
+  },
+  "header_main": {
+   "card": {
+    "type": "custom:paper-buttons-row",
+    "styles": {
+     "justify-content": "space-between",
+     "background": "none",
+     "margin": "24px 20px 16px",
+     "text-shadow": "0px 0px 20px var(--card-background-color);"
+    },
+    "buttons": [
+     {
+      "layout": "name_state",
+      "name": "{{ states('sensor.dayoftheweek') }}, {{ states('sensor.date') }}",
+      "state": "{{ now().strftime('%H') }}:{{ now().strftime('%M')}}",
+      "styles": {
+       "name": {
+        "font-weight": 400,
+        "font-size": "16px",
+        "margin-left": 0,
+        "display": "block",
+        "text-align": "left",
+        "float": "left",
+        "width": "140px"
+       },
+       "button": {
+        "pointer-events": "none",
+        "align-items": "left",
+        "width": "140px",
+        "line-height": "1.6em"
+       },
+       "state": {
+        "font-weight": 700,
+        "font-size": "30px",
+        "letter-spacing": "-1px",
+        "margin-left": 0,
+        "display": "block",
+        "text-align": "left",
+        "float": "left",
+        "width": "140px"
+       }
+      }
+     },
+     {
+      "layout": "icon|name_state",
+      "name": "\u2302 {{ states('sensor.average_main_floor_temp') }} C",
+      "state": "{{ state_attr('weather.openweathermap','temperature') }}C",
+      "image": "{% set mapper =\n  { 'breezy':'cloudy',\n    'clear-night':'night',\n    'clear':'day',\n    'mostly-clear':'day',\n    'clear-day':'day',\n    'cloudy':'cloudy',\n    'fog':'fog',\n    'hail':'rainy-7',\n    'haze':'haze',\n    'lightning':'thunder',\n    'mostly-cloudy':'cloudy',\n    'partlycloudy':'cloudy-day-3',\n    'partly-cloudy-day':'partly-cloudy-day',\n    'partly-cloudy-night':'partly-cloudy-night',\n    'rain':'rainy-4',\n    'scattered-showers':'rainy-3',\n    'showers':'rainy-6',\n    'sleet':'sleet',\n    'snow':'snowy-6',\n    'mostly-sunny':'day',\n    'sunny':'day',\n    'thunderstorm':'thunder',\n    'tornado':'tornado',\n    'wind':'wind',\n    'windy':'wind'} %}\n{% set state = states('weather.maison_2') %}\n{% set weather = mapper[state] if state in mapper else 'weather' %}\n{% set path = '/local/icons/weather_icons/animated/' %}\n{% set ext = '.svg'%}\n  {{[path,weather,ext]|join('')}}\n",
+      "styles": {
+       "name": {
+        "font-weight": 400,
+        "font-size": "16px",
+        "margin-left": 0,
+        "display": "block",
+        "text-align": "right",
+        "width": "140px"
+       },
+       "button": {
+        "pointer-events": "none",
+        "align-items": "right",
+        "width": "140px",
+        "line-height": "1.6em"
+       },
+       "state": {
+        "font-weight": 600,
+        "font-size": "30px",
+        "letter-spacing": "-1px",
+        "margin-left": 0,
+        "display": "block",
+        "text-align": "right",
+        "width": "140px"
+       },
+       "icon": {
+        "position": "absolute",
+        "left": "2px",
+        "transform": "scale(0.17)",
+        "transform-origin": "0 19.5%",
+        "top": "-48px;",
+        "padding": "0;",
+        "height": "380px !important;",
+        "width": "380px !important;"
+       }
+      }
+     }
+    ]
+   }
+  }
+ },
+ "views": [
+  {
+   "title": "Weather Command V2",
+   "path": "weather-command-v2",
+   "icon": "mdi:weather-lightning-rainy",
+   "type": "panel",
+   "theme": "Frosted Glass",
+   "background": {
+    "image": "linear-gradient(135deg, #02070b 0%, #061724 48%, #102a33 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "cards": [
+    {
+     "type": "vertical-stack",
+     "cards": [
+      {
+       "type": "custom:weather-reactor-smooth-card",
+       "radar_entity": "camera.fredericton_radar",
+       "storm_entity": "sensor.ai_storm_risk_index",
+       "storm_level_entity": "sensor.ai_storm_risk_level",
+       "condition_entity": "sensor.fredericton_current_condition",
+       "summary_entity": "sensor.fredericton_summary",
+       "temp_entity": "sensor.ihome_atlas_temperature",
+       "wind_speed_entity": "sensor.ihome_atlas_wind_speed",
+       "wind_direction_entity": "sensor.ihome_atlas_wind_direction",
+       "rain_entity": "sensor.daily_rain",
+       "lightning_counter_entity": "sensor.lightning_map_lightning_counter",
+       "lightning_distance_entity": "sensor.lightning_map_lightning_distance",
+       "lightning_azimuth_entity": "sensor.lightning_map_lightning_azimuth",
+       "fallback_lightning_distance_entity": "sensor.lightning_detector_storm_distance",
+       "warnings_entity": "sensor.fredericton_warnings",
+       "watches_entity": "sensor.fredericton_watches",
+       "sweep_seconds": 14,
+       "title": "Kingsclear Weather Station",
+       "theme": "dark"
+      },
+      {
+       "type": "custom:swipe-card",
+       "parameters": {
+        "spaceBetween": 14,
+        "slidesPerView": 1,
+        "pagination": {
+         "type": "bullets"
+        },
+        "grabCursor": true
+       },
+       "cards": [
+        {
+         "type": "custom:apexcharts-card",
+         "header": {
+          "show": true,
+          "title": "Thermal Profile - Air, Dew Point, Humidity",
+          "show_states": true,
+          "colorize_states": true
+         },
+         "graph_span": "24h",
+         "all_series_config": {
+          "stroke_width": 3,
+          "group_by": {
+           "func": "avg",
+           "duration": "15min"
+          }
+         },
+         "apex_config": {
+          "chart": {
+           "height": 285,
+           "toolbar": {
+            "show": false
+           }
+          },
+          "grid": {
+           "borderColor": "rgba(255,255,255,.08)"
+          },
+          "legend": {
+           "show": false
+          }
+         },
+         "yaxis": [
+          {
+           "id": "temp",
+           "decimals": 1
+          },
+          {
+           "id": "humidity",
+           "opposite": true,
+           "min": 0,
+           "max": 100,
+           "decimals": 0
+          }
+         ],
+         "series": [
+          {
+           "entity": "sensor.fredericton_temperature",
+           "name": "EC Air",
+           "type": "line",
+           "yaxis_id": "temp",
+           "color": "#68d8ff"
+          },
+          {
+           "entity": "sensor.ihome_atlas_temperature",
+           "name": "Atlas Air",
+           "type": "line",
+           "yaxis_id": "temp",
+           "color": "#f6c65b"
+          },
+          {
+           "entity": "sensor.fredericton_dew_point",
+           "name": "Dew Point",
+           "type": "area",
+           "yaxis_id": "temp",
+           "color": "#60e6a8",
+           "opacity": 0.18
+          },
+          {
+           "entity": "sensor.fredericton_humidity",
+           "name": "Humidity",
+           "type": "line",
+           "yaxis_id": "humidity",
+           "color": "#b28cff"
+          }
+         ],
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(13, 21, 33, .62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); box-shadow: 0 18px 60px rgba(0,0,0,.28); }"
+         }
+        },
+        {
+         "type": "custom:apexcharts-card",
+         "header": {
+          "show": true,
+          "title": "Pressure, Wind, Rain - Storm Mechanics",
+          "show_states": true,
+          "colorize_states": true
+         },
+         "graph_span": "24h",
+         "all_series_config": {
+          "stroke_width": 3,
+          "group_by": {
+           "func": "avg",
+           "duration": "15min"
+          }
+         },
+         "apex_config": {
+          "chart": {
+           "height": 285,
+           "toolbar": {
+            "show": false
+           }
+          },
+          "grid": {
+           "borderColor": "rgba(255,255,255,.08)"
+          },
+          "legend": {
+           "show": false
+          }
+         },
+         "yaxis": [
+          {
+           "id": "pressure",
+           "decimals": 0
+          },
+          {
+           "id": "wind",
+           "opposite": true,
+           "decimals": 0
+          },
+          {
+           "id": "rain",
+           "opposite": true,
+           "decimals": 1
+          }
+         ],
+         "series": [
+          {
+           "entity": "sensor.fredericton_barometric_pressure",
+           "name": "Pressure",
+           "type": "line",
+           "yaxis_id": "pressure",
+           "color": "#f6c65b"
+          },
+          {
+           "entity": "sensor.fredericton_wind_speed",
+           "name": "EC Wind",
+           "type": "line",
+           "yaxis_id": "wind",
+           "color": "#68d8ff"
+          },
+          {
+           "entity": "sensor.ihome_atlas_wind_speed",
+           "name": "Atlas Wind",
+           "type": "line",
+           "yaxis_id": "wind",
+           "color": "#7cffc4"
+          },
+          {
+           "entity": "sensor.daily_rain",
+           "name": "Daily Rain",
+           "type": "area",
+           "yaxis_id": "rain",
+           "color": "#4f8cff",
+           "opacity": 0.2
+          }
+         ],
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(13, 21, 33, .62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); box-shadow: 0 18px 60px rgba(0,0,0,.28); }"
+         }
+        },
+        {
+         "type": "custom:apexcharts-card",
+         "header": {
+          "show": true,
+          "title": "AI Storm Model Components",
+          "show_states": true,
+          "colorize_states": true
+         },
+         "graph_span": "48h",
+         "all_series_config": {
+          "stroke_width": 3,
+          "group_by": {
+           "func": "avg",
+           "duration": "30min"
+          }
+         },
+         "apex_config": {
+          "chart": {
+           "height": 285,
+           "toolbar": {
+            "show": false
+           }
+          },
+          "grid": {
+           "borderColor": "rgba(255,255,255,.08)"
+          },
+          "legend": {
+           "show": false
+          }
+         },
+         "yaxis": [
+          {
+           "min": 0,
+           "max": 100,
+           "decimals": 0
+          }
+         ],
+         "series": [
+          {
+           "entity": "sensor.ai_storm_risk_index",
+           "name": "Risk Index",
+           "type": "area",
+           "color": "#ffb86b",
+           "opacity": 0.18
+          },
+          {
+           "entity": "sensor.storm_probability",
+           "name": "Probability",
+           "type": "line",
+           "color": "#ff6b8a"
+          },
+          {
+           "entity": "sensor.ai_storm_moisture_instability_score",
+           "name": "Moisture",
+           "type": "line",
+           "color": "#60e6a8"
+          },
+          {
+           "entity": "sensor.ai_storm_pressure_wind_score",
+           "name": "Pressure/Wind",
+           "type": "line",
+           "color": "#68d8ff"
+          },
+          {
+           "entity": "sensor.ai_storm_forecast_alert_score",
+           "name": "Forecast/Alert",
+           "type": "line",
+           "color": "#f6c65b"
+          },
+          {
+           "entity": "sensor.ai_storm_lightning_score",
+           "name": "Lightning",
+           "type": "line",
+           "color": "#b28cff"
+          },
+          {
+           "entity": "sensor.ai_storm_season_score",
+           "name": "Season",
+           "type": "line",
+           "color": "#ffffff"
+          }
+         ],
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(13, 21, 33, .62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); box-shadow: 0 18px 60px rgba(0,0,0,.28); }"
+         }
+        },
+        {
+         "type": "custom:apexcharts-card",
+         "header": {
+          "show": true,
+          "title": "Lightning and Visibility Watch",
+          "show_states": true,
+          "colorize_states": true
+         },
+         "graph_span": "48h",
+         "all_series_config": {
+          "stroke_width": 3,
+          "group_by": {
+           "func": "avg",
+           "duration": "30min"
+          }
+         },
+         "apex_config": {
+          "chart": {
+           "height": 285,
+           "toolbar": {
+            "show": false
+           }
+          },
+          "grid": {
+           "borderColor": "rgba(255,255,255,.08)"
+          },
+          "legend": {
+           "show": false
+          }
+         },
+         "yaxis": [
+          {
+           "id": "distance",
+           "decimals": 0
+          },
+          {
+           "id": "counts",
+           "opposite": true,
+           "decimals": 0
+          }
+         ],
+         "series": [
+          {
+           "entity": "sensor.lightning_detector_storm_distance",
+           "name": "Lightning Distance",
+           "type": "line",
+           "yaxis_id": "distance",
+           "color": "#f6c65b"
+          },
+          {
+           "entity": "sensor.daily_lightning",
+           "name": "Daily Lightning",
+           "type": "area",
+           "yaxis_id": "counts",
+           "color": "#b28cff",
+           "opacity": 0.2
+          },
+          {
+           "entity": "sensor.fredericton_visibility",
+           "name": "Visibility",
+           "type": "line",
+           "yaxis_id": "distance",
+           "color": "#68d8ff"
+          }
+         ],
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(13, 21, 33, .62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); box-shadow: 0 18px 60px rgba(0,0,0,.28); }"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "entities",
+     "entities": [
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_alert_level",
+       "name": "Weather Brain Alert Level"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_confidence",
+       "name": "Weather Brain Confidence"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_explanation",
+       "name": "Weather Brain Explanation"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_lightning_risk_1h",
+       "name": "Weather Brain Lightning Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_rain_risk_1h",
+       "name": "Weather Brain Rain Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_1h",
+       "name": "Weather Brain Storm Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_24h",
+       "name": "Weather Brain Storm Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_wind_risk_1h",
+       "name": "Weather Brain Wind Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+       "name": "Weather Brain Heat Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_severity",
+       "name": "Weather Brain Heat Severity"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_cold_risk_24h",
+       "name": "Weather Brain Cold Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_cold_severity",
+       "name": "Weather Brain Cold Severity"
+      }
+     ],
+     "title": "KCR Weather Brain"
+    }
+   ]
+  },
+  {
+   "title": "Weather Brain",
+   "path": "weather-brain",
+   "icon": "mdi:brain",
+   "type": "sections",
+   "max_columns": 3,
+   "dense_section_placement": true,
+   "badges": [
+    {
+     "type": "entity",
+     "entity": "sensor.weather_brain_alert_level",
+     "name": "Threat"
+    },
+    {
+     "type": "entity",
+     "entity": "sensor.weather_brain_eccc_alert_level",
+     "name": "ECCC"
+    },
+    {
+     "type": "entity",
+     "entity": "sensor.weather_brain_confidence",
+     "name": "Confidence"
+    },
+    {
+     "type": "entity",
+     "entity": "sensor.weather_brain_imminent_event",
+     "name": "Imminent"
+    }
+   ],
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "TACTICAL WEATHER STATUS",
+       "icon": "mdi:shield-half-full"
+      },
+      {
+       "type": "markdown",
+       "content": "## {{ states('sensor.weather_brain_alert_level') | upper }}\n**{{ states('sensor.weather_brain_explanation') }}**\n\n{% if not is_state('sensor.weather_brain_imminent_event','none') %}\u23f1 **{{ states('sensor.weather_brain_imminent_summary') }}**{% else %}No severe weather is imminent.{% endif %}"
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_storm_risk_1h",
+       "name": "Storm \u00b7 1 hour",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 75
+       }
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.weather_brain_imminent_event",
+       "name": "Imminent Event",
+       "vertical": false
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.weather_brain_imminent_event_eta",
+       "name": "Event ETA",
+       "vertical": false
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.weather_brain_eccc_alert",
+       "name": "Official ECCC Alert",
+       "vertical": false
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "PREDICTIVE HORIZONS",
+       "icon": "mdi:timeline-clock"
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_storm_risk_24h",
+       "name": "24 hour",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 35,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_storm_risk_48h",
+       "name": "48 hour",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 35,
+        "red": 70
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_storm_risk_72h",
+       "name": "72 hour",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 35,
+        "red": 70
+       }
+      },
+      {
+       "type": "history-graph",
+       "title": "Threat Evolution \u00b7 24h",
+       "hours_to_show": 24,
+       "entities": [
+        "sensor.weather_brain_storm_risk_1h",
+        "sensor.weather_brain_storm_risk_24h",
+        "sensor.weather_brain_confidence"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "SENSOR FUSION",
+       "icon": "mdi:radar"
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_lightning_risk_1h",
+       "name": "Lightning",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 75
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_rain_risk_1h",
+       "name": "Rain",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 75
+       }
+      },
+      {
+       "type": "gauge",
+       "entity": "sensor.weather_brain_wind_risk_1h",
+       "name": "Wind",
+       "min": 0,
+       "max": 100,
+       "needle": true,
+       "severity": {
+        "green": 0,
+        "yellow": 40,
+        "red": 75
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Environmental Intelligence",
+       "show_header_toggle": false,
+       "entities": [
+        "sensor.weather_brain_heat_severity",
+        "sensor.weather_brain_cold_severity",
+        "sensor.weather_brain_aqhi_current",
+        "sensor.weather_brain_wildfire_smoke_risk",
+        "sensor.weather_brain_active_fires_within_150_km"
+       ]
+      },
+      {
+       "type": "history-graph",
+       "title": "Local Signal History",
+       "hours_to_show": 12,
+       "entities": [
+        "sensor.weather_brain_rain_risk_1h",
+        "sensor.weather_brain_wind_risk_1h",
+        "sensor.weather_brain_lightning_risk_1h"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Fire & Air",
+   "path": "fire-air",
+   "icon": "mdi:fire-alert",
+   "type": "panel",
+   "cards": [
+    {
+     "type": "iframe",
+     "url": "http://192.168.1.118:8126/fire",
+     "aspect_ratio": "100%"
+    }
+   ]
+  },
+  {
+   "title": "Weather Guru",
+   "path": "weather-guru",
+   "icon": "mdi:weather-hurricane",
+   "type": "panel",
+   "theme": "Frosted Glass",
+   "background": {
+    "opacity": 100,
+    "alignment": "center",
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed",
+    "image": "linear-gradient(135deg, #05070d 0%, #101829 45%, #07111d 100%)"
+   },
+   "cards": [
+    {
+     "type": "custom:weather-guru-command-card",
+     "title": "Weather Guru",
+     "subtitle": "Fredericton / Southern York County Nowcast Desk"
+    },
+    {
+     "type": "entities",
+     "entities": [
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_alert_level",
+       "name": "Weather Brain Alert Level"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_confidence",
+       "name": "Weather Brain Confidence"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_explanation",
+       "name": "Weather Brain Explanation"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_lightning_risk_1h",
+       "name": "Weather Brain Lightning Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_rain_risk_1h",
+       "name": "Weather Brain Rain Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_1h",
+       "name": "Weather Brain Storm Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_24h",
+       "name": "Weather Brain Storm Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_wind_risk_1h",
+       "name": "Weather Brain Wind Risk 1h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+       "name": "Weather Brain Heat Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_severity",
+       "name": "Weather Brain Heat Severity"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_cold_risk_24h",
+       "name": "Weather Brain Cold Risk 24h"
+      },
+      {
+       "entity": "sensor.kcr_weather_brain_weather_brain_cold_severity",
+       "name": "Weather Brain Cold Severity"
+      }
+     ],
+     "title": "KCR Weather Brain"
+    }
+   ]
+  },
+  {
+   "title": "WX Command",
+   "path": "wx-command",
+   "icon": "mdi:radar",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "dense_section_placement": true,
+   "background": {
+    "image": "radial-gradient(circle at 15% 10%, rgba(94,234,212,.35) 0, transparent 28%), radial-gradient(circle at 86% 4%, rgba(250,204,21,.26) 0, transparent 24%), linear-gradient(135deg, #06131f 0%, #12324a 42%, #5a6f75 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Flight Deck"
+      },
+      {
+       "type": "custom:stack-in-card",
+       "grid_options": {
+        "columns": 12,
+        "rows": 5
+       },
+       "cards": [
+        {
+         "type": "custom:atmospheric-weather-card",
+         "weather_entity": "weather.home_weather_station",
+         "card_style": "standalone",
+         "theme": "auto",
+         "filter": "vivid",
+         "card_height": 260,
+         "disable_bottom_text": true,
+         "disable_bottom_icon": true,
+         "text_position": "center",
+         "text_alignment": "center",
+         "sun_entity": "sun.sun",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "card_mod": {
+          "style": "ha-card { border-radius: 28px; overflow: hidden; background: linear-gradient(135deg, rgba(248,252,255,.96), rgba(224,243,255,.88)) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; border: 1px solid rgba(255,255,255,.62); box-shadow: 0 24px 70px rgba(4, 14, 28, .28); backdrop-filter: blur(22px); }"
+         }
+        },
+        {
+         "type": "markdown",
+         "content": "# Fredericton Weather Command\n**{{ states(\"sensor.fredericton_current_condition\") }}** \u00b7 Atlas {{ states(\"sensor.ihome_atlas_temperature\") }}\u00b0C \u00b7 EC {{ states(\"sensor.fredericton_temperature\") }}\u00b0C \u00b7 RH {{ states(\"sensor.ihome_atlas_humidity\") }}% \u00b7 pressure {{ states(\"sensor.fredericton_barometric_pressure\") }} hPa \u00b7 rain {{ states(\"sensor.daily_rain\") }} mm \u00b7 lightning {{ states(\"sensor.daily_lightning\") }} today\n\n{{ states(\"sensor.fredericton_summary\") }}",
+         "card_mod": {
+          "style": "ha-card { border-radius: 28px; overflow: hidden; background: linear-gradient(135deg, rgba(248,252,255,.96), rgba(224,243,255,.88)) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; border: 1px solid rgba(255,255,255,.62); box-shadow: 0 24px 70px rgba(4, 14, 28, .28); backdrop-filter: blur(22px); }"
+         }
+        },
+        {
+         "type": "custom:hourly-weather",
+         "entity": "weather.fredericton",
+         "num_segments": 24,
+         "name": "24h Tactical Forecast",
+         "icons": true,
+         "round_temperatures": true,
+         "show_wind": true,
+         "show_precipitation_probability": true,
+         "card_mod": {
+          "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 28px; overflow: hidden; background: linear-gradient(135deg, rgba(248,252,255,.96), rgba(224,243,255,.88)) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; border: 1px solid rgba(255,255,255,.62); box-shadow: 0 24px 70px rgba(4, 14, 28, .28); backdrop-filter: blur(22px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Telemetry Ribbon"
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Atlas Temp",
+         "icon": "mdi:thermometer",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(255,247,237,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(249,115,22,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(67, 20, 7, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#7c2d12"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#9a3412"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#f97316"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.ihome_atlas_humidity",
+         "name": "Humidity",
+         "icon": "mdi:water-percent",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(236,254,255,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(6,182,212,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(8, 47, 73, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#155e75"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#0e7490"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#06b6d4"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "icon": "mdi:gauge",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(238,242,255,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(99,102,241,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(30, 27, 75, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#3730a3"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "14px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#4338ca"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#6366f1"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.daily_rain",
+         "name": "Rain Today",
+         "icon": "mdi:weather-rainy",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(239,246,255,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(37,99,235,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(30, 64, 175, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#1e40af"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "19px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#1d4ed8"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#2563eb"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Wind",
+         "icon": "mdi:weather-windy",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(240,253,250,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(20,184,166,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(15, 118, 110, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#115e59"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#0f766e"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#14b8a6"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Lightning Range",
+         "icon": "mdi:weather-lightning",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(254,249,195,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(234,179,8,.32)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(113, 63, 18, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#854d0e"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#a16207"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#eab308"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.fredericton_uv_index",
+         "name": "UV",
+         "icon": "mdi:white-balance-sunny",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(255,251,235,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(245,158,11,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(146, 64, 14, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#92400e"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#b45309"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#f59e0b"
+           }
+          ]
+         }
+        },
+        {
+         "type": "custom:button-card",
+         "entity": "sensor.ihome_atlas_battery",
+         "name": "Station Battery",
+         "icon": "mdi:battery-heart",
+         "show_state": true,
+         "styles": {
+          "card": [
+           {
+            "border-radius": "18px"
+           },
+           {
+            "padding": "14px"
+           },
+           {
+            "background": "linear-gradient(135deg, rgba(240,253,244,.96), rgba(255,255,255,.90))"
+           },
+           {
+            "border": "1px solid rgba(34,197,94,.25)"
+           },
+           {
+            "box-shadow": "0 12px 26px rgba(22, 101, 52, .14)"
+           }
+          ],
+          "name": [
+           {
+            "font-size": "12px"
+           },
+           {
+            "color": "#166534"
+           },
+           {
+            "font-weight": "700"
+           }
+          ],
+          "state": [
+           {
+            "font-size": "18px"
+           },
+           {
+            "font-weight": "900"
+           },
+           {
+            "color": "#15803d"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#22c55e"
+           }
+          ]
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:meteoalarm-card",
+       "integration": "env_canada",
+       "entities": [
+        {
+         "entity": "sensor.fredericton_watches"
+        },
+        {
+         "entity": "sensor.fredericton_warnings"
+        }
+       ],
+       "override_headline": false,
+       "hide_when_no_warning": false,
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Station Freshness / Health",
+       "entities": [
+        {
+         "entity": "sensor.ihome_atlas_battery",
+         "name": "Atlas battery"
+        },
+        {
+         "entity": "sensor.lightning_detector_acurite_6045m_a_155_b",
+         "name": "Lightning detector battery"
+        },
+        {
+         "entity": "sensor.temperature_last_update",
+         "name": "Temperature age"
+        },
+        {
+         "entity": "sensor.humidity_last_update",
+         "name": "Humidity age"
+        },
+        {
+         "entity": "sensor.wind_speed_last_update",
+         "name": "Wind speed age"
+        },
+        {
+         "entity": "sensor.wind_direction_last_update",
+         "name": "Wind direction age"
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain age"
+        },
+        {
+         "entity": "sensor.uv_index_last_update",
+         "name": "UV age"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Radar / Strike Maps"
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_name": false,
+       "show_state": false,
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:blitzortung-lightning-card",
+       "title": "Blitzortung Live Strike Field",
+       "distance_entity": "sensor.lightning_map_lightning_distance",
+       "counter_entity": "sensor.lightning_map_lightning_counter",
+       "azimuth_entity": "sensor.lightning_map_lightning_azimuth",
+       "location_zone_entity": "zone.home",
+       "lightning_detection_radius": 150,
+       "card_section_order": [
+        "map",
+        "compass_radar",
+        "history_chart"
+       ],
+       "show_map": true,
+       "map_theme_mode": "light",
+       "map_height": "360px",
+       "always_show_full_card": true,
+       "show_history_chart": true,
+       "period": "1h",
+       "grid_color": "rgba(16,32,47,.22)",
+       "font_color": "#10202f",
+       "strike_color": "#f59e0b",
+       "azimuth_color": "#2563eb",
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "iframe",
+       "url": "https://embed.windy.com/embed2.html?lat=45.963&lon=-66.643&zoom=7&level=surface&overlay=radar&product=radar&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1",
+       "aspect_ratio": "16:9",
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Radar & Nowcast",
+       "heading_style": "title",
+       "icon": "mdi:radar"
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_name": false,
+       "show_state": false,
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "markdown",
+       "content": "### Weather Guru Nowcast\n**Classification:** {{ states('input_select.weather_guru_storm_classification') }}  \n**Confidence:** {{ states('input_number.weather_guru_impact_confidence') }}%  \n**Last analysis:** {{ states('input_datetime.weather_guru_last_radar_analysis') }}  \n\n{{ states('input_text.weather_guru_nowcast_summary') }}\n\n_Evidence:_ {{ states('input_text.weather_guru_last_radar_evidence') }}",
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Live Storm Inputs",
+       "entities": [
+        {
+         "entity": "sensor.weather_guru_live_lightning_within_60_km",
+         "name": "Live strikes under 60 km"
+        },
+        {
+         "entity": "sensor.weather_guru_nearest_live_lightning",
+         "name": "Nearest live strike"
+        },
+        {
+         "entity": "sensor.lightning_map_lightning_distance",
+         "name": "Blitzortung distance"
+        },
+        {
+         "entity": "sensor.lightning_map_lightning_counter",
+         "name": "Blitzortung counter"
+        },
+        {
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Local detector distance"
+        },
+        {
+         "entity": "sensor.ai_storm_risk_index",
+         "name": "AI risk index"
+        },
+        {
+         "entity": "input_datetime.weather_guru_last_radar_analysis",
+         "name": "Last radar analysis"
+        }
+       ],
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Model / Forecast"
+      },
+      {
+       "type": "custom:weather-chart-card",
+       "entity": "weather.home_weather_station",
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "weather-forecast",
+       "entity": "weather.fredericton",
+       "forecast_type": "daily",
+       "show_current": true,
+       "show_forecast": true,
+       "secondary_info_attribute": "humidity",
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "7d Forecast Context / Observed Profile",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 340,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "legend": {
+         "show": true
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "temp",
+         "decimals": 1
+        },
+        {
+         "id": "humidity",
+         "opposite": true,
+         "min": 0,
+         "max": 100,
+         "decimals": 0
+        },
+        {
+         "id": "pressure",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.fredericton_temperature",
+         "name": "EC temp",
+         "yaxis_id": "temp",
+         "color": "#f97316",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Atlas temp",
+         "yaxis_id": "temp",
+         "color": "#facc15",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_humidity",
+         "name": "Humidity",
+         "yaxis_id": "humidity",
+         "color": "#06b6d4",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "yaxis_id": "pressure",
+         "color": "#6366f1",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Wind Lab"
+      },
+      {
+       "type": "custom:windrose-card",
+       "title": "Command Wind Rose",
+       "card_width": 8,
+       "refresh_interval": 180,
+       "windspeed_bar_location": "right",
+       "hide_windspeed_bar": false,
+       "rose_config": {
+        "wind_direction_count": 32,
+        "rose_opacity": 0.92,
+        "first_segment_in_leaves": false,
+        "center_circle": {
+         "enabled": true,
+         "size": 68,
+         "text": "${calm-percentage}%",
+         "text_size": 38
+        },
+        "circle_legend_text_size": 24
+       },
+       "direction_labels": {
+        "show_cardinal_directions": true,
+        "show_intercardinal_directions": true,
+        "show_secondary_intercardinal_directions": true,
+        "cardinal_direction_letters": "NESW"
+       },
+       "wind_direction_entity": {
+        "entity": "sensor.ihome_atlas_wind_direction",
+        "use_statistics": false,
+        "direction_compensation": 0
+       },
+       "windspeed_entities": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Wind",
+         "speed_unit": "kph",
+         "output_speed_unit": "kph",
+         "output_speed_unit_label": "km/h",
+         "speed_range_beaufort": false,
+         "windspeed_bar_full": true,
+         "use_for_windrose": true,
+         "use_statistics": false,
+         "speed_ranges": [
+          {
+           "from_value": 0,
+           "color": "#d9f99d"
+          },
+          {
+           "from_value": 5,
+           "color": "#86efac"
+          },
+          {
+           "from_value": 10,
+           "color": "#5eead4"
+          },
+          {
+           "from_value": 20,
+           "color": "#60a5fa"
+          },
+          {
+           "from_value": 30,
+           "color": "#fbbf24"
+          },
+          {
+           "from_value": 45,
+           "color": "#ef4444"
+          }
+         ]
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust",
+         "speed_unit": "kph",
+         "output_speed_unit": "kph",
+         "speed_range_beaufort": false,
+         "windspeed_bar_full": true,
+         "use_statistics": false
+        }
+       ],
+       "buttons_config": {
+        "location": "bottom",
+        "default_colors": {
+         "active_color": "#10202f",
+         "active_bg_color": "#d9edf7",
+         "color": "#435466"
+        },
+        "buttons": [
+         {
+          "type": "period_selector",
+          "button_text": "1h",
+          "period_back": "-1h"
+         },
+         {
+          "type": "period_selector",
+          "button_text": "8h",
+          "period_back": "-8h",
+          "active": true
+         },
+         {
+          "type": "period_selector",
+          "button_text": "24h",
+          "period_back": "-24h"
+         },
+         {
+          "type": "period_selector",
+          "button_text": "72h",
+          "period_back": "-72h"
+         },
+         {
+          "type": "windrose_speed_selector",
+          "button_text": "Wind",
+          "windspeed_entity_index": 0,
+          "active": true
+         },
+         {
+          "type": "windrose_speed_selector",
+          "button_text": "Gust",
+          "windspeed_entity_index": 1
+         }
+        ]
+       },
+       "current_direction": {
+        "show_arrow": true,
+        "arrow_size": 50,
+        "center_circle_size": 30,
+        "hide_direction_below_speed": 1
+       },
+       "corner_info": {
+        "top_left": {
+         "label": "Current",
+         "unit": " km/h",
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 1
+        },
+        "top_right": {
+         "label": "Direction",
+         "unit": "\u00b0",
+         "entity": "sensor.ihome_atlas_wind_direction",
+         "input_unit": "degrees",
+         "output_unit": "letters",
+         "direction_letters": "NESW"
+        },
+        "bottom_left": {
+         "label": "EC",
+         "unit": " km/h",
+         "entity": "sensor.fredericton_wind_speed",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 0
+        },
+        "bottom_right": {
+         "label": "Gust",
+         "unit": " km/h",
+         "entity": "sensor.wind_gust_average",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 1
+        }
+       },
+       "colors": {
+        "rose_lines": "rgba(16,32,47,.28)",
+        "rose_cardinal_direction_labels": "#10202f",
+        "rose_intercardinal_direction_labels": "#40566a",
+        "rose_secondary_intercardinal_direction_labels": "#6b7c8f",
+        "rose_center_percentage": "#10202f",
+        "rose_current_direction_arrow": "#ef4444",
+        "bar_border": "rgba(16,32,47,.18)"
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "72h",
+       "header": {
+        "show": true,
+        "title": "72h Wind / Gust / Bearing Lab",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 340,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "legend": {
+         "show": true
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "speed",
+         "decimals": 1
+        },
+        {
+         "id": "bearing",
+         "opposite": true,
+         "min": 0,
+         "max": 360,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Atlas speed",
+         "yaxis_id": "speed",
+         "color": "#2563eb",
+         "group_by": {
+          "func": "avg",
+          "duration": "15min"
+         }
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust avg",
+         "yaxis_id": "speed",
+         "color": "#f59e0b",
+         "group_by": {
+          "func": "max",
+          "duration": "15min"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_wind_direction",
+         "name": "Bearing",
+         "yaxis_id": "bearing",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "avg",
+          "duration": "15min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Hydrology / Lightning"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "14d",
+       "header": {
+        "show": true,
+        "title": "14d Rain Ledger + Pulse",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 330,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.daily_rain",
+         "name": "Daily",
+         "type": "column",
+         "color": "#2563eb",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        },
+        {
+         "entity": "sensor.weekly_rain",
+         "name": "Weekly",
+         "type": "line",
+         "color": "#06b6d4",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        },
+        {
+         "entity": "sensor.monthly_rain",
+         "name": "Monthly",
+         "type": "line",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        },
+        {
+         "entity": "sensor.rain_5_minute_delta",
+         "name": "5m pulse",
+         "type": "column",
+         "color": "#93c5fd",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "Lightning Count / Distance",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 330,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "count",
+         "decimals": 0
+        },
+        {
+         "id": "distance",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.daily_lightning",
+         "name": "Daily",
+         "type": "column",
+         "yaxis_id": "count",
+         "color": "#f59e0b",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.lightning_detector_total_strikes",
+         "name": "Detector total",
+         "type": "line",
+         "yaxis_id": "count",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Distance",
+         "type": "line",
+         "yaxis_id": "distance",
+         "color": "#ef4444",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Station QA"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "Signal Freshness Drift",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 330,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "stepline",
+         "width": 2
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.temperature_last_update",
+         "name": "Temp age",
+         "color": "#22c55e"
+        },
+        {
+         "entity": "sensor.wind_speed_last_update",
+         "name": "Wind age",
+         "color": "#0ea5e9"
+        },
+        {
+         "entity": "sensor.wind_direction_last_update",
+         "name": "Direction age",
+         "color": "#6366f1"
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain age",
+         "color": "#f97316"
+        },
+        {
+         "entity": "sensor.uv_index_last_update",
+         "name": "UV age",
+         "color": "#eab308"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "WX Summary",
+   "path": "wx-summary",
+   "icon": "mdi:view-dashboard-variant",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "dense_section_placement": true,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Readouts"
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "Wind and gusts",
+       "hours_to_show": 12,
+       "points_per_hour": 6,
+       "decimals": 1,
+       "entities": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Wind",
+         "show_state": true,
+         "color": "#64b5f6"
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust",
+         "show_state": true,
+         "color": "#ffb74d"
+        }
+       ],
+       "show": {
+        "labels": true,
+        "icon": false,
+        "state": true,
+        "extrema": true
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_aqhi",
+         "name": "AQHI",
+         "icon": "mdi:air-filter",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "icon": "mdi:gauge",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.ihome_atlas_battery",
+         "name": "Atlas Battery",
+         "icon": "mdi:battery",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain Age",
+         "icon": "mdi:timer-alert",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "custom:meteoalarm-card",
+       "integration": "env_canada",
+       "entities": [
+        {
+         "entity": "sensor.fredericton_watches"
+        },
+        {
+         "entity": "sensor.fredericton_warnings"
+        }
+       ],
+       "override_headline": false,
+       "hide_when_no_warning": false,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "heading",
+       "heading": "Now"
+      },
+      {
+       "type": "custom:stack-in-card",
+       "cards": [
+        {
+         "type": "custom:mushroom-template-card",
+         "entity": "weather.home_weather_station",
+         "primary": "{{ states(\"sensor.ihome_atlas_temperature\") }}\u00b0C \u00b7 {{ states(\"sensor.fredericton_current_condition\") }}",
+         "secondary": "{{ states(\"sensor.fredericton_summary\") }}",
+         "icon": "mdi:weather-partly-cloudy",
+         "icon_color": "blue",
+         "layout": "vertical",
+         "multiline_secondary": true,
+         "fill_container": true,
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "custom:hourly-weather",
+         "entity": "weather.home_weather_station",
+         "num_segments": 12,
+         "name": "Next 12 hours",
+         "icons": true,
+         "round_temperatures": true,
+         "show_wind": true,
+         "show_precipitation_probability": true,
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "48h",
+       "header": {
+        "show": true,
+        "title": "Nerd Panel: Temp, Dew Point, Humidex, Wind Chill",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Atlas Temp",
+         "color": "#f97316",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_dew_point",
+         "name": "Dew Point",
+         "color": "#06b6d4",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        },
+        {
+         "entity": "sensor.humidex",
+         "name": "Humidex",
+         "color": "#ef4444",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        },
+        {
+         "entity": "sensor.wind_chill",
+         "name": "Wind Chill",
+         "color": "#3b82f6",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Trends"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "12h",
+       "header": {
+        "show": true,
+        "title": "Outside signal",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 230,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "temp",
+         "decimals": 1
+        },
+        {
+         "id": "humidity",
+         "opposite": true,
+         "min": 0,
+         "max": 100,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Temp",
+         "yaxis_id": "temp",
+         "color": "#f7c948",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_humidity",
+         "name": "Humidity",
+         "yaxis_id": "humidity",
+         "color": "#4dd0e1",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "Rain pulse",
+       "hours_to_show": 12,
+       "points_per_hour": 4,
+       "decimals": 1,
+       "entities": [
+        {
+         "entity": "sensor.daily_rain",
+         "name": "Accumulation",
+         "show_state": true
+        },
+        {
+         "entity": "sensor.rain_5_minute_delta",
+         "name": "5 min delta",
+         "show_state": true,
+         "y_axis": "secondary"
+        }
+       ],
+       "show": {
+        "labels": true,
+        "labels_secondary": true,
+        "icon": false,
+        "state": true,
+        "graph": "bar"
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Signals"
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_warnings",
+         "name": "Warnings",
+         "icon": "mdi:alert-octagon",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Lightning km",
+         "icon": "mdi:weather-lightning",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.daily_rain",
+         "name": "Rain Today",
+         "icon": "mdi:weather-rainy",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_uv_index",
+         "name": "UV",
+         "icon": "mdi:white-balance-sunny",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_state": false,
+       "show_name": false,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "KCR Weather Brain"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_alert_level"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_confidence"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_explanation"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_lightning_risk_1h"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_rain_risk_1h"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_1h"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_storm_risk_24h"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_wind_risk_1h"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+       "name": "Heat Risk"
+      },
+      {
+       "type": "tile",
+       "entity": "sensor.kcr_weather_brain_weather_brain_heat_severity",
+       "name": "Heat Severity"
+      },
+      {
+       "type": "history-graph",
+       "title": "Weather Brain Heat History (24h)",
+       "hours_to_show": 24,
+       "entities": [
+        "sensor.kcr_weather_brain_weather_brain_heat_risk_24h",
+        "sensor.humidex"
+       ]
+      }
+     ]
+    }
+   ],
+   "background": {
+    "image": "linear-gradient(135deg, #07111f 0%, #12324a 45%, #4e6d6a 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Alerts",
+   "path": "wx-alerts",
+   "icon": "mdi:alert-decagram",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Public Alerts"
+      },
+      {
+       "type": "custom:meteoalarm-card",
+       "integration": "env_canada",
+       "entities": [
+        {
+         "entity": "sensor.fredericton_watches"
+        },
+        {
+         "entity": "sensor.fredericton_warnings"
+        }
+       ],
+       "override_headline": false,
+       "hide_when_no_warning": false,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Counters"
+      },
+      {
+       "type": "grid",
+       "columns": 4,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_warnings",
+         "name": "Warnings",
+         "icon": "mdi:alert-octagon",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_watches",
+         "name": "Watches",
+         "icon": "mdi:alert",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_statements",
+         "name": "Statements",
+         "icon": "mdi:message-alert",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_advisory",
+         "name": "Advisories",
+         "icon": "mdi:information-outline",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Event Feed"
+      },
+      {
+       "type": "tile",
+       "entity": "event.fredericton_and_southern_york_county_weather_alert_environment_canada",
+       "name": "Latest Environment Canada Alert Event",
+       "icon": "mdi:radio-tower",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Automation Layer"
+      },
+      {
+       "type": "entities",
+       "title": "Alert Automations Status",
+       "entities": [
+        {
+         "entity": "automation.weather_warning",
+         "name": "Weather warning"
+        },
+        {
+         "entity": "automation.weather_watch",
+         "name": "Weather watch"
+        },
+        {
+         "entity": "automation.weather_warning_voice",
+         "name": "Warning voice"
+        },
+        {
+         "entity": "automation.redirect_to_weather_dashboard_when_weather_warnings_are_issued",
+         "name": "Auto redirect on warnings"
+        },
+        {
+         "entity": "automation.tornado_watch_warning_alert",
+         "name": "Tornado watch/warning"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #180b16 0%, #3a1722 45%, #8b4b2c 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Radar",
+   "path": "wx-radar",
+   "icon": "mdi:radar",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Fredericton Radar"
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_state": false,
+       "show_name": false,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_chance_of_precipitation",
+         "name": "Precip Chance",
+         "icon": "mdi:weather-pouring",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.daily_rain",
+         "name": "Rain Today",
+         "icon": "mdi:weather-rainy",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.rain_5_minute_delta",
+         "name": "5 Min Delta",
+         "icon": "mdi:water-sync",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_visibility",
+         "name": "Visibility",
+         "icon": "mdi:eye",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "RainViewer"
+      },
+      {
+       "type": "custom:weather-radar-card",
+       "card_title": "RainViewer Radar",
+       "data_source": "RainViewer",
+       "map_style": "Dark",
+       "zoom_level": 7,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "AI Canvas"
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.weather_gpt_image",
+       "camera_image": "camera.weather_gpt_image",
+       "name": "AI Weather Canvas",
+       "show_state": false,
+       "tap_action": {
+        "action": "more-info"
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Precip Data"
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #061316 0%, #0f3b42 48%, #1c6d70 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Wind",
+   "path": "wx-wind",
+   "icon": "mdi:weather-windy",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Rose"
+      },
+      {
+       "type": "custom:windrose-card",
+       "title": "Command Wind Rose",
+       "card_width": 8,
+       "refresh_interval": 180,
+       "windspeed_bar_location": "right",
+       "hide_windspeed_bar": false,
+       "rose_config": {
+        "wind_direction_count": 32,
+        "rose_opacity": 0.92,
+        "first_segment_in_leaves": false,
+        "center_circle": {
+         "enabled": true,
+         "size": 68,
+         "text": "${calm-percentage}%",
+         "text_size": 38
+        },
+        "circle_legend_text_size": 24
+       },
+       "direction_labels": {
+        "show_cardinal_directions": true,
+        "show_intercardinal_directions": true,
+        "show_secondary_intercardinal_directions": true,
+        "cardinal_direction_letters": "NESW"
+       },
+       "wind_direction_entity": {
+        "entity": "sensor.ihome_atlas_wind_direction",
+        "use_statistics": false,
+        "direction_compensation": 0
+       },
+       "windspeed_entities": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Wind",
+         "speed_unit": "kph",
+         "output_speed_unit": "kph",
+         "output_speed_unit_label": "km/h",
+         "speed_range_beaufort": false,
+         "windspeed_bar_full": true,
+         "use_for_windrose": true,
+         "use_statistics": false,
+         "speed_ranges": [
+          {
+           "from_value": 0,
+           "color": "#d9f99d"
+          },
+          {
+           "from_value": 5,
+           "color": "#86efac"
+          },
+          {
+           "from_value": 10,
+           "color": "#5eead4"
+          },
+          {
+           "from_value": 20,
+           "color": "#60a5fa"
+          },
+          {
+           "from_value": 30,
+           "color": "#fbbf24"
+          },
+          {
+           "from_value": 45,
+           "color": "#ef4444"
+          }
+         ]
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust",
+         "speed_unit": "kph",
+         "output_speed_unit": "kph",
+         "speed_range_beaufort": false,
+         "windspeed_bar_full": true,
+         "use_statistics": false
+        }
+       ],
+       "buttons_config": {
+        "location": "bottom",
+        "default_colors": {
+         "active_color": "#10202f",
+         "active_bg_color": "#d9edf7",
+         "color": "#435466"
+        },
+        "buttons": [
+         {
+          "type": "period_selector",
+          "button_text": "1h",
+          "period_back": "-1h"
+         },
+         {
+          "type": "period_selector",
+          "button_text": "8h",
+          "period_back": "-8h",
+          "active": true
+         },
+         {
+          "type": "period_selector",
+          "button_text": "24h",
+          "period_back": "-24h"
+         },
+         {
+          "type": "period_selector",
+          "button_text": "72h",
+          "period_back": "-72h"
+         },
+         {
+          "type": "windrose_speed_selector",
+          "button_text": "Wind",
+          "windspeed_entity_index": 0,
+          "active": true
+         },
+         {
+          "type": "windrose_speed_selector",
+          "button_text": "Gust",
+          "windspeed_entity_index": 1
+         }
+        ]
+       },
+       "current_direction": {
+        "show_arrow": true,
+        "arrow_size": 50,
+        "center_circle_size": 30,
+        "hide_direction_below_speed": 1
+       },
+       "corner_info": {
+        "top_left": {
+         "label": "Current",
+         "unit": " km/h",
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 1
+        },
+        "top_right": {
+         "label": "Direction",
+         "unit": "\u00b0",
+         "entity": "sensor.ihome_atlas_wind_direction",
+         "input_unit": "degrees",
+         "output_unit": "letters",
+         "direction_letters": "NESW"
+        },
+        "bottom_left": {
+         "label": "EC",
+         "unit": " km/h",
+         "entity": "sensor.fredericton_wind_speed",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 0
+        },
+        "bottom_right": {
+         "label": "Gust",
+         "unit": " km/h",
+         "entity": "sensor.wind_gust_average",
+         "input_unit": "kph",
+         "output_unit": "kph",
+         "precision": 1
+        }
+       },
+       "colors": {
+        "rose_lines": "rgba(16,32,47,.28)",
+        "rose_cardinal_direction_labels": "#10202f",
+        "rose_intercardinal_direction_labels": "#40566a",
+        "rose_secondary_intercardinal_direction_labels": "#6b7c8f",
+        "rose_center_percentage": "#10202f",
+        "rose_current_direction_arrow": "#ef4444",
+        "bar_border": "rgba(16,32,47,.18)"
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 22px; background: rgba(249, 252, 255, .92) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #40566a; --card-primary-color: #10202f; --card-secondary-color: #40566a; --ha-card-border-color: rgba(24, 54, 80, .16); border: 1px solid rgba(24, 54, 80, .18); box-shadow: 0 16px 38px rgba(7, 18, 32, .20); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Wind Bearing Trace",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 260,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "stepline",
+         "width": 2
+        },
+        "yaxis": {
+         "min": 0,
+         "max": 360,
+         "tickAmount": 8
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_wind_direction",
+         "name": "Atlas bearing",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_wind_bearing",
+         "name": "EC bearing",
+         "color": "#0ea5e9",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Compass"
+      },
+      {
+       "type": "custom:compass-card",
+       "indicator_sensors": [
+        {
+         "sensor": "sensor.ihome_atlas_wind_direction",
+         "indicator": {
+          "image": "arrow_outward"
+         }
+        }
+       ],
+       "value_sensors": [
+        {
+         "sensor": "sensor.ihome_atlas_wind_speed"
+        }
+       ],
+       "compass": {
+        "north": {
+         "show": true
+        }
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Atlas Wind",
+         "icon": "mdi:weather-windy",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.ihome_atlas_wind_direction",
+         "name": "Atlas Direction",
+         "icon": "mdi:compass",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_wind_speed",
+         "name": "EC Wind",
+         "icon": "mdi:windsock",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_wind_direction",
+         "name": "EC Direction",
+         "icon": "mdi:sign-direction",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Trend"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Wind speed, gusts and wind chill",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Atlas Wind",
+         "type": "area",
+         "color": "#64b5f6",
+         "group_by": {
+          "func": "avg",
+          "duration": "5min"
+         }
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust Average",
+         "type": "line",
+         "color": "#ffb74d",
+         "group_by": {
+          "func": "avg",
+          "duration": "5min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "72h",
+       "header": {
+        "show": true,
+        "title": "72h Wind Speed / Gust Envelope",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "legend": {
+         "show": true
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_wind_speed",
+         "name": "Atlas wind",
+         "color": "#2563eb",
+         "group_by": {
+          "func": "avg",
+          "duration": "15min"
+         }
+        },
+        {
+         "entity": "sensor.wind_gust_average",
+         "name": "Gust average",
+         "color": "#f59e0b",
+         "group_by": {
+          "func": "max",
+          "duration": "15min"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_wind_speed",
+         "name": "EC wind",
+         "color": "#14b8a6",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #071521 0%, #213a50 45%, #6f8b9a 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Rain",
+   "path": "wx-rain",
+   "icon": "mdi:weather-pouring",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Accumulation"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "48h",
+       "header": {
+        "show": true,
+        "title": "Rain accumulation and pulse",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 320,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.daily_rain",
+         "name": "Today",
+         "type": "area",
+         "color": "#42a5f5",
+         "group_by": {
+          "func": "max",
+          "duration": "15min"
+         }
+        },
+        {
+         "entity": "sensor.rain_5_minute_delta",
+         "name": "5 min delta",
+         "type": "column",
+         "color": "#80deea",
+         "group_by": {
+          "func": "max",
+          "duration": "15min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Totals"
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.daily_rain",
+         "name": "Today",
+         "icon": "mdi:weather-rainy",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.weekly_rain",
+         "name": "Week",
+         "icon": "mdi:calendar-week",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.monthly_rain",
+         "name": "Month",
+         "icon": "mdi:calendar-month",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.rain_24_hour_delta",
+         "name": "24h Delta",
+         "icon": "mdi:chart-timeline-variant",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "14d",
+       "header": {
+        "show": true,
+        "title": "14d Rain Ledger",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.daily_rain",
+         "name": "Daily rain",
+         "type": "column",
+         "color": "#2563eb",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        },
+        {
+         "entity": "sensor.weekly_rain",
+         "name": "Weekly rain",
+         "type": "line",
+         "color": "#06b6d4",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        },
+        {
+         "entity": "sensor.monthly_rain",
+         "name": "Monthly rain",
+         "type": "line",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "max",
+          "duration": "1d"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Station Feed"
+      },
+      {
+       "type": "custom:mini-graph-card",
+       "name": "Rain total station feed",
+       "hours_to_show": 24,
+       "points_per_hour": 2,
+       "decimals": 1,
+       "entities": [
+        {
+         "entity": "sensor.ihome_atlas_rain_total",
+         "name": "Atlas total",
+         "show_state": true
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Last update age",
+         "show_state": true,
+         "y_axis": "secondary"
+        }
+       ],
+       "show": {
+        "labels": true,
+        "labels_secondary": true,
+        "icon": false,
+        "state": true
+       },
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #051629 0%, #0e3a66 48%, #2f7fad 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Lightning",
+   "path": "wx-lightning",
+   "icon": "mdi:weather-lightning",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Detector"
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Detector Distance",
+         "icon": "mdi:map-marker-distance",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.lightning_detector_total_strikes",
+         "name": "Detector Total",
+         "icon": "mdi:counter",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.daily_lightning",
+         "name": "Today",
+         "icon": "mdi:lightning-bolt",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.monthly_lightning",
+         "name": "Month",
+         "icon": "mdi:calendar-month",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "entities",
+       "title": "Lightning automation layer",
+       "entities": [
+        {
+         "entity": "automation.lightning_pre_warning_30km_range_or_less",
+         "name": "Pre-warning 30km"
+        },
+        {
+         "entity": "automation.notify_about_lightning_distance",
+         "name": "Distance notification"
+        },
+        {
+         "entity": "automation.lightning_greater_than_30km_turn_off_warning",
+         "name": "Clear warning over 30km"
+        },
+        {
+         "entity": "automation.manual_lightning_warning",
+         "name": "Manual warning"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "map",
+       "title": "Blitzortung Geo Layer",
+       "entities": [
+        {
+         "entity": "zone.home",
+         "name": "Home"
+        }
+       ],
+       "geo_location_sources": [
+        "blitzortung"
+       ],
+       "default_zoom": 8,
+       "auto_fit": true,
+       "hours_to_show": 1,
+       "aspect_ratio": "16:9",
+       "theme_mode": "auto",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Trend"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Strike count and storm distance",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 320,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "count",
+         "decimals": 0
+        },
+        {
+         "id": "distance",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.daily_lightning",
+         "name": "Daily count",
+         "type": "column",
+         "yaxis_id": "count",
+         "color": "#ffd54f",
+         "group_by": {
+          "func": "max",
+          "duration": "30min"
+         }
+        },
+        {
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Distance",
+         "type": "line",
+         "yaxis_id": "distance",
+         "color": "#ef5350",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "7d Lightning Totals",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 280,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.daily_lightning",
+         "name": "Daily",
+         "type": "column",
+         "color": "#f59e0b",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.weekly_lightning",
+         "name": "Weekly",
+         "type": "line",
+         "color": "#7c3aed",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.monthly_lightning",
+         "name": "Monthly",
+         "type": "line",
+         "color": "#ef4444",
+         "group_by": {
+          "func": "max",
+          "duration": "1h"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Live Map"
+      },
+      {
+       "type": "custom:blitzortung-lightning-card",
+       "title": "Live Blitzortung Strike Map",
+       "distance_entity": "sensor.lightning_map_lightning_distance",
+       "counter_entity": "sensor.lightning_map_lightning_counter",
+       "azimuth_entity": "sensor.lightning_map_lightning_azimuth",
+       "location_zone_entity": "zone.home",
+       "lightning_detection_radius": 150,
+       "card_section_order": [
+        "map",
+        "compass_radar",
+        "history_chart"
+       ],
+       "show_map": true,
+       "map_theme_mode": "light",
+       "show_history_chart": true,
+       "period": "1h",
+       "grid_color": "rgba(16, 32, 47, .22)",
+       "font_color": "#10202f",
+       "strike_color": "#f59e0b",
+       "azimuth_color": "#2563eb",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       },
+       "always_show_full_card": true,
+       "map_height": "420px"
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Automation Layer"
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #130d25 0%, #30204f 48%, #8a6a2a 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Atmosphere",
+   "path": "wx-atmosphere",
+   "icon": "mdi:weather-partly-cloudy",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Model"
+      },
+      {
+       "type": "custom:weather-chart-card",
+       "entity": "weather.home_weather_station",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "gauge",
+         "entity": "sensor.fredericton_uv_index",
+         "name": "Forecast UV",
+         "min": 0,
+         "max": 11,
+         "severity": {
+          "green": 0,
+          "yellow": 3,
+          "red": 6
+         },
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "gauge",
+         "entity": "sensor.fredericton_aqhi",
+         "name": "AQHI",
+         "min": 0,
+         "max": 10,
+         "severity": {
+          "green": 0,
+          "yellow": 4,
+          "red": 7
+         },
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.fredericton_dew_point",
+         "name": "Dew Point",
+         "icon": "mdi:thermometer-water",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.ihome_atlas_outside_luminance",
+         "name": "Luminance",
+         "icon": "mdi:brightness-6",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:hourly-weather",
+       "entity": "weather.fredericton",
+       "num_segments": 24,
+       "name": "Next 24 hours - Environment Canada",
+       "icons": true,
+       "round_temperatures": true,
+       "show_wind": true,
+       "show_precipitation_probability": true,
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Forecast"
+      },
+      {
+       "type": "markdown",
+       "content": "## Forecast Brief\n**Now:** {{ states(\"sensor.fredericton_current_condition\") }} \u00b7 {{ states(\"sensor.fredericton_temperature\") }}\u00b0C, humidity {{ state_attr(\"weather.fredericton\", \"humidity\") }}%, pressure {{ state_attr(\"weather.fredericton\", \"pressure\") }} {{ state_attr(\"weather.fredericton\", \"pressure_unit\") }}.\n\n**Today:** {{ states(\"sensor.fredericton_summary\") }}\n\n**Range:** high {{ states(\"sensor.fredericton_high_temperature\") }}\u00b0C / low {{ states(\"sensor.fredericton_low_temperature\") }}\u00b0C. Precipitation chance {{ states(\"sensor.fredericton_chance_of_precipitation\") }}%. Wind {{ states(\"sensor.fredericton_wind_direction\") }} at {{ states(\"sensor.fredericton_wind_speed\") }} km/h. UV {{ states(\"sensor.fredericton_uv_index\") }}. Visibility {{ states(\"sensor.fredericton_visibility\") }} km.",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "weather-forecast",
+       "entity": "weather.fredericton",
+       "forecast_type": "daily",
+       "show_current": true,
+       "show_forecast": true,
+       "secondary_info_attribute": "humidity",
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Profile"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Thermal, moisture and pressure profile",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 320,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "temp",
+         "decimals": 1
+        },
+        {
+         "id": "humidity",
+         "opposite": true,
+         "min": 0,
+         "max": 100,
+         "decimals": 0
+        },
+        {
+         "id": "pressure",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Atlas Temp",
+         "yaxis_id": "temp",
+         "color": "#f6c85f",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_humidity",
+         "name": "Humidity",
+         "yaxis_id": "humidity",
+         "color": "#4db6ac",
+         "group_by": {
+          "func": "avg",
+          "duration": "10min"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "yaxis_id": "pressure",
+         "color": "#9fa8da",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "7d Atmospheric History",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 320,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "yaxis": [
+        {
+         "id": "temp",
+         "decimals": 1
+        },
+        {
+         "id": "humidity",
+         "opposite": true,
+         "min": 0,
+         "max": 100,
+         "decimals": 0
+        },
+        {
+         "id": "pressure",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.fredericton_temperature",
+         "name": "EC Temp",
+         "yaxis_id": "temp",
+         "color": "#f97316",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_temperature",
+         "name": "Atlas Temp",
+         "yaxis_id": "temp",
+         "color": "#facc15",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.ihome_atlas_humidity",
+         "name": "Atlas Humidity",
+         "yaxis_id": "humidity",
+         "color": "#06b6d4",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        },
+        {
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "yaxis_id": "pressure",
+         "color": "#6366f1",
+         "group_by": {
+          "func": "avg",
+          "duration": "1h"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Sun and Air"
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #07131f 0%, #254059 48%, #7b8d76 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "WX Station",
+   "path": "wx-station",
+   "icon": "mdi:access-point-check",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Power"
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.ihome_atlas_battery",
+         "name": "Atlas Battery",
+         "icon": "mdi:battery",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.lightning_detector_acurite_6045m_a_155_b",
+         "name": "Lightning Battery",
+         "icon": "mdi:battery-alert",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.temperature_last_update",
+         "name": "Temperature Age",
+         "icon": "mdi:timer-check",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain Age",
+         "icon": "mdi:timer-alert",
+         "card_mod": {
+          "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+         }
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "7d",
+       "header": {
+        "show": true,
+        "title": "Station Signal Freshness - 7d",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "stepline",
+         "width": 2
+        },
+        "grid": {
+         "borderColor": "rgba(16,32,47,.14)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.temperature_last_update",
+         "name": "Temp age",
+         "color": "#22c55e"
+        },
+        {
+         "entity": "sensor.wind_speed_last_update",
+         "name": "Wind age",
+         "color": "#0ea5e9"
+        },
+        {
+         "entity": "sensor.wind_direction_last_update",
+         "name": "Direction age",
+         "color": "#6366f1"
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain age",
+         "color": "#f97316"
+        },
+        {
+         "entity": "sensor.uv_index_last_update",
+         "name": "UV age",
+         "color": "#eab308"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .90) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Freshness"
+      },
+      {
+       "type": "entities",
+       "title": "Sensor freshness",
+       "entities": [
+        {
+         "entity": "sensor.temperature_last_update",
+         "name": "Temperature age"
+        },
+        {
+         "entity": "sensor.humidity_last_update",
+         "name": "Humidity age"
+        },
+        {
+         "entity": "sensor.wind_speed_last_update",
+         "name": "Wind speed age"
+        },
+        {
+         "entity": "sensor.wind_direction_last_update",
+         "name": "Wind direction age"
+        },
+        {
+         "entity": "sensor.uv_index_last_update",
+         "name": "UV age"
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain age"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Drift"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "section_mode": true,
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Station freshness drift",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "stepline",
+         "width": 2
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.08)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.temperature_last_update",
+         "name": "Temp age",
+         "color": "#81c784"
+        },
+        {
+         "entity": "sensor.humidity_last_update",
+         "name": "Humidity age",
+         "color": "#4dd0e1"
+        },
+        {
+         "entity": "sensor.rain_total_last_update",
+         "name": "Rain age",
+         "color": "#ff8a65"
+        }
+       ],
+       "card_mod": {
+        "style": "ha-card { border-radius: 24px; background: rgba(248, 252, 255, .88) !important; color: #10202f !important; --primary-text-color: #10202f; --secondary-text-color: #435466; --card-primary-color: #10202f; --card-secondary-color: #435466; --ha-card-border-color: rgba(20, 50, 75, .14); border: 1px solid rgba(20, 50, 75, .18); box-shadow: 0 18px 45px rgba(7, 18, 32, .22); backdrop-filter: blur(18px); }"
+       }
+      }
+     ]
+    }
+   ],
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #0b1118 0%, #263145 48%, #57606d 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   }
+  },
+  {
+   "title": "Storm Lab",
+   "path": "storm-lab",
+   "icon": "mdi:weather-lightning-rainy",
+   "type": "sections",
+   "theme": "Frosted Glass",
+   "max_columns": 4,
+   "dense_section_placement": true,
+   "background": {
+    "image": "linear-gradient(135deg, #07111f 0%, #102c45 45%, #334155 100%)",
+    "opacity": 100,
+    "size": "cover",
+    "repeat": "no-repeat",
+    "attachment": "fixed"
+   },
+   "sections": [
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Predictive Storm Mode"
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "sensor.ai_storm_risk_index",
+       "name": "Storm Risk Index",
+       "icon": "mdi:weather-lightning-rainy",
+       "show_state": true,
+       "grid_options": {
+        "columns": 12,
+        "rows": 3
+       },
+       "styles": {
+        "card": [
+         {
+          "border-radius": "28px"
+         },
+         {
+          "padding": "20px"
+         },
+         {
+          "background": "radial-gradient(circle at 18% 20%, rgba(250,204,21,.38), transparent 34%), linear-gradient(135deg, rgba(15,23,42,.96), rgba(30,64,175,.74))"
+         },
+         {
+          "box-shadow": "0 20px 58px rgba(0,0,0,.36)"
+         }
+        ],
+        "name": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "24px"
+         },
+         {
+          "font-weight": "850"
+         }
+        ],
+        "state": [
+         {
+          "justify-self": "start"
+         },
+         {
+          "font-size": "46px"
+         },
+         {
+          "font-weight": "950"
+         }
+        ],
+        "icon": [
+         {
+          "width": "58px"
+         },
+         {
+          "color": "#fde68a"
+         },
+         {
+          "filter": "drop-shadow(0 0 16px rgba(253,230,138,.75))"
+         }
+        ],
+        "custom_fields": {
+         "body": [
+          {
+           "justify-self": "stretch"
+          },
+          {
+           "text-align": "left"
+          },
+          {
+           "font-size": "14px"
+          },
+          {
+           "line-height": "1.45"
+          }
+         ]
+        }
+       },
+       "custom_fields": {
+        "body": "[[[ return `<b>${states[\"sensor.ai_storm_risk_level\"]?.state ?? \"Unknown\"}</b> \u00b7 ${states[\"sensor.ai_storm_risk_direction\"]?.state ?? \"Unknown\"}<br>Lightning ${states[\"sensor.ai_storm_lightning_score\"]?.state ?? \"--\"}% \u00b7 Moisture ${states[\"sensor.ai_storm_moisture_instability_score\"]?.state ?? \"--\"}% \u00b7 Pressure/wind ${states[\"sensor.ai_storm_pressure_wind_score\"]?.state ?? \"--\"}% \u00b7 Forecast ${states[\"sensor.ai_storm_forecast_alert_score\"]?.state ?? \"--\"}%`; ]]]"
+       }
+      },
+      {
+       "type": "markdown",
+       "content": "## Weather Guru Nowcast\n**{{ states(\"input_select.weather_guru_storm_classification\") }}** \u00b7 {{ states(\"input_number.weather_guru_impact_confidence\") | round(0) }}% confidence\n\n{{ states(\"input_text.weather_guru_nowcast_summary\") }}\n\n**Live lightning:** {{ states(\"sensor.weather_guru_live_lightning_within_60_km\") }} strikes within 60 km; nearest {{ states(\"sensor.weather_guru_nearest_live_lightning\") }} km.\n\n_Evidence: {{ states(\"input_text.weather_guru_last_radar_evidence\") }}_\n\nLast analysis: {{ states(\"input_datetime.weather_guru_last_radar_analysis\") }}"
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "graph_span": "48h",
+       "header": {
+        "show": true,
+        "title": "Risk Trend and Ingredients",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 310,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "legend": {
+         "show": true
+        },
+        "grid": {
+         "borderColor": "rgba(255,255,255,.12)"
+        }
+       },
+       "series": [
+        {
+         "entity": "sensor.ai_storm_risk_index",
+         "name": "Risk",
+         "color": "#facc15"
+        },
+        {
+         "entity": "sensor.ai_storm_lightning_score",
+         "name": "Lightning",
+         "color": "#f97316"
+        },
+        {
+         "entity": "sensor.ai_storm_moisture_instability_score",
+         "name": "Moisture",
+         "color": "#38bdf8"
+        },
+        {
+         "entity": "sensor.ai_storm_pressure_wind_score",
+         "name": "Pressure/Wind",
+         "color": "#a78bfa"
+        },
+        {
+         "entity": "sensor.ai_storm_forecast_alert_score",
+         "name": "Forecast",
+         "color": "#fb7185"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Component Evidence"
+      },
+      {
+       "type": "grid",
+       "columns": 2,
+       "square": false,
+       "cards": [
+        {
+         "type": "gauge",
+         "entity": "sensor.ai_storm_lightning_score",
+         "name": "Lightning",
+         "min": 0,
+         "max": 100,
+         "severity": {
+          "green": 0,
+          "yellow": 25,
+          "red": 55
+         }
+        },
+        {
+         "type": "gauge",
+         "entity": "sensor.ai_storm_moisture_instability_score",
+         "name": "Moisture / Instability",
+         "min": 0,
+         "max": 100,
+         "severity": {
+          "green": 0,
+          "yellow": 35,
+          "red": 65
+         }
+        },
+        {
+         "type": "gauge",
+         "entity": "sensor.ai_storm_pressure_wind_score",
+         "name": "Pressure / Wind",
+         "min": 0,
+         "max": 100,
+         "severity": {
+          "green": 0,
+          "yellow": 30,
+          "red": 60
+         }
+        },
+        {
+         "type": "gauge",
+         "entity": "sensor.ai_storm_forecast_alert_score",
+         "name": "Forecast / Alerts",
+         "min": 0,
+         "max": 100,
+         "severity": {
+          "green": 0,
+          "yellow": 25,
+          "red": 60
+         }
+        }
+       ]
+      },
+      {
+       "type": "entities",
+       "title": "Live Meteorology Inputs",
+       "entities": [
+        {
+         "entity": "sensor.lightning_detector_storm_distance",
+         "name": "Lightning distance"
+        },
+        {
+         "entity": "sensor.daily_lightning",
+         "name": "Lightning today"
+        },
+        {
+         "entity": "sensor.fredericton_ai_storm_pressure_tendency",
+         "name": "Pressure tendency"
+        },
+        {
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure"
+        },
+        {
+         "entity": "sensor.dew_point",
+         "name": "Dew point"
+        },
+        {
+         "entity": "sensor.fredericton_humidity",
+         "name": "Humidity"
+        },
+        {
+         "entity": "sensor.fredericton_wind_speed",
+         "name": "Wind"
+        },
+        {
+         "entity": "sensor.fredericton_warnings",
+         "name": "Warnings"
+        },
+        {
+         "entity": "sensor.fredericton_watches",
+         "name": "Watches"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "grid",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "Radar and Lightning"
+      },
+      {
+       "type": "picture-entity",
+       "entity": "camera.fredericton_radar",
+       "camera_image": "camera.fredericton_radar",
+       "camera_view": "auto",
+       "show_name": false,
+       "show_state": false,
+       "grid_options": {
+        "columns": 12,
+        "rows": 4
+       }
+      },
+      {
+       "type": "custom:apexcharts-card",
+       "graph_span": "24h",
+       "header": {
+        "show": true,
+        "title": "Pressure / Rain / Lightning Context",
+        "show_states": true,
+        "colorize_states": true
+       },
+       "apex_config": {
+        "chart": {
+         "height": 300,
+         "toolbar": {
+          "show": false
+         }
+        },
+        "stroke": {
+         "curve": "smooth",
+         "width": 3
+        },
+        "legend": {
+         "show": true
+        }
+       },
+       "yaxis": [
+        {
+         "id": "pressure",
+         "decimals": 0
+        },
+        {
+         "id": "rain",
+         "opposite": true,
+         "decimals": 1
+        },
+        {
+         "id": "strike",
+         "opposite": true,
+         "decimals": 0
+        }
+       ],
+       "series": [
+        {
+         "entity": "sensor.fredericton_barometric_pressure",
+         "name": "Pressure",
+         "yaxis_id": "pressure",
+         "color": "#818cf8",
+         "group_by": {
+          "func": "avg",
+          "duration": "30min"
+         }
+        },
+        {
+         "entity": "sensor.rain_5_minute_delta",
+         "name": "Rain 5m",
+         "yaxis_id": "rain",
+         "color": "#38bdf8",
+         "group_by": {
+          "func": "max",
+          "duration": "10min"
+         }
+        },
+        {
+         "entity": "sensor.daily_lightning",
+         "name": "Lightning",
+         "yaxis_id": "strike",
+         "color": "#f97316",
+         "group_by": {
+          "func": "max",
+          "duration": "15min"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
