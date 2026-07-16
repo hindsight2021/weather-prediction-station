@@ -10,9 +10,9 @@
 <link rel="stylesheet" href="/static/overview.css">
 <script>
   (function () {
-    var saved = localStorage.getItem("kcr-theme");
-    var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-    document.documentElement.setAttribute("data-theme", theme);
+    var t = localStorage.getItem("kcr-theme-applied");
+    if (!t) { var h = new Date().getHours(); t = (h >= 6 && h < 21) ? "light" : "dark"; }
+    document.documentElement.setAttribute("data-theme", t);
   })();
 </script>
 </head>
@@ -97,6 +97,7 @@
     </section>
   </main>
 </div>
+<script src="/static/theme.js"></script>
 <script src="/static/overview.js"></script>
 </body>
 </html>

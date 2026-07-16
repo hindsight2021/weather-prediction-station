@@ -6,62 +6,116 @@
      light (#f5f2ec): #a86414 #2f6ea8 #5f7d22 #008573 #b34a28
    ========================================================================== */
 
+/* ---- NIGHT: neon on black — luminous, classy, readable ---- */
 :root, :root[data-theme="dark"] {
-  --bg: #0b1114;
-  --bg-glow-a: #12202699;
-  --bg-glow-b: #101c1799;
-  --surface: #10181d;
-  --surface-2: #141e24;
-  --surface-3: #0d1418;
-  --line: #1e2b33;
-  --line-soft: #18232a;
+  --bg: #050508;
+  --bg-glow-a: #16123099;
+  --bg-glow-b: #0a1c2499;
+  --surface: #0b0b12;
+  --surface-2: #10101a;
+  --surface-3: #08080e;
+  --line: #23233a;
+  --line-soft: #191928;
 
-  --ink: #e6ebe8;
-  --ink-2: #9fb0ab;
-  --ink-mute: #5c6f6a;
+  --ink: #eceaf2;
+  --ink-2: #a5a3bb;
+  --ink-mute: #5d5c74;
 
-  --sand: #d8c3a5;
-  --amber: #c97e2e;
-  --blue: #4189c9;
-  --olive: #7a9440;
-  --teal: #2aa48d;
-  --coral: #cf5f3a;
-  --gold: #c9a227;
-  --ice: #6db3d8;
-  --good: #33b57f;
+  --sand: #fde68a;
+  --amber: #f59e0b;
+  --blue: #38bdf8;
+  --olive: #a3e635;
+  --teal: #22d3aa;
+  --coral: #fb7185;
+  --gold: #fde047;
+  --ice: #7dd3fc;
+  --good: #34d399;
+  --violet: #8b5cf6;
+  --magenta: #e879f9;
 
-  --hero-sky-day: linear-gradient(160deg, #16303c 0%, #0e1c22 70%);
-  --hero-sky-night: linear-gradient(160deg, #0b1220 0%, #090d14 70%);
-  --shadow: 0 8px 30px #00000066;
+  --hero-sky-day: linear-gradient(160deg, #131a33 0%, #0a0d18 70%);
+  --hero-sky-night: linear-gradient(160deg, #0d1026 0%, #06070f 70%);
+  --shadow: 0 8px 30px #00000088;
+  --rainbow: linear-gradient(120deg, #f59e0b2e, #fb71852e 25%, #e879f92e 50%, #38bdf82e 75%, #22d3aa2e);
 }
 
+/* neon chrome: hairline rainbow borders + soft glows, night only */
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .fire-banner {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--rainbow) border-box;
+}
+:root[data-theme="dark"] .tick { color: inherit; box-shadow: 0 0 9px currentColor; }
+:root[data-theme="dark"] .t-sand { color: var(--sand); } :root[data-theme="dark"] .t-amber { color: var(--amber); }
+:root[data-theme="dark"] .t-blue { color: var(--blue); } :root[data-theme="dark"] .t-teal { color: var(--teal); }
+:root[data-theme="dark"] .t-coral { color: var(--coral); } :root[data-theme="dark"] .t-gold { color: var(--gold); }
+:root[data-theme="dark"] .alert-word,
+:root[data-theme="dark"] .ov-alert-word,
+:root[data-theme="dark"] .fb-word { text-shadow: 0 0 18px currentColor; }
+:root[data-theme="dark"] .hz-fill,
+:root[data-theme="dark"] .swatch { box-shadow: 0 0 8px -1px currentColor; }
+:root[data-theme="dark"] .brand-dot { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--teal) 60%, transparent); }
+:root[data-theme="dark"] .readout, :root[data-theme="dark"] .env-cell .value,
+:root[data-theme="dark"] .hz-val { text-shadow: 0 0 12px color-mix(in srgb, var(--sand) 35%, transparent); }
+
+/* ---- DAY: earthy but vibrant; hue drifts with the weather mood ---- */
 :root[data-theme="light"] {
-  --bg: #ece7dc;
-  --bg-glow-a: #dfe8e444;
-  --bg-glow-b: #e8ddc944;
-  --surface: #f5f2ec;
-  --surface-2: #ece7dd;
-  --surface-3: #e4ded1;
-  --line: #d4ccbc;
-  --line-soft: #ded7c8;
+  --bg: #ede6d7;
+  --bg-glow-a: #f4d9a866;
+  --bg-glow-b: #cfe4d766;
+  --surface: #f6f1e7;
+  --surface-2: #ede5d6;
+  --surface-3: #e4dbc8;
+  --line: #d2c6ae;
+  --line-soft: #ddd3bf;
 
-  --ink: #26302d;
-  --ink-2: #5a6a64;
-  --ink-mute: #93998f;
+  --ink: #23302b;
+  --ink-2: #52655d;
+  --ink-mute: #8d9488;
 
-  --sand: #8a6c3c;
-  --amber: #a86414;
-  --blue: #2f6ea8;
-  --olive: #5f7d22;
-  --teal: #008573;
-  --coral: #b34a28;
-  --gold: #96780f;
-  --ice: #2e7ea6;
-  --good: #1c8a5c;
+  --sand: #a5762f;
+  --amber: #b96a0a;
+  --blue: #1e6fbf;
+  --olive: #5f8a10;
+  --teal: #00947f;
+  --coral: #c9481f;
+  --gold: #9c7c05;
+  --ice: #1c81ad;
+  --good: #148f5b;
+  --violet: #6d4fc4;
+  --magenta: #b0479c;
 
-  --hero-sky-day: linear-gradient(160deg, #cfe4ec 0%, #eef0e6 75%);
+  --hero-sky-day: linear-gradient(160deg, #a8d4e8 0%, #f0eedd 75%);
   --hero-sky-night: linear-gradient(160deg, #37415a 0%, #565f75 75%);
-  --shadow: 0 6px 22px #4a422f22;
+  --shadow: 0 6px 22px #4a422f26;
+  --rainbow: none;
+}
+
+/* daytime weather moods: the whole page warms/cools with the forecast */
+:root[data-theme="light"][data-mood="sun"] {
+  --bg: #efe4cd; --bg-glow-a: #ffd98a88; --bg-glow-b: #ffe9bd66;
+  --hero-sky-day: linear-gradient(160deg, #8fd0ee 0%, #fdeeC9 80%);
+}
+:root[data-theme="light"][data-mood="rain"] {
+  --bg: #e2e8e6; --bg-glow-a: #a9cfe388; --bg-glow-b: #c2ded766;
+  --surface: #eef3f0; --surface-2: #e2eae6; --line: #c2d0cb; --line-soft: #d0dcd7;
+  --hero-sky-day: linear-gradient(160deg, #9dbfd4 0%, #e3ebe6 78%);
+}
+:root[data-theme="light"][data-mood="storm"] {
+  --bg: #e0dde6; --bg-glow-a: #b9a9e088; --bg-glow-b: #cdc2e066;
+  --surface: #edeaf2; --surface-2: #e1dde9; --line: #c8c1d6; --line-soft: #d6d0e1;
+  --hero-sky-day: linear-gradient(160deg, #8f8fb8 0%, #e4e0ea 80%);
+}
+:root[data-theme="light"][data-mood="snow"] {
+  --bg: #e6ebee; --bg-glow-a: #cfe5f088; --bg-glow-b: #dde9ee66;
+  --surface: #f2f6f8; --surface-2: #e6edf1; --line: #c9d6dc; --line-soft: #d7e1e6;
+  --hero-sky-day: linear-gradient(160deg, #c3d9e6 0%, #eef3f5 80%);
+}
+:root[data-theme="light"][data-mood="cloud"] {
+  --bg: #e7e4dc; --bg-glow-a: #d5d5cc77; --bg-glow-b: #dcd8ce66;
+  --hero-sky-day: linear-gradient(160deg, #b9c4c8 0%, #ecebe2 78%);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

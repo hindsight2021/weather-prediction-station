@@ -7,17 +7,13 @@ const css = (name) => getComputedStyle(document.documentElement).getPropertyValu
 const HOME = { lat: 45.9636, lon: -66.6431 };
 let lastState = null;
 
-/* ---------- theme ---------- */
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("kcr-theme", theme);
-  $("theme-toggle").textContent = theme === "dark" ? "◐" : "◑";
-  if (lastState) render(lastState); // re-resolve palette-derived colors
-}
-$("theme-toggle").onclick = () =>
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
-$("theme-toggle").textContent =
-  document.documentElement.getAttribute("data-theme") === "dark" ? "◐" : "◑";
+/* ---------- theme: auto day/night via shared engine ---------- */
+KCRTheme.bind($("theme-toggle"), () => { if (lastState) render(lastState); });
+
+const MOOD_FOR = {
+  clear: "sun", clearnight: "sun", partly: "sun", wind: "sun",
+  cloudy: "cloud", showers: "rain", rain: "rain", storm: "storm", snow: "snow",
+};
 
 /* ---------- palette (resolved live so themes swap correctly) ---------- */
 function palette() {
@@ -146,6 +142,7 @@ function heroScene(cond) {
 
 function renderHero(state) {
   const cond = conditionFrom(state);
+  KCRTheme.setMood(MOOD_FOR[cond.key] || "clear");
   const scene = $("hero-scene");
   scene.classList.toggle("night", cond.night);
   $("hero-svg").innerHTML = heroScene(cond);

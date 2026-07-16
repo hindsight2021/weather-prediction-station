@@ -9,9 +9,9 @@
 <link rel="stylesheet" href="/static/console.css">
 <script>
   (function () {
-    var saved = localStorage.getItem("kcr-theme");
-    var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-    document.documentElement.setAttribute("data-theme", theme);
+    var t = localStorage.getItem("kcr-theme-applied");
+    if (!t) { var h = new Date().getHours(); t = (h >= 6 && h < 21) ? "light" : "dark"; }
+    document.documentElement.setAttribute("data-theme", t);
   })();
 </script>
 </head>
@@ -80,6 +80,7 @@
 
   <footer id="foot">GNB ERD BURN CATEGORIES + FIRE LOCATIONS · REFRESH 5 MIN · <span id="last-update">—</span></footer>
 </div>
+<script src="/static/theme.js"></script>
 <script src="/static/fire.js"></script>
 </body>
 </html>

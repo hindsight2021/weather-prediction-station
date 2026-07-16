@@ -3,16 +3,8 @@
 
 const $ = (id) => document.getElementById(id);
 
-/* ---------- theme ---------- */
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("kcr-theme", theme);
-  $("theme-toggle").textContent = theme === "dark" ? "◐" : "◑";
-}
-$("theme-toggle").onclick = () =>
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
-$("theme-toggle").textContent =
-  document.documentElement.getAttribute("data-theme") === "dark" ? "◐" : "◑";
+/* ---------- theme: auto day/night via shared engine ---------- */
+KCRTheme.bind($("theme-toggle"));
 
 function tick() {
   $("clock").textContent = new Date().toLocaleTimeString("en-CA", { hour12: false });

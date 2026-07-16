@@ -6,16 +6,13 @@ const $ = (id) => document.getElementById(id);
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const HOME = { lat: 45.9636, lon: -66.6431 };
 
-/* ---------- theme ---------- */
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("kcr-theme", theme);
-  $("theme-toggle").textContent = theme === "dark" ? "◐" : "◑";
-}
-$("theme-toggle").onclick = () =>
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
-$("theme-toggle").textContent =
-  document.documentElement.getAttribute("data-theme") === "dark" ? "◐" : "◑";
+/* ---------- theme: auto day/night via shared engine ---------- */
+KCRTheme.bind($("theme-toggle"), () => { if (window.__lastWeatherState) renderWeather(window.__lastWeatherState); });
+
+const MOOD_FOR = {
+  clear: "sun", clearnight: "sun", partly: "sun",
+  cloudy: "cloud", showers: "rain", rain: "rain", storm: "storm",
+};
 
 /* ---------- clock ---------- */
 function tick() {
@@ -71,11 +68,12 @@ function sceneFor(state) {
         `<path class="bolt" d="M244 44 L232 66 L242 66 L229 92 L254 60 L242 60 L252 44 Z" fill="var(--gold)"/>`;
       break;
   }
-  return { svg, name, night, temp: latest.temperature_c, humidex: latest.humidex };
+  return { svg, name, night, key, temp: latest.temperature_c, humidex: latest.humidex };
 }
 
 /* ---------- weather brain side ---------- */
 function renderWeather(state) {
+  window.__lastWeatherState = state;
   const p = state.prediction || {};
   const alertEl = $("ov-alert");
   alertEl.className = "ov-alert " + ({ normal: "level-normal", advisory: "level-advisory", watch: "level-watch", warning: "level-warning" }[p.level] || "level-normal");
@@ -88,6 +86,7 @@ function renderWeather(state) {
   } else imminent.classList.add("hidden");
 
   const scene = sceneFor(state);
+  KCRTheme.setMood(MOOD_FOR[scene.key] || "clear");
   $("ov-scene").classList.toggle("night", scene.night);
   $("ov-scene-svg").innerHTML = scene.svg;
   $("ov-temp").textContent = scene.temp != null ? Number(scene.temp).toFixed(1) + "°" : "—°";
