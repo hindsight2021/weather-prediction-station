@@ -1,0 +1,155 @@
+/* ==========================================================================
+   iHome Command overview — designed to fill a 9.7" iPad in landscape
+   (1024x768) with zero scrolling. Shares the console design system;
+   this file only adds the fixed overview grid + its components.
+   ========================================================================== */
+
+.ov-body { padding: 0; overflow: hidden; height: 100vh; }
+
+#ov {
+  height: 100vh; max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-rows: 60px 1fr;
+  gap: 10px; padding: 10px 14px 12px;
+}
+
+/* ===== header ===== */
+#ov-head {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--line-soft);
+  border-radius: 14px; padding: 6px 16px; box-shadow: var(--shadow);
+}
+.ov-clockblock { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ov-time { font-size: 30px; font-weight: 600; color: var(--sand); letter-spacing: 1px; }
+.ov-date { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+
+.ov-alert {
+  display: flex; flex-direction: column; justify-content: center;
+  border-left: 3px solid var(--teal); padding: 2px 12px; border-radius: 4px;
+}
+.ov-alert-word { font-size: 19px; font-weight: 700; text-transform: capitalize; line-height: 1.05; }
+.ov-alert.level-normal   { border-left-color: var(--teal); }   .ov-alert.level-normal .ov-alert-word { color: var(--teal); }
+.ov-alert.level-advisory { border-left-color: var(--gold); }   .ov-alert.level-advisory .ov-alert-word { color: var(--gold); }
+.ov-alert.level-watch    { border-left-color: var(--amber); }  .ov-alert.level-watch .ov-alert-word { color: var(--amber); }
+.ov-alert.level-warning  { border-left-color: var(--coral); }  .ov-alert.level-warning .ov-alert-word { color: var(--coral); animation: soft-pulse 1.6s infinite; }
+
+.ov-imminent {
+  display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--coral);
+  border: 1px solid color-mix(in srgb, var(--coral) 40%, transparent);
+  background: color-mix(in srgb, var(--coral) 9%, transparent);
+  border-radius: 999px; padding: 5px 14px; max-width: 330px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.ov-head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.ov-persons { display: flex; gap: 8px; }
+.ov-person {
+  display: flex; align-items: center; gap: 7px; border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 12px 4px 6px; font-size: 12.5px; color: var(--ink-2);
+  background: var(--surface-2);
+}
+.ov-person .p-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--surface-3); }
+.ov-person.home { border-color: color-mix(in srgb, var(--good) 45%, transparent); color: var(--ink); }
+.ov-person.home .p-dot { background: color-mix(in srgb, var(--good) 22%, transparent); }
+.ov-sec, #theme-toggle {
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+  border-radius: 999px; width: 34px; height: 34px; cursor: pointer; font-size: 14px;
+}
+.ov-sec.armed { border-color: var(--good); color: var(--good); box-shadow: 0 0 8px color-mix(in srgb, var(--good) 40%, transparent); }
+
+/* ===== main grid ===== */
+#ov-main {
+  display: grid; grid-template-columns: 292px 1fr 292px; gap: 10px; min-height: 0;
+}
+.ov-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+.ov-col .card { padding: 10px 14px; }
+
+/* left column */
+.ov-hero-mini { position: relative; overflow: hidden; height: 118px; padding: 0 !important; background: var(--hero-sky-day); flex: none; }
+.ov-hero-mini.night { background: var(--hero-sky-night); }
+#ov-scene-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ov-hero-read {
+  position: absolute; left: 12px; bottom: 8px; display: flex; align-items: flex-end; gap: 10px; z-index: 2;
+  text-shadow: 0 1px 8px color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.ov-temp { font-size: 38px; font-weight: 600; line-height: 1; }
+.ov-cond { font-size: 13.5px; font-weight: 600; text-transform: capitalize; display: block; }
+
+.ov-risks { flex: none; }
+.ov-risks .hz-row { grid-template-columns: 64px 1fr 34px; margin-bottom: 7px; margin-top: 2px; }
+.ov-risks .hz-name { font-size: 11.5px; }
+.ov-risks .hz-track { height: 8px; }
+.ov-risks .hz-val { font-size: 12px; }
+
+.ov-outlook { flex: 1; min-height: 0; overflow: hidden; }
+.ov-outlook p {
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-2); margin-top: 6px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden;
+}
+
+.ov-firewx { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; align-items: center; }
+.ov-firewx .fcell { display: flex; flex-direction: column; }
+.ov-firewx .fval { font-family: "IBM Plex Mono", monospace; font-size: 16px; color: var(--sand); font-weight: 600; }
+
+/* center column — the daily portrait is the hero */
+#ov-center { min-width: 0; }
+.ov-portrait {
+  flex: 1; min-height: 0; padding: 0 !important; overflow: hidden; position: relative;
+  border: 1px solid var(--line); display: flex;
+}
+.ov-portrait img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  animation: ov-fadein 1.2s ease;
+}
+@keyframes ov-fadein { from { opacity: 0; transform: scale(1.02); } }
+.ov-portrait figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 16px 10px;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--bg) 82%, transparent), transparent);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ov-portrait-sub { font-size: 13px; color: var(--ink); font-weight: 600; }
+
+.ov-strip { flex: none; }
+.ov-chip-card { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; }
+.ov-chip { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-2); }
+.ov-chip b { font-family: "IBM Plex Mono", monospace; color: var(--sand); font-weight: 600; font-size: 14px; }
+.ov-chip .ci { font-size: 15px; }
+
+/* right column */
+.ov-climate { flex: none; }
+.ov-ac-row { display: grid; grid-template-columns: 54px 1fr auto; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+.ov-ac-row:last-child { border-bottom: 0; }
+.ov-ac-name { font-size: 12.5px; color: var(--ink-2); }
+.ov-ac-state { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-mute); }
+.ov-ac-cur { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--sand); }
+.ov-ac-ctl { display: flex; align-items: center; gap: 6px; }
+.ov-ac-btn {
+  width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--ink); cursor: pointer; font-size: 14px; line-height: 1;
+}
+.ov-ac-btn:active { background: var(--surface-3); }
+.ov-ac-target { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--ink); min-width: 26px; text-align: center; }
+
+.ov-cams { flex: 1; min-height: 0; padding: 8px 10px !important; display: flex; flex-direction: column; gap: 6px; }
+.ov-cam-tabs { display: flex; gap: 6px; }
+.ov-cam-tab {
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-mute);
+  border-radius: 999px; padding: 3px 12px; font-family: "IBM Plex Mono", monospace;
+  font-size: 10px; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase;
+}
+.ov-cam-tab.active { color: var(--ink); border-color: var(--sand); }
+.ov-cam-frame { flex: 1; min-height: 0; border-radius: 9px; overflow: hidden; background: var(--surface-3); }
+.ov-cam-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ov-agenda { flex: none; }
+.ov-event { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 4px 0; align-items: baseline; }
+.ov-event .e-when { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--teal); }
+.ov-event .e-what { font-size: 12.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-empty { font-size: 12px; color: var(--ink-mute); font-style: italic; padding: 4px 0; }
+
+/* smaller landscape tablets / big phones still get everything, just scrollable */
+@media (max-width: 900px) {
+  .ov-body { overflow: auto; height: auto; }
+  #ov { height: auto; }
+  #ov-main { grid-template-columns: 1fr; }
+  .ov-portrait { min-height: 300px; }
+}

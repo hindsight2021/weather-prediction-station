@@ -53,6 +53,52 @@ INPUT_TOPIC_PREFIXES = ("ha_bridge/", "lightning/", "radar/")
 
 FIRE_CACHE_TTL_SECONDS = 600
 
+# ---- Home Assistant bridge for the overview page --------------------------
+# The overview console surfaces HA entities (persons, AC, cameras, calendar)
+# through this backend so the page stays same-origin. Token comes from .env
+# (same one ha-bridge uses); nothing HA-side is exposed beyond the whitelist.
+HA_TOKEN = os.environ.get("HA_TOKEN", "")
+HA_URL = os.environ.get(
+    "HA_HTTP_URL",
+    os.environ.get("HA_WS_URL", "ws://homeassistant.local:8123/api/websocket")
+    .replace("ws://", "http://").replace("wss://", "https://")
+    .replace("/api/websocket", ""),
+)
+
+OVERVIEW_ENTITIES = [
+    "device_tracker.mikes_iphone", "device_tracker.chris_iphone",
+    "climate.main_floor_ac", "climate.bedroom_ac", "climate.basement_ac",
+    "alarm_control_panel.blink_ihomecamera", "input_boolean.enhanced_security",
+    "sensor.mail_amazon_packages_delivered", "sensor.mail_intelcom_delivered",
+    "sensor.mail_canada_post_delivered", "sensor.gas_station_regular_gas",
+    "sensor.speedtest_download", "sensor.speedtest_upload", "sensor.speedtest_ping",
+    "sensor.exchange_rate_1_btc",
+    "sensor.average_main_floor_temp", "sensor.pws_main_floor_humidity",
+    "sensor.average_basement_temp", "sensor.pws_basement_humidity",
+    "sensor.average_bedroom_temperature",
+    "sensor.fredericton_warnings", "sensor.fredericton_watches",
+    "sensor.fredericton_current_condition", "sensor.fredericton_uv_index",
+]
+OVERVIEW_CALENDARS = [
+    "calendar.m_boudreau87_gmail_com", "calendar.mikes_events",
+    "calendar.work3", "calendar.birthdays_2",
+]
+CAMERA_ENTITIES = {
+    "portrait": "camera.weather_gpt_image",
+    "door": "camera.blink_front_door",
+    "drive": "camera.blink_driveway",
+    "yard": "camera.blink_back_door",
+}
+# Only these HA services may be called from the page.
+SERVICE_WHITELIST = {
+    ("climate", "set_temperature"),
+    ("climate", "set_hvac_mode"),
+    ("input_boolean", "toggle"),
+}
+
+_ha_camera_cache: dict[str, tuple[float, bytes, str]] = {}
+_ha_lock = threading.Lock()
+
 app = Flask(__name__, static_folder=None)
 
 _cache: dict[str, object] = {
@@ -244,9 +290,126 @@ def api_fires():
     return jsonify({"error": "fire data unavailable"}), 503
 
 
+def _ha_get(path: str, timeout: float = 12.0):
+    import requests
+
+    return requests.get(
+        f"{HA_URL}{path}",
+        headers={"Authorization": f"Bearer {HA_TOKEN}"},
+        timeout=timeout,
+    )
+
+
+@app.route("/api/ha/overview")
+def api_ha_overview():
+    if not HA_TOKEN:
+        return jsonify({"error": "HA_TOKEN not configured"}), 503
+    try:
+        states = {}
+        response = _ha_get("/api/states")
+        response.raise_for_status()
+        wanted = set(OVERVIEW_ENTITIES)
+        for entity in response.json():
+            if entity["entity_id"] in wanted:
+                states[entity["entity_id"]] = {
+                    "state": entity.get("state"),
+                    "attributes": {
+                        k: v for k, v in (entity.get("attributes") or {}).items()
+                        if k in ("friendly_name", "temperature", "current_temperature",
+                                 "hvac_modes", "unit_of_measurement", "hvac_action")
+                    },
+                }
+
+        events = []
+        start = datetime.now(timezone.utc)
+        end = start + timedelta(days=7)
+        from urllib.parse import quote
+
+        for calendar in OVERVIEW_CALENDARS:
+            try:
+                cal = _ha_get(
+                    f"/api/calendars/{calendar}"
+                    f"?start={quote(start.isoformat())}&end={quote(end.isoformat())}",
+                    timeout=8,
+                )
+                if cal.status_code == 200:
+                    for event in cal.json():
+                        events.append({
+                            "summary": event.get("summary"),
+                            "start": (event.get("start") or {}).get("dateTime")
+                            or (event.get("start") or {}).get("date"),
+                            "all_day": "date" in (event.get("start") or {}),
+                        })
+            except Exception:  # noqa: BLE001 - one broken calendar shouldn't kill the page
+                continue
+        events = sorted((e for e in events if e["start"]), key=lambda e: e["start"])[:6]
+
+        return jsonify({"states": states, "events": events, "cameras": list(CAMERA_ENTITIES)})
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("HA overview fetch failed: %s", exc)
+        return jsonify({"error": str(exc)}), 502
+
+
+@app.route("/api/ha/camera/<name>")
+def api_ha_camera(name: str):
+    entity = CAMERA_ENTITIES.get(name)
+    if entity is None or not HA_TOKEN:
+        return jsonify({"error": "unknown camera"}), 404
+    now = time.monotonic()
+    with _ha_lock:
+        cached = _ha_camera_cache.get(name)
+        if cached and now - cached[0] < 55:
+            return app.response_class(cached[1], mimetype=cached[2])
+    try:
+        response = _ha_get(f"/api/camera_proxy/{entity}", timeout=15)
+        response.raise_for_status()
+        content_type = response.headers.get("Content-Type", "image/jpeg")
+        with _ha_lock:
+            _ha_camera_cache[name] = (now, response.content, content_type)
+        return app.response_class(response.content, mimetype=content_type)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("Camera proxy failed for %s: %s", entity, exc)
+        with _ha_lock:
+            cached = _ha_camera_cache.get(name)
+        if cached:
+            return app.response_class(cached[1], mimetype=cached[2])
+        return jsonify({"error": "camera unavailable"}), 502
+
+
+@app.route("/api/ha/service", methods=["POST"])
+def api_ha_service():
+    from flask import request as flask_request
+
+    if not HA_TOKEN:
+        return jsonify({"error": "HA_TOKEN not configured"}), 503
+    body = flask_request.get_json(silent=True) or {}
+    domain, service = str(body.get("domain", "")), str(body.get("service", ""))
+    if (domain, service) not in SERVICE_WHITELIST:
+        return jsonify({"error": "service not allowed"}), 403
+    try:
+        import requests
+
+        response = requests.post(
+            f"{HA_URL}/api/services/{domain}/{service}",
+            headers={"Authorization": f"Bearer {HA_TOKEN}"},
+            json=body.get("data") or {},
+            timeout=12,
+        )
+        response.raise_for_status()
+        return jsonify({"ok": True})
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("HA service call failed: %s", exc)
+        return jsonify({"error": str(exc)}), 502
+
+
 @app.route("/")
 def index():
     return send_from_directory(STATIC_DIR, "index.html")
+
+
+@app.route("/overview")
+def overview():
+    return send_from_directory(STATIC_DIR, "overview.html")
 
 
 @app.route("/fire")

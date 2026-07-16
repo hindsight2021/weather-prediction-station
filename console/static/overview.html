@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iHome Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/console.css">
+<link rel="stylesheet" href="/static/overview.css">
+<script>
+  (function () {
+    var saved = localStorage.getItem("kcr-theme");
+    var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body class="ov-body">
+<div id="ov">
+
+  <!-- ===== header strip ===== -->
+  <header id="ov-head">
+    <div class="ov-clockblock">
+      <span id="ov-time" class="ov-time mono">—:—</span>
+      <span id="ov-date" class="ov-date">—</span>
+    </div>
+    <div id="ov-alert" class="ov-alert level-normal">
+      <span class="micro">WEATHER BRAIN</span>
+      <span id="ov-alert-word" class="ov-alert-word">standby</span>
+    </div>
+    <div id="ov-imminent" class="ov-imminent hidden">
+      <span class="imm-dot"></span><span id="ov-imminent-text"></span>
+    </div>
+    <div class="ov-head-right">
+      <div id="ov-persons" class="ov-persons"></div>
+      <button id="ov-security" class="ov-sec" title="Enhanced security">🔒</button>
+      <button id="theme-toggle" title="Theme">◐</button>
+    </div>
+  </header>
+
+  <!-- ===== main grid ===== -->
+  <main id="ov-main">
+
+    <!-- left: weather brain -->
+    <section class="ov-col" id="ov-left">
+      <div class="card ov-hero-mini" id="ov-scene">
+        <svg id="ov-scene-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"></svg>
+        <div class="ov-hero-read">
+          <span id="ov-temp" class="ov-temp mono">—°</span>
+          <div>
+            <span id="ov-cond" class="ov-cond">standby</span>
+            <span id="ov-cond-sub" class="micro"></span>
+          </div>
+        </div>
+      </div>
+      <div class="card ov-risks">
+        <span class="micro">HAZARDS · NEXT 24 H</span>
+        <div id="ov-risk-bars"></div>
+      </div>
+      <div class="card ov-outlook">
+        <span class="micro">OUTLOOK · AI ANALYSIS <span id="ov-outlook-when"></span></span>
+        <p id="ov-outlook-text">Daily briefing pending.</p>
+      </div>
+      <div class="card ov-firewx" id="ov-firewx"></div>
+    </section>
+
+    <!-- center: daily portrait + weather strip -->
+    <section class="ov-col" id="ov-center">
+      <figure class="card ov-portrait">
+        <img id="ov-portrait-img" src="/api/ha/camera/portrait" alt="Daily AI weather portrait">
+        <figcaption>
+          <span class="micro">TODAY'S WEATHER · MIKE &amp; CHRIS</span>
+          <span id="ov-portrait-sub" class="ov-portrait-sub">AI-generated daily portrait</span>
+        </figcaption>
+      </figure>
+      <div class="ov-strip">
+        <div class="card ov-chip-card" id="ov-envchips"></div>
+      </div>
+    </section>
+
+    <!-- right: house -->
+    <section class="ov-col" id="ov-right">
+      <div class="card ov-climate">
+        <span class="micro">CLIMATE</span>
+        <div id="ov-ac"></div>
+      </div>
+      <div class="card ov-cams">
+        <div class="ov-cam-tabs" id="ov-cam-tabs"></div>
+        <div class="ov-cam-frame"><img id="ov-cam-img" src="" alt="camera"></div>
+      </div>
+      <div class="card ov-agenda">
+        <span class="micro">AGENDA</span>
+        <div id="ov-events"></div>
+      </div>
+      <div class="card ov-chip-card" id="ov-housechips"></div>
+    </section>
+  </main>
+</div>
+<script src="/static/overview.js"></script>
+</body>
+</html>
