@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NB Fire Warden Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/console.css">
+<script>
+  (function () {
+    var saved = localStorage.getItem("kcr-theme");
+    var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body>
+<div id="fire-frame">
+
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-dot" style="background: var(--coral); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--coral) 45%, transparent);"></span>
+      <div>
+        <h1>NB Fire Warden Console</h1>
+        <span class="brand-sub">provincial wildfire tracking &middot; GNB ERD live feeds</span>
+      </div>
+    </div>
+    <div class="top-right">
+      <a class="chip" href="/">🌦 WEATHER</a>
+      <div class="clock-cell"><span class="micro">LOCAL</span><span id="clock" class="mono">—:—:—</span></div>
+      <div id="link-chip" class="chip chip-down"><span class="chip-dot"></span><span id="link-label">FEED</span></div>
+      <button id="theme-toggle" title="Toggle light/dark">◐</button>
+    </div>
+  </header>
+
+  <!-- province-wide status banner -->
+  <div id="fire-banner" class="fire-banner fb-green">
+    <span class="fb-flame">🔥</span>
+    <div style="flex:1; min-width: 200px;">
+      <span class="micro">YORK COUNTY BURN STATUS</span>
+      <div id="fb-word" class="fb-word">—</div>
+      <span id="fb-sub" class="fb-sub">awaiting feed…</span>
+    </div>
+    <div style="display:flex; gap:18px; flex-wrap:wrap;">
+      <div><span class="micro">ACTIVE FIRES · NB</span><div id="fb-count" class="fb-word" style="font-size:30px">—</div></div>
+      <div><span class="micro">NEAREST ACTIVE</span><div id="fb-nearest" class="fb-word" style="font-size:30px">—</div></div>
+      <div><span class="micro">AQHI NOW</span><div id="fb-aqhi" class="fb-word" style="font-size:30px">—</div></div>
+    </div>
+  </div>
+
+  <div id="fire-main">
+    <!-- own SVG map — no third-party embeds -->
+    <div id="fire-map-card" class="card panel">
+      <h2><span class="tick t-coral"></span>Province map <span class="h-side">county burn categories &middot; active incidents</span></h2>
+      <svg id="nb-map" viewBox="0 0 640 560" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="map-legend">
+        <span class="chip-l"><span class="dot" style="background: color-mix(in srgb, var(--coral) 55%, transparent)"></span>NO BURNING</span>
+        <span class="chip-l"><span class="dot" style="background: color-mix(in srgb, var(--gold) 55%, transparent)"></span>EVENING ONLY</span>
+        <span class="chip-l"><span class="dot" style="background: color-mix(in srgb, var(--good) 50%, transparent)"></span>PERMITTED</span>
+        <span class="chip-l"><span class="dot" style="background: var(--coral)"></span>OUT OF CONTROL</span>
+        <span class="chip-l"><span class="dot" style="background: var(--gold)"></span>BEING HELD</span>
+        <span class="chip-l"><span class="dot" style="background: var(--blue)"></span>UNDER CONTROL</span>
+        <span class="chip-l"><span class="dot" style="background: var(--ink-mute)"></span>EXTINGUISHED</span>
+        <span class="chip-l">★ HOME</span>
+      </div>
+    </div>
+
+    <div id="fire-side">
+      <div class="card panel">
+        <h2><span class="tick t-amber"></span>Incident log <span class="h-side">sorted by distance</span></h2>
+        <div id="fire-list" class="fire-list"></div>
+      </div>
+      <div class="card panel">
+        <h2><span class="tick t-gold"></span>Smoke &amp; air</h2>
+        <div class="fire-strip" id="fire-air"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="foot">GNB ERD BURN CATEGORIES + FIRE LOCATIONS · REFRESH 5 MIN · <span id="last-update">—</span></footer>
+</div>
+<script src="/static/fire.js"></script>
+</body>
+</html>

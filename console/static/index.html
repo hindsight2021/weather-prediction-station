@@ -2,11 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kingsclear Atmospheric Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/console.css">
+<script>
+  // Apply saved/preferred theme before first paint to avoid a flash.
+  (function () {
+    var saved = localStorage.getItem("kcr-theme");
+    var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
 </head>
 <body>
 <div id="frame">
@@ -16,50 +24,96 @@
       <span class="brand-dot"></span>
       <div>
         <h1>Kingsclear Atmospheric Intelligence</h1>
-        <span class="brand-sub">weather brain &middot; local prediction engine</span>
+        <span class="brand-sub">weather brain &middot; local ML prediction engine</span>
       </div>
     </div>
     <div class="top-right">
+      <a class="chip" href="/fire">🔥 FIRE WARDEN</a>
       <div class="clock-cell"><span class="micro">LOCAL</span><span id="clock" class="mono">—:—:—</span></div>
       <div class="clock-cell"><span class="micro">UTC</span><span id="clock-utc" class="mono">—:—:—</span></div>
       <div id="link-chip" class="chip chip-down"><span class="chip-dot"></span><span id="link-label">LINK</span></div>
+      <button id="theme-toggle" title="Toggle light/dark">◐</button>
     </div>
   </header>
 
-  <!-- status row -->
-  <section id="status-row">
-    <div id="alert-card" class="card level-normal">
-      <span class="micro">ALERT STATUS</span>
-      <span id="alert-level" class="alert-word">standby</span>
-      <span id="official-alert" class="official">—</span>
+  <!-- hero row: animated scene | alert + confidence | analysis -->
+  <section id="hero-row">
+    <div id="hero-scene">
+      <svg id="hero-svg" viewBox="0 0 400 210" preserveAspectRatio="xMidYMid slice"></svg>
+      <div class="hero-readout">
+        <div class="hero-temp"><span id="hero-temp">—</span><span class="unit">°C</span></div>
+        <div class="hero-cond">
+          <span id="hero-cond-name" class="cond-name">standby</span>
+          <span id="hero-cond-sub" class="cond-sub">awaiting telemetry</span>
+        </div>
+      </div>
+      <div class="hero-chips" id="hero-chips"></div>
     </div>
-    <div class="card gauge-card">
-      <span class="micro">CONFIDENCE</span>
-      <div class="gauge-wrap">
-        <svg id="confidence-gauge" viewBox="0 0 120 120"></svg>
-        <span id="confidence" class="gauge-num mono">—</span>
+
+    <div id="status-col">
+      <div id="alert-card" class="card level-normal">
+        <span class="micro">ALERT STATUS</span>
+        <span id="alert-level" class="alert-word">standby</span>
+        <span id="official-alert" class="official">—</span>
+      </div>
+      <div class="card gauge-card">
+        <div class="gauge-wrap">
+          <svg id="confidence-gauge" viewBox="0 0 120 120"></svg>
+          <span id="confidence" class="gauge-num mono">—</span>
+        </div>
+        <div class="gauge-side">
+          <span class="micro">MODEL CONFIDENCE</span>
+          <span id="confidence-desc" class="desc">Input availability, corroborating sources and history depth.</span>
+        </div>
       </div>
     </div>
-    <div class="card grow">
-      <span class="micro">ANALYSIS</span>
+
+    <div id="analysis-card" class="card">
+      <span class="micro">MODEL ANALYSIS</span>
       <p id="explanation" class="analysis">Awaiting telemetry…</p>
       <div id="imminent" class="imminent hidden">
-        <span class="imm-dot"></span>
-        <span id="imminent-text"></span>
-        <span id="imminent-eta" class="mono"></span>
+        <div class="imm-ring"><svg id="imm-svg" viewBox="0 0 40 40"></svg><span id="imm-min" class="imm-min"></span></div>
+        <span id="imminent-text" class="imm-text"></span>
       </div>
+      <div id="ml-line" class="ml-line"></div>
     </div>
   </section>
 
   <!-- sensors -->
   <section class="card panel">
-    <h2><span class="tick t-sand"></span>Current conditions</h2>
+    <h2><span class="tick t-sand"></span>Current conditions <span class="h-side">live station telemetry</span></h2>
     <div class="env-grid" id="env-grid"></div>
+  </section>
+
+  <!-- instruments: wind compass + daylight arc -->
+  <section class="dual-row">
+    <div class="card panel">
+      <h2><span class="tick t-olive"></span>Wind</h2>
+      <div class="instrument">
+        <svg id="compass" viewBox="0 0 130 130" width="130" height="130"></svg>
+        <div class="inst-side">
+          <span class="micro">DIRECTION</span>
+          <span id="wind-dir" class="inst-big">—</span>
+          <span id="wind-detail" class="inst-sub">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="card panel">
+      <h2><span class="tick t-gold"></span>Daylight</h2>
+      <div class="instrument">
+        <svg id="daylight" viewBox="0 0 170 100" width="170" height="100"></svg>
+        <div class="inst-side">
+          <span class="micro">SUN</span>
+          <span id="sun-times" class="inst-big" style="font-size:16px">—</span>
+          <span id="sun-detail" class="inst-sub">—</span>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- hazards -->
   <section class="card panel">
-    <h2><span class="tick t-amber"></span>Hazard analysis</h2>
+    <h2><span class="tick t-amber"></span>Hazard analysis <span class="h-side">ML + rule ensemble</span></h2>
     <div class="hazard-cols">
       <div class="hazard-col">
         <h3 class="micro">NEXT HOUR</h3>
@@ -70,6 +124,18 @@
         <div id="hazards-24h"></div>
       </div>
     </div>
+  </section>
+
+  <!-- strategic outlook -->
+  <section class="card panel">
+    <h2><span class="tick t-blue"></span>Strategic outlook <span class="h-side">48–72 h model horizon</span></h2>
+    <div class="outlook-grid" id="outlook-grid"></div>
+  </section>
+
+  <!-- fire & air -->
+  <section class="card panel">
+    <h2><span class="tick t-coral"></span>Fire &amp; air <span class="h-side">wildfire · smoke · AQHI</span></h2>
+    <div class="fire-strip" id="fire-strip"></div>
   </section>
 
   <!-- telemetry -->
@@ -91,18 +157,18 @@
 
   <!-- AI forecast -->
   <section class="card panel">
-    <h2><span class="tick t-teal"></span>Long-range outlook <span class="h-side">24–72 h &middot; AI analysis</span></h2>
+    <h2><span class="tick t-teal"></span>Long-range outlook <span class="h-side">24–72 h &middot; generated from the model's own data</span></h2>
     <div id="forecast-meta" class="micro forecast-meta">no analysis on file — daily briefing pending</div>
     <div id="forecast-text" class="forecast-text"></div>
   </section>
 
   <!-- verification -->
   <section class="card panel">
-    <h2><span class="tick t-coral"></span>Forecast verification <span class="h-side">rolling 30 days</span></h2>
+    <h2><span class="tick t-coral"></span>Forecast verification <span class="h-side">rolling 30 days &middot; brier / pod / far</span></h2>
     <div id="verify-body" class="verify-body">Calibration in progress.</div>
   </section>
 
-  <footer id="foot" class="micro">KCR WEATHER BRAIN · REFRESH 30 S · <span id="last-update">—</span></footer>
+  <footer id="foot">KCR WEATHER BRAIN · REFRESH 30 S · <span id="last-update">—</span></footer>
 </div>
 <script src="/static/console.js"></script>
 </body>

@@ -30,6 +30,8 @@ def publish_discovery(client: WeatherMqttClient, settings: MqttSettings) -> None
         "aqhi_current": {"name": "Weather Brain AQHI Current", "unit": "AQHI", "icon": "mdi:air-filter"},
         "aqhi_forecast_max_24h": {"name": "Weather Brain AQHI Forecast 24h", "unit": "AQHI", "icon": "mdi:air-filter"},
         "active_fires_nearby": {"name": "Weather Brain Active Fires Within 150 km", "unit": "fires", "icon": "mdi:fire-alert"},
+        "nearest_fire_km": {"name": "Weather Brain Nearest Active Fire", "unit": "km", "icon": "mdi:map-marker-distance"},
+        "nb_burn_category": {"name": "Weather Brain NB Burn Category", "unit": "", "icon": "mdi:campfire"},
     }
 
     for key, meta in sensors.items():
