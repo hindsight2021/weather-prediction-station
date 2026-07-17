@@ -77,6 +77,7 @@ OVERVIEW_ENTITIES = [
     "sensor.average_basement_temp", "sensor.pws_basement_humidity",
     "sensor.average_bedroom_temperature",
     "sensor.fredericton_warnings", "sensor.fredericton_watches",
+    "sensor.fredericton_statements", "sensor.fredericton_summary",
     "sensor.fredericton_current_condition", "sensor.fredericton_uv_index",
 ]
 OVERVIEW_CALENDARS = [
@@ -86,6 +87,7 @@ OVERVIEW_CALENDARS = [
 CAMERA_ENTITIES = {
     "portrait": "camera.weather_gpt_image",
     "door": "camera.blink_front_door",
+    "bell": "camera.front_door",  # Blink doorbell
     "drive": "camera.blink_driveway",
     "yard": "camera.blink_back_door",
 }

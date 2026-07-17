@@ -106,13 +106,7 @@ function renderWeather(state) {
       `<span class="hz-val">${value}</span></div>`;
   }).join("");
 
-  const ai = state.ai_forecast;
-  if (ai?.forecast) {
-    const text = ai.forecast.replace(/^SYNOPSIS:\s*/i, "").split(/\n\nNEXT 24H:/i)[0];
-    $("ov-outlook-text").textContent = text;
-    if (ai.generated_at)
-      $("ov-outlook-when").textContent = "· " + new Date(ai.generated_at).toLocaleTimeString("en-CA", { hour: "2-digit", minute: "2-digit", hour12: false });
-  }
+  renderOutlook();
 
   const burn = { no_burn: ["NO BURNING", "var(--coral)"], restricted_20h_to_08h: ["EVE BURNS", "var(--gold)"], burn_permitted: ["BURN OK", "var(--good)"] }[p.nb_burn_status] || ["—", "var(--ink-mute)"];
   const aqhi = p.aqhi_current;
@@ -136,6 +130,21 @@ function renderWeather(state) {
     `<span class="ov-chip"><span class="ci">${icon}</span><span class="micro">${label}</span><b>${value}</b></span>`).join("");
 }
 
+/* Forecast text panel prefers the EC summary (same source as Weather
+   Command V2); the AI briefing is the fallback when EC is unavailable. */
+function renderOutlook() {
+  const summary = haData?.states?.["sensor.fredericton_summary"]?.state;
+  const ai = window.__lastWeatherState?.ai_forecast;
+  if (summary && summary !== "unknown" && summary !== "unavailable") {
+    $("ov-outlook-text").textContent = summary;
+    $("ov-outlook-when").textContent = "";
+  } else if (ai?.forecast) {
+    $("ov-outlook-text").textContent = ai.forecast;
+    if (ai.generated_at)
+      $("ov-outlook-when").textContent = "· AI " + new Date(ai.generated_at).toLocaleTimeString("en-CA", { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+}
+
 /* ---------- HA side ---------- */
 let haData = null;
 const st = (entity) => haData?.states?.[entity]?.state;
@@ -143,6 +152,9 @@ const attr = (entity, name) => haData?.states?.[entity]?.attributes?.[name];
 
 function renderHa() {
   if (!haData) return;
+  renderOutlook();
+  checkEvents();
+  if ($("ov-thermo")?.classList.contains("open")) renderThermostat();
   // persons
   const persons = [
     ["Mike", "🤠", st("device_tracker.mikes_iphone")],
@@ -174,14 +186,16 @@ function renderHa() {
     const target = attr(entity, "temperature");
     const room = st(roomSensor);
     return `<div class="ov-ac-row">
-      <div><div class="ov-ac-name">${name}</div><div class="ov-ac-state">${mode}</div></div>
-      <div class="ov-ac-cur">${room && room !== "unknown" && room !== "unavailable" ? Number(room).toFixed(1) + "°" : "—"}</div>
+      <div class="ov-ac-open" data-open="${entity}"><div class="ov-ac-name">${name}</div><div class="ov-ac-state">${mode}</div></div>
+      <div class="ov-ac-cur ov-ac-open" data-open="${entity}">${room && room !== "unknown" && room !== "unavailable" ? Number(room).toFixed(1) + "°" : "—"}</div>
       <div class="ov-ac-ctl">
         <button class="ov-ac-btn" data-e="${entity}" data-d="-1">−</button>
         <span class="ov-ac-target">${target != null ? Math.round(target) : "—"}</span>
         <button class="ov-ac-btn" data-e="${entity}" data-d="1">+</button>
       </div></div>`;
   }).join("");
+  for (const opener of document.querySelectorAll(".ov-ac-open"))
+    opener.onclick = () => openThermostat(opener.dataset.open);
   for (const btn of document.querySelectorAll(".ov-ac-btn")) {
     btn.onclick = async () => {
       const entity = btn.dataset.e;
@@ -221,7 +235,7 @@ function renderHa() {
 }
 
 /* ---------- cameras ---------- */
-const CAMS = [["door", "Door"], ["drive", "Drive"], ["yard", "Yard"]];
+const CAMS = [["door", "Door"], ["bell", "Bell"], ["drive", "Drive"], ["yard", "Yard"]];
 let activeCam = 0, camAuto = true;
 function renderCamTabs() {
   $("ov-cam-tabs").innerHTML = CAMS.map(([key, label], index) =>
@@ -243,6 +257,7 @@ async function refreshWeather() {
   try {
     const state = await (await fetch("/api/state")).json();
     renderWeather(state);
+    checkWeatherEvents(state);
   } catch { /* keep last render */ }
 }
 async function refreshHa() {
@@ -251,6 +266,143 @@ async function refreshHa() {
     if (!data.error) { haData = data; renderHa(); }
   } catch { /* keep last render */ }
 }
+/* ---------- lightbox: tap any camera/portrait to enlarge ---------- */
+function openLightbox(src, caption) {
+  let box = $("ov-lightbox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "ov-lightbox";
+    box.innerHTML = `<img alt=""><span class="lb-cap micro"></span>`;
+    box.onclick = () => box.classList.remove("open");
+    document.body.appendChild(box);
+  }
+  box.querySelector("img").src = src;
+  box.querySelector(".lb-cap").textContent = caption || "";
+  box.classList.add("open");
+}
+$("ov-cam-img").onclick = () =>
+  openLightbox(`/api/ha/camera/${CAMS[activeCam][0]}?t=${Date.now()}`, CAMS[activeCam][1].toUpperCase() + " CAMERA — TAP TO CLOSE");
+$("ov-portrait-img").onclick = () =>
+  openLightbox(`/api/ha/camera/portrait?t=${Date.now()}`, "TODAY'S WEATHER · MIKE & CHRIS — TAP TO CLOSE");
+
+/* ---------- thermostat modal: tap a climate row to edit fully ---------- */
+const AC_UNITS = {
+  "climate.main_floor_ac": "Main Floor", "climate.bedroom_ac": "Bedroom", "climate.basement_ac": "Basement",
+};
+function openThermostat(entity) {
+  let modal = $("ov-thermo");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "ov-thermo";
+    modal.innerHTML = `<div class="th-card card">
+      <div class="th-head"><span id="th-name"></span><button id="th-close">✕</button></div>
+      <div class="th-temp-row">
+        <button class="th-big-btn" id="th-down">−</button>
+        <div class="th-target"><span id="th-target" class="mono">—</span><span class="micro">TARGET °C</span></div>
+        <button class="th-big-btn" id="th-up">+</button>
+      </div>
+      <div class="th-current micro">ROOM <span id="th-room" class="mono"></span></div>
+      <div class="th-modes" id="th-modes"></div>
+    </div>`;
+    modal.onclick = (ev) => { if (ev.target === modal) modal.classList.remove("open"); };
+    document.body.appendChild(modal);
+    modal.querySelector("#th-close").onclick = () => modal.classList.remove("open");
+  }
+  modal.dataset.entity = entity;
+  renderThermostat();
+  modal.classList.add("open");
+}
+function renderThermostat() {
+  const modal = $("ov-thermo");
+  if (!modal || !modal.classList.contains("open") && !modal.dataset.entity) return;
+  const entity = modal.dataset.entity;
+  const target = attr(entity, "temperature");
+  const room = attr(entity, "current_temperature");
+  const mode = st(entity);
+  modal.querySelector("#th-name").textContent = AC_UNITS[entity] || entity;
+  modal.querySelector("#th-target").textContent = target != null ? Math.round(target) : "—";
+  modal.querySelector("#th-room").textContent = room != null ? Number(room).toFixed(1) + "°" : "—";
+  const modes = attr(entity, "hvac_modes") || ["auto", "cool", "heat", "fan_only", "dry", "off"];
+  modal.querySelector("#th-modes").innerHTML = modes.map((m) =>
+    `<button class="th-mode ${m === mode ? "active" : ""}" data-m="${m}">${m.replace("_", " ")}</button>`).join("");
+  for (const btn of modal.querySelectorAll(".th-mode"))
+    btn.onclick = async () => {
+      await fetch("/api/ha/service", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "climate", service: "set_hvac_mode", data: { entity_id: entity, hvac_mode: btn.dataset.m } }) });
+      setTimeout(async () => { await refreshHa(); renderThermostat(); }, 900);
+    };
+  const bump = (delta) => async () => {
+    const current = attr(entity, "temperature");
+    if (current == null) return;
+    await fetch("/api/ha/service", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: "climate", service: "set_temperature", data: { entity_id: entity, temperature: Math.round(current) + delta } }) });
+    setTimeout(async () => { await refreshHa(); renderThermostat(); }, 900);
+  };
+  modal.querySelector("#th-up").onclick = bump(1);
+  modal.querySelector("#th-down").onclick = bump(-1);
+}
+
+/* ---------- event pop-ups: prominent, auto-dismiss, tap to close ---------- */
+const POPUP_TTL_MS = 180000; // 3 minutes
+function showPopup({ icon, title, body, tone }) {
+  let host = $("ov-popups");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "ov-popups";
+    document.body.appendChild(host);
+  }
+  const el = document.createElement("div");
+  el.className = `ov-popup tone-${tone || "info"}`;
+  el.innerHTML = `<span class="pp-icon">${icon}</span><div class="pp-text"><b>${title}</b><span>${body || ""}</span></div>`;
+  el.onclick = () => el.remove();
+  host.prepend(el);
+  while (host.children.length > 3) host.lastChild.remove();
+  setTimeout(() => el.remove(), POPUP_TTL_MS);
+}
+
+const prevEvents = {};
+function watchNumeric(entity, makePopup) {
+  const raw = st(entity);
+  const value = raw == null || raw === "unknown" || raw === "unavailable" ? null : Number(raw);
+  const previous = prevEvents[entity];
+  prevEvents[entity] = value;
+  if (previous != null && value != null && value > previous) makePopup(value);
+}
+function watchString(entity_or_key, value, makePopup) {
+  const previous = prevEvents[entity_or_key];
+  prevEvents[entity_or_key] = value;
+  if (previous !== undefined && value !== previous && value) makePopup(value);
+}
+
+function checkEvents() {
+  // Environment Canada products
+  watchNumeric("sensor.fredericton_warnings", () =>
+    showPopup({ icon: "🚨", title: "Environment Canada WARNING", body: st("sensor.fredericton_summary") || "A weather warning is in effect for Fredericton.", tone: "danger" }));
+  watchNumeric("sensor.fredericton_watches", () =>
+    showPopup({ icon: "⚠️", title: "Environment Canada WATCH", body: st("sensor.fredericton_summary") || "A weather watch is in effect.", tone: "warn" }));
+  watchNumeric("sensor.fredericton_statements", () =>
+    showPopup({ icon: "📋", title: "EC Special Weather Statement", body: st("sensor.fredericton_summary") || "", tone: "info" }));
+  // Mail & packages
+  const carriers = [["sensor.mail_amazon_packages_delivered", "Amazon"], ["sensor.mail_intelcom_delivered", "Intelcom"], ["sensor.mail_canada_post_delivered", "Canada Post"]];
+  for (const [entity, name] of carriers)
+    watchNumeric(entity, () => showPopup({ icon: "📦", title: `${name} delivery`, body: "A package was just delivered.", tone: "good" }));
+  // Presence
+  for (const [entity, who] of [["device_tracker.mikes_iphone", "Mike"], ["device_tracker.chris_iphone", "Chris"]])
+    watchString(entity, st(entity), (value) => {
+      if (value === "home") showPopup({ icon: "🏠", title: `${who} is home`, body: "", tone: "good" });
+    });
+}
+function checkWeatherEvents(state) {
+  const p = state.prediction || {};
+  watchString("wb_level", p.level, (level) => {
+    if (level === "warning") showPopup({ icon: "🌩", title: "Weather Brain WARNING", body: p.explanation || "", tone: "danger" });
+    else if (level === "watch") showPopup({ icon: "🌦", title: "Weather Brain watch", body: p.explanation || "", tone: "warn" });
+  });
+  watchString("wb_imminent", p.imminent_event !== "none" ? p.imminent_summary : "", (summary) => {
+    if (summary) showPopup({ icon: "⏱", title: "Imminent weather", body: summary, tone: "warn" });
+  });
+}
+
 refreshWeather(); refreshHa(); showCam();
 setInterval(refreshWeather, 30000);
 setInterval(refreshHa, 60000);

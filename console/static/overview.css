@@ -80,11 +80,15 @@
 .ov-risks .hz-track { height: 8px; }
 .ov-risks .hz-val { font-size: 12px; }
 
-.ov-outlook { flex: 1; min-height: 0; overflow: hidden; }
+.ov-outlook { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .ov-outlook p {
-  font-size: 12.5px; line-height: 1.5; color: var(--ink-2); margin-top: 6px;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden;
+  font-size: 12.5px; line-height: 1.55; color: var(--ink-2); margin-top: 6px;
+  flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
+.ov-outlook p::-webkit-scrollbar { width: 5px; }
+.ov-outlook p::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 
 .ov-firewx { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; align-items: center; }
 .ov-firewx .fcell { display: flex; flex-direction: column; }
@@ -121,6 +125,8 @@
 .ov-ac-name { font-size: 12.5px; color: var(--ink-2); }
 .ov-ac-state { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-mute); }
 .ov-ac-cur { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--sand); }
+.ov-ac-open { cursor: pointer; border-radius: 6px; transition: background .15s; }
+.ov-ac-open:active { background: var(--surface-3); }
 .ov-ac-ctl { display: flex; align-items: center; gap: 6px; }
 .ov-ac-btn {
   width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line);
@@ -138,13 +144,67 @@
 }
 .ov-cam-tab.active { color: var(--ink); border-color: var(--sand); }
 .ov-cam-frame { flex: 1; min-height: 0; border-radius: 9px; overflow: hidden; background: var(--surface-3); }
-.ov-cam-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ov-cam-frame img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+.ov-portrait img { cursor: zoom-in; }
 
 .ov-agenda { flex: none; }
 .ov-event { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 4px 0; align-items: baseline; }
 .ov-event .e-when { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--teal); }
 .ov-event .e-what { font-size: 12.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ov-empty { font-size: 12px; color: var(--ink-mute); font-style: italic; padding: 4px 0; }
+
+/* ===== lightbox (tap a camera/portrait to enlarge) ===== */
+#ov-lightbox {
+  position: fixed; inset: 0; z-index: 60; display: none;
+  align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(6px); cursor: zoom-out; padding: 3vh 3vw;
+}
+#ov-lightbox.open { display: flex; animation: ov-fadein .25s ease; }
+#ov-lightbox img { max-width: 94vw; max-height: 84vh; object-fit: contain; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+#ov-lightbox .lb-cap { color: var(--ink-2); }
+
+/* ===== thermostat modal ===== */
+#ov-thermo {
+  position: fixed; inset: 0; z-index: 60; display: none;
+  align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(6px);
+}
+#ov-thermo.open { display: flex; animation: ov-fadein .22s ease; }
+#ov-thermo .th-card { width: min(360px, 92vw); padding: 20px 22px !important; }
+.th-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+#th-name { font-size: 18px; font-weight: 600; }
+#th-close { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; }
+.th-temp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.th-big-btn { width: 58px; height: 58px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 28px; cursor: pointer; line-height: 1; }
+.th-big-btn:active { background: var(--surface-3); }
+.th-target { display: flex; flex-direction: column; align-items: center; }
+#th-target { font-size: 46px; font-weight: 700; color: var(--sand); line-height: 1; }
+.th-current { text-align: center; color: var(--ink-mute); margin-bottom: 16px; }
+.th-current .mono { color: var(--ink-2); }
+.th-modes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.th-mode { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 7px 15px; font-size: 12.5px; cursor: pointer; text-transform: capitalize; }
+.th-mode.active { color: var(--bg); background: var(--sand); border-color: var(--sand); font-weight: 600; }
+
+/* ===== event pop-ups ===== */
+#ov-popups { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 70; display: flex; flex-direction: column; gap: 10px; width: min(560px, 94vw); }
+.ov-popup {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; cursor: pointer;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--surface);
+  box-shadow: var(--shadow); animation: pp-drop .4s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pp-drop { from { transform: translateY(-24px); opacity: 0; } }
+.ov-popup .pp-icon { font-size: 30px; flex: none; }
+.ov-popup .pp-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ov-popup .pp-text b { font-size: 15px; }
+.ov-popup .pp-text span { font-size: 12.5px; color: var(--ink-2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.ov-popup.tone-danger { border-color: color-mix(in srgb, var(--coral) 55%, transparent); background: color-mix(in srgb, var(--coral) 12%, var(--surface)); }
+.ov-popup.tone-danger b { color: var(--coral); }
+.ov-popup.tone-warn { border-color: color-mix(in srgb, var(--gold) 55%, transparent); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); }
+.ov-popup.tone-warn b { color: var(--gold); }
+.ov-popup.tone-good { border-color: color-mix(in srgb, var(--good) 50%, transparent); background: color-mix(in srgb, var(--good) 11%, var(--surface)); }
+.ov-popup.tone-good b { color: var(--good); }
+:root[data-theme="dark"] .ov-popup { text-shadow: 0 0 14px color-mix(in srgb, currentColor 30%, transparent); }
 
 /* smaller landscape tablets / big phones still get everything, just scrollable */
 @media (max-width: 900px) {
