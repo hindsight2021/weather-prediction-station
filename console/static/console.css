@@ -93,29 +93,60 @@
   --rainbow: none;
 }
 
-/* daytime weather moods: the whole page warms/cools with the forecast */
+/* Daytime weather moods: the whole page takes on the day's forecast colour.
+   Surfaces stay light and legible; the background and its glows carry the hue,
+   distinctly per condition (sun=gold, rain=blue, snow=white, cloud=grey,
+   storm/lightning=indigo, fog=lavender-grey, wind=teal). */
 :root[data-theme="light"][data-mood="sun"] {
-  --bg: #efe4cd; --bg-glow-a: #ffd98a88; --bg-glow-b: #ffe9bd66;
-  --hero-sky-day: linear-gradient(160deg, #8fd0ee 0%, #fdeeC9 80%);
+  --bg: #f7e2a8; --bg-glow-a: #ffcb45cc; --bg-glow-b: #ffe58aaa;
+  --surface: #fbf3dc; --surface-2: #f4e8c6; --surface-3: #eeddb2;
+  --line: #dcc386; --line-soft: #e6d3a0; --sand: #9a6b12; --gold: #8a6a04;
+  --hero-sky-day: linear-gradient(160deg, #63bdec 0%, #ffe7a6 82%);
 }
 :root[data-theme="light"][data-mood="rain"] {
-  --bg: #e2e8e6; --bg-glow-a: #a9cfe388; --bg-glow-b: #c2ded766;
-  --surface: #eef3f0; --surface-2: #e2eae6; --line: #c2d0cb; --line-soft: #d0dcd7;
-  --hero-sky-day: linear-gradient(160deg, #9dbfd4 0%, #e3ebe6 78%);
+  --bg: #bcd8ef; --bg-glow-a: #4d9de0cc; --bg-glow-b: #86bce6aa;
+  --surface: #e6f0fa; --surface-2: #d6e6f5; --surface-3: #c8dcf0;
+  --line: #a6c4e0; --line-soft: #bbd2ea; --ink-2: #3f5a72; --sand: #1e5a94;
+  --hero-sky-day: linear-gradient(160deg, #5a90bf 0%, #cfe0ef 80%);
 }
 :root[data-theme="light"][data-mood="storm"] {
-  --bg: #e0dde6; --bg-glow-a: #b9a9e088; --bg-glow-b: #cdc2e066;
-  --surface: #edeaf2; --surface-2: #e1dde9; --line: #c8c1d6; --line-soft: #d6d0e1;
-  --hero-sky-day: linear-gradient(160deg, #8f8fb8 0%, #e4e0ea 80%);
+  --bg: #c6c0ea; --bg-glow-a: #6a5adfcc; --bg-glow-b: #9a86e6aa;
+  --surface: #ece8fa; --surface-2: #ddd6f4; --surface-3: #cec4ee;
+  --line: #b3a6e0; --line-soft: #c6bce9; --ink-2: #453f6b; --sand: #4a34b0; --gold: #7a3fd0;
+  --hero-sky-day: linear-gradient(160deg, #5d54a8 0%, #d6cff0 82%);
 }
 :root[data-theme="light"][data-mood="snow"] {
-  --bg: #e6ebee; --bg-glow-a: #cfe5f088; --bg-glow-b: #dde9ee66;
-  --surface: #f2f6f8; --surface-2: #e6edf1; --line: #c9d6dc; --line-soft: #d7e1e6;
-  --hero-sky-day: linear-gradient(160deg, #c3d9e6 0%, #eef3f5 80%);
+  --bg: #dce9f2; --bg-glow-a: #bfe0f5cc; --bg-glow-b: #ffffffcc;
+  --surface: #fbfdff; --surface-2: #eef5fb; --surface-3: #e2edf5;
+  --line: #cadbe8; --line-soft: #dbe8f2; --ink-2: #4a5c6b; --sand: #2b6f9c;
+  --hero-sky-day: linear-gradient(160deg, #9cc4de 0%, #ffffff 82%);
 }
 :root[data-theme="light"][data-mood="cloud"] {
-  --bg: #e7e4dc; --bg-glow-a: #d5d5cc77; --bg-glow-b: #dcd8ce66;
-  --hero-sky-day: linear-gradient(160deg, #b9c4c8 0%, #ecebe2 78%);
+  --bg: #d3d3cd; --bg-glow-a: #b4b4aaaa; --bg-glow-b: #c8c8bf99;
+  --surface: #eeeee8; --surface-2: #e1e1d9; --surface-3: #d5d5cc;
+  --line: #bcbcb1; --line-soft: #cdcdc3; --ink-2: #55584f;
+  --hero-sky-day: linear-gradient(160deg, #9ba3a6 0%, #e6e6dd 80%);
+}
+:root[data-theme="light"][data-mood="fog"] {
+  --bg: #dcd8e0; --bg-glow-a: #c3bcd0aa; --bg-glow-b: #d2ccdc99;
+  --surface: #efecf3; --surface-2: #e3dfec; --surface-3: #d7d2e2;
+  --line: #c4bdd2; --line-soft: #d3cddf; --ink-2: #565064;
+  --hero-sky-day: linear-gradient(160deg, #a9a2ba 0%, #e8e4ee 80%);
+}
+:root[data-theme="light"][data-mood="wind"] {
+  --bg: #bfe3d8; --bg-glow-a: #3fb79acc; --bg-glow-b: #8fd6c3aa;
+  --surface: #e4f4ee; --surface-2: #d4ece3; --surface-3: #c6e2d7;
+  --line: #a6cfc2; --line-soft: #bbddd1; --ink-2: #35594f; --sand: #0d6f5c;
+  --hero-sky-day: linear-gradient(160deg, #4fa78f 0%, #d6efe7 82%);
+}
+
+/* moods make the background hue dominate the page (bigger, stronger glows) */
+:root[data-theme="light"][data-mood]:not([data-mood="clear"]) body,
+:root[data-theme="light"][data-mood]:not([data-mood="clear"]).ov-body {
+  background:
+    radial-gradient(1300px 620px at 78% -14%, var(--bg-glow-a) 0%, transparent 62%),
+    radial-gradient(1100px 560px at -12% 114%, var(--bg-glow-b) 0%, transparent 58%),
+    var(--bg);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

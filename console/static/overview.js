@@ -10,9 +10,27 @@ const HOME = { lat: 45.9636, lon: -66.6431 };
 KCRTheme.bind($("theme-toggle"), () => { if (window.__lastWeatherState) renderWeather(window.__lastWeatherState); });
 
 const MOOD_FOR = {
-  clear: "sun", clearnight: "sun", partly: "sun",
-  cloudy: "cloud", showers: "rain", rain: "rain", storm: "storm",
+  clear: "sun", clearnight: "sun", partly: "sun", wind: "wind",
+  cloudy: "cloud", fog: "fog", showers: "rain", rain: "rain",
+  storm: "storm", snow: "snow",
 };
+
+/* Map an Environment Canada condition string to a scene/mood key. This is the
+   authoritative "what's the forecast" signal; risk-based inference is fallback. */
+function keyFromCondition(text, night) {
+  const t = (text || "").toLowerCase();
+  if (!t) return null;
+  if (/(thunder|lightning|tstorm)/.test(t)) return "storm";
+  if (/(snow|flurr|blizzard|ice|freezing|sleet)/.test(t)) return "snow";
+  if (/(rain|shower|drizzle|precip)/.test(t)) return "rain";
+  if (/(fog|mist|haze|smoke)/.test(t)) return "fog";
+  if (/(wind|blustery|gust)/.test(t)) return "wind";
+  if (/(overcast|cloudy)/.test(t) && !/mainly sunny|mix/.test(t)) return "cloudy";
+  if (/(mix of sun|partly|mainly cloudy|few clouds)/.test(t)) return "partly";
+  if (/(sun|clear|fair)/.test(t)) return night ? "clearnight" : "clear";
+  if (/cloud/.test(t)) return "cloudy";
+  return null;
+}
 
 /* ---------- clock ---------- */
 function tick() {
@@ -36,12 +54,25 @@ function sceneFor(state) {
   const latest = env.length ? env[env.length - 1] : {};
   const night = solarNight();
   const rain = latest.rain_rate_mm_h ?? 0;
-  let key = night ? "clearnight" : "clear", name = night ? "clear night" : "clear skies";
-  if (p.lightning_risk_1h >= 55 || p.storm_risk_1h >= 65) { key = "storm"; name = "thunderstorm conditions"; }
-  else if (rain > 0.2) { key = "rain"; name = "rain"; }
-  else if (p.rain_risk_1h >= 70) { key = "showers"; name = "showers nearby"; }
-  else if ((latest.humidity_pct ?? 0) >= 88) { key = "cloudy"; name = "overcast"; }
-  else if ((latest.humidity_pct ?? 0) >= 72) { key = "partly"; name = "partly cloudy"; }
+  const NAMES = {
+    clear: "clear skies", clearnight: "clear night", partly: "partly cloudy",
+    cloudy: "overcast", fog: "fog", rain: "rain", showers: "showers nearby",
+    storm: "thunderstorm conditions", snow: "snow", wind: "windy",
+  };
+  // 1) real-time overrides (something is happening right now),
+  // 2) the EC forecast condition text, 3) risk/humidity inference.
+  let key = null;
+  if (p.lightning_risk_1h >= 55 || p.storm_risk_1h >= 70) key = "storm";
+  else if (rain > 0.2) key = "rain";
+  if (!key) key = keyFromCondition(st("sensor.fredericton_current_condition"), night);
+  if (!key) {
+    if (p.rain_risk_1h >= 70) key = "showers";
+    else if ((latest.wind_gust_kmh ?? 0) >= 45) key = "wind";
+    else if ((latest.humidity_pct ?? 0) >= 88) key = "cloudy";
+    else if ((latest.humidity_pct ?? 0) >= 72) key = "partly";
+    else key = night ? "clearnight" : "clear";
+  }
+  const name = NAMES[key] || "conditions";
 
   const sunColor = night ? "#d9dfeb" : "#f2b53c";
   const cloudFill = night ? "#5a6478cc" : "#ffffffd9";
@@ -66,6 +97,21 @@ function sceneFor(state) {
     case "storm":
       svg += `<g class="cloud-a" fill="${night ? "#3a4152" : "#8d99a3"}">${cloudPath(200, 14, 1.05)}</g>` +
         `<path class="bolt" d="M244 44 L232 66 L242 66 L229 92 L254 60 L242 60 L252 44 Z" fill="var(--gold)"/>`;
+      break;
+    case "snow":
+      svg += `<g class="cloud-a" fill="${cloudFill}">${cloudPath(206, 18, 1.0)}</g>`;
+      for (let i = 0; i < 6; i++)
+        svg += `<circle class="snowflake" cx="${218 + i * 11}" cy="56" r="2.1" fill="${night ? "#dfe6f2" : "#ffffff"}" style="animation-delay:${(i % 4) * 0.45}s"/>`;
+      break;
+    case "fog":
+      svg += sun;
+      for (let i = 0; i < 4; i++)
+        svg += `<line class="windline" x1="150" y1="${64 + i * 12}" x2="290" y2="${64 + i * 12}" stroke="${night ? "#6b7488" : "#c7cdc8"}" stroke-width="4" stroke-linecap="round" opacity=".7" style="animation-delay:${i * 0.4}s"/>`;
+      break;
+    case "wind":
+      svg += sun;
+      for (let i = 0; i < 3; i++)
+        svg += `<path class="windline" d="M150 ${58 + i * 16} q 46 ${-9 + i * 6} 100 0" fill="none" stroke="var(--teal)" stroke-width="2.4" stroke-linecap="round" style="animation-delay:${i * 0.5}s"/>`;
       break;
   }
   return { svg, name, night, key, temp: latest.temperature_c, humidex: latest.humidex };
@@ -154,6 +200,14 @@ function renderHa() {
   if (!haData) return;
   renderOutlook();
   checkEvents();
+  // EC condition drives the day's mood; re-apply the scene once HA data lands.
+  if (window.__lastWeatherState) {
+    const scene = sceneFor(window.__lastWeatherState);
+    KCRTheme.setMood(MOOD_FOR[scene.key] || "clear");
+    $("ov-scene").classList.toggle("night", scene.night);
+    $("ov-scene-svg").innerHTML = scene.svg;
+    $("ov-cond").textContent = scene.name;
+  }
   if ($("ov-thermo")?.classList.contains("open")) renderThermostat();
   // persons
   const persons = [
