@@ -63,7 +63,12 @@ function conditionFrom(state) {
   const rain = latest.rain_rate_mm_h ?? 0;
   const temp = latest.temperature_c;
   const gust = latest.wind_gust_kmh ?? 0;
-  const lightningKm = inputs["lightning/local/distance_km"];
+  // Only trust local lightning if the report is live (not a retained replay) and
+  // recent — the AcuRite 6045M false-triggers on EMI (e.g. the well pump), and a
+  // stale retained strike used to latch the storm scene indefinitely.
+  const lightningAge = state.inputs_age_s?.["lightning/local/distance_km"];
+  const lightningKm = lightningAge != null && lightningAge <= 2700
+    ? inputs["lightning/local/distance_km"] : null;
   const radar = inputs["radar/nearby/precip"];
   const humidity = latest.humidity_pct ?? 0;
 

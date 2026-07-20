@@ -108,6 +108,7 @@ _cache: dict[str, object] = {
     "availability": "unknown",
     "ai_forecast": None,
     "inputs": {},
+    "inputs_at": {},
 }
 _cache_lock = threading.Lock()
 
@@ -147,6 +148,10 @@ def _on_message(client, userdata, message) -> None:
                 _cache["ai_forecast"] = {"forecast": payload}
         elif message.topic.startswith(INPUT_TOPIC_PREFIXES):
             _cache["inputs"][message.topic] = _parse_input_payload(payload)  # type: ignore[index]
+            # Retained deliveries are historical replays (e.g. a stale lightning
+            # strike re-sent on connect) — only live messages get a freshness stamp.
+            if not message.retain:
+                _cache["inputs_at"][message.topic] = time.time()  # type: ignore[index]
 
 
 def start_mqtt() -> None:
@@ -254,6 +259,8 @@ def api_state():
         availability = _cache["availability"]
         ai_forecast = _cache["ai_forecast"]
         inputs = dict(_cache["inputs"])  # type: ignore[arg-type]
+        inputs_at = dict(_cache["inputs_at"])  # type: ignore[arg-type]
+    now_ts = time.time()
     return jsonify(
         {
             "now": datetime.now(timezone.utc).isoformat(),
@@ -262,6 +269,7 @@ def api_state():
             "prediction": prediction,
             "ai_forecast": ai_forecast,
             "inputs": inputs,
+            "inputs_age_s": {topic: round(now_ts - at, 1) for topic, at in inputs_at.items()},
             "history": build_history(),
             "verification": load_scoreboard(),
         }
