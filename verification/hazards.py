@@ -28,6 +28,15 @@ COLD_WIND_CHILL_WARNING_C = -30.0
 # Lightning within this range is treated as a local lightning event.
 LIGHTNING_NEARBY_KM = 25.0
 
+# Observed convective-storm signature. Mirrors the training proxy_storm_event
+# target (training/build_features.py) so training, live scoring, and
+# verification finally agree on what "a storm" is: a thunderstorm (local
+# lightning), heavy rain, or damaging wind. Previously storm hazards verified
+# against CAP alerts ALONE -- a handful of ultra-rare positives that made the
+# Brier score meaningless and left storm_1h with no forecast baseline at all.
+STORM_RAIN_MM_H = 10.0  # roadmap storm precip threshold / rain_rate_warning
+STORM_WIND_GUST_KMH = 65.0  # wind_gust_warning_kmh
+
 # Published risk scores are 0-100; tiers mirror app/risk_rules.py levels.
 TIER_THRESHOLDS = {"advisory": 40, "watch": 60, "warning": 80}
 
@@ -64,8 +73,9 @@ HAZARDS: tuple[HazardSpec, ...] = (
                forecast_reference_field="forecast_wind_gust_max_1h"),
     HazardSpec("wind_24h", "wind_risk_24h", 24, ("obs",),
                forecast_reference_field="forecast_wind_gust_max_24h"),
-    HazardSpec("storm_1h", "storm_risk_1h", 1, ("alert",), alert_hazard="storm"),
-    HazardSpec("storm_24h", "storm_risk_24h", 24, ("alert",), alert_hazard="storm",
+    HazardSpec("storm_1h", "storm_risk_1h", 1, ("obs", "alert"), alert_hazard="storm",
+               forecast_reference_field="forecast_next_severe_minutes"),
+    HazardSpec("storm_24h", "storm_risk_24h", 24, ("obs", "alert"), alert_hazard="storm",
                forecast_reference_field="forecast_severe_condition_24h"),
     HazardSpec("heat_24h", "heat_risk_24h", 24, ("obs", "alert"), alert_hazard="heat"),
     HazardSpec("cold_24h", "cold_risk_24h", 24, ("obs", "alert"), alert_hazard="cold"),
@@ -91,11 +101,22 @@ def observed_event(hazard: str, window_snapshots: list[dict]) -> bool:
     if hazard.startswith("cold"):
         return any(v <= COLD_WIND_CHILL_WARNING_C for v in values("wind_chill_c"))
     if hazard.startswith("lightning"):
+        return _lightning_observed(values)
+    if hazard.startswith("storm"):
         return (
-            any(v <= LIGHTNING_NEARBY_KM for v in values("local_lightning_distance_km"))
-            or any(v > 0 for v in values("local_lightning_count_30m"))
+            _lightning_observed(values)
+            or any(v >= STORM_RAIN_MM_H for v in values("rain_rate_mm_h"))
+            or any(v >= STORM_WIND_GUST_KMH for v in values("wind_gust_kmh"))
+            or any(v >= WIND_SUSTAINED_WARNING_KMH for v in values("wind_speed_kmh"))
         )
     return False
+
+
+def _lightning_observed(values) -> bool:
+    return (
+        any(v <= LIGHTNING_NEARBY_KM for v in values("local_lightning_distance_km"))
+        or any(v > 0 for v in values("local_lightning_count_30m"))
+    )
 
 
 def hazard_for_alert_event(event: str) -> str | None:

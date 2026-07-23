@@ -211,6 +211,70 @@ def test_storm_hazard_uses_alert_labels(tmp_path: Path) -> None:
     assert storm["brier"] == pytest.approx(0.01)
 
 
+def test_observed_storm_from_convective_signature() -> None:
+    # Heavy rain, damaging wind, or local lightning each count as an observed
+    # storm, matching the training proxy_storm_event definition.
+    assert observed_event("storm_1h", [{"rain_rate_mm_h": 12.0}])
+    assert observed_event("storm_24h", [{"wind_gust_kmh": 70.0}])
+    assert observed_event("storm_1h", [{"local_lightning_distance_km": 8.0}])
+    assert observed_event("storm_1h", [{"local_lightning_count_30m": 2.0}])
+    # A muggy but quiet hour is not a storm.
+    assert not observed_event(
+        "storm_1h", [{"rain_rate_mm_h": 1.0, "wind_gust_kmh": 20.0}]
+    )
+
+
+def test_storm_hazard_credits_observed_events_without_an_alert(tmp_path: Path) -> None:
+    # No CAP alert, but the station observes heavy rain inside the first
+    # window -> the obs source must fire so storm is scoreable on its own.
+    predictions = [
+        {"timestamp": iso(0), "storm_risk_24h": 90},
+        {"timestamp": iso(30), "storm_risk_24h": 10},
+    ]
+    snapshots = [{"timestamp": iso(h), "rain_rate_mm_h": 0.0} for h in range(0, 56, 6)]
+    snapshots.append({"timestamp": iso(6), "rain_rate_mm_h": 15.0})  # storm in window 1
+    predictions_path = tmp_path / "predictions.jsonl"
+    snapshots_path = tmp_path / "snapshots.jsonl"
+    _write_jsonl(predictions_path, predictions)
+    _write_jsonl(snapshots_path, sorted(snapshots, key=lambda r: r["timestamp"]))
+
+    scoreboard = build_scoreboard(
+        predictions_path=predictions_path,
+        snapshots_path=snapshots_path,
+        alerts_path=tmp_path / "alerts.jsonl",  # no alerts file
+        window_days=None,
+    )
+    storm = next(h for h in scoreboard["hazards"] if h["hazard"] == "storm_24h")
+    assert storm["n"] == 2
+    # Observed storm in window 1 only: Brier = (0.1^2 + 0.1^2)/2 = 0.01.
+    assert storm["brier"] == pytest.approx(0.01)
+
+
+def test_storm_1h_has_a_forecast_baseline(tmp_path: Path) -> None:
+    predictions = [{"timestamp": iso(0), "storm_risk_1h": 70}]
+    snapshots = [
+        {"timestamp": iso(-0.1), "forecast_next_severe_minutes": 30, "rain_rate_mm_h": 0.0},
+        {"timestamp": iso(0.5), "rain_rate_mm_h": 12.0},  # storm occurs
+        {"timestamp": iso(1.5), "rain_rate_mm_h": 0.0},
+    ]
+    predictions_path = tmp_path / "predictions.jsonl"
+    snapshots_path = tmp_path / "snapshots.jsonl"
+    _write_jsonl(predictions_path, predictions)
+    _write_jsonl(snapshots_path, snapshots)
+
+    scoreboard = build_scoreboard(
+        predictions_path=predictions_path,
+        snapshots_path=snapshots_path,
+        alerts_path=tmp_path / "alerts.jsonl",
+        window_days=None,
+    )
+    storm = next(h for h in scoreboard["hazards"] if h["hazard"] == "storm_1h")
+    # A severe signal 30 min out -> forecast reference probability 1.0, and a
+    # storm did occur, so the forecast baseline now exists and is perfect here.
+    assert storm["n_forecast_reference"] == 1
+    assert storm["brier_forecast"] == pytest.approx(0.0)
+
+
 def test_every_hazard_maps_to_a_prediction_field() -> None:
     prediction_fields = set(
         Prediction(
