@@ -77,11 +77,19 @@ storm/lightning skill. As of the `storm-lightning-viability` work:
   `convective_inhibition`, and `lifted_index` from the Open-Meteo forecast API
   each cycle. They are logged into every snapshot and feed a convective-
   potential term in the live rule engine (`app/risk_rules._convective_potential`).
-- **ML path (TODO):** the trained models still use `features/transforms.FEATURES`,
-  which does **not** yet include the convective fields, because the ECCC hourly
-  training archive has no CAPE. To let the models learn instability, join the
-  Open-Meteo **historical** archive (`https://archive-api.open-meteo.com/v1/archive`,
-  ERA5-backed, same `cape,convective_inhibition,lifted_index` variables) onto the
-  training dataset by station/timestamp, then add the fields to `FEATURES`.
-  Keep training/inference in lockstep via the shared `FEATURES` list, and
-  backfill snapshots already accumulating the live values so train/serve match.
+- **ML path (pipeline ready, data pending):** the models train on
+  `features/transforms.FEATURES` (surface only) plus `CONVECTIVE_FEATURES`
+  whenever the dataset actually carries them. `model_feature_columns()` folds
+  the convective columns in automatically, `build_inference_row` always
+  supplies them, each model bundle records the exact feature set it trained on,
+  and the gradient-boosted trees tolerate NaN gaps -- so there is no flag day:
+  the day the training data has CAPE, the models use it.
+- **Sourcing CAPE for history (open):** the ECCC hourly archive has no CAPE,
+  and -- verified 2026-07 -- Open-Meteo's ERA5 **archive**
+  (`archive-api.open-meteo.com`) returns *null* CAPE/CIN/LI, so there is no
+  drop-in historical backfill from it. The live engine now logs CAPE/CIN/LI
+  into every snapshot, so the practical path is to train (or fine-tune) on the
+  accumulating `data/weather_snapshots.jsonl` once it spans a convective
+  season, or to add a genuine ERA5 CAPE source (Copernicus CDS
+  `reanalysis-era5-single-levels`, variable `convective_available_potential_energy`,
+  which requires a CDS API key) and join it by station/timestamp.

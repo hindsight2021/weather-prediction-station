@@ -22,7 +22,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import brier_score_loss, classification_report, roc_auc_score
 
-from features.transforms import FEATURES
+from features.transforms import CONVECTIVE_FEATURES, FEATURES
 
 LOGGER = logging.getLogger("train_models")
 
@@ -329,10 +329,23 @@ def main(argv: list[str] = None) -> int:
         except Exception as e:
             LOGGER.error(f"Failed to apply feedback dataset: {e}")
 
-    # Drop rows with missing features
+    # Base surface features are required; drop rows missing any of them. The
+    # convective columns are only included when the dataset actually carries
+    # non-null values (the ECCC archive has none), and the gradient-boosted
+    # trees handle any remaining NaN gaps natively -- so they are NOT part of
+    # the dropna subset.
     df = df.dropna(subset=FEATURES)
 
-    X = df[FEATURES]
+    convective_present = [
+        column
+        for column in CONVECTIVE_FEATURES
+        if column in df.columns and df[column].notna().any()
+    ]
+    model_features = FEATURES + convective_present
+    if convective_present:
+        LOGGER.info("Including convective features: %s", ", ".join(convective_present))
+
+    X = df[model_features]
     test_mask = chronological_split(df)
 
     args.models_dir.mkdir(parents=True, exist_ok=True)
@@ -414,7 +427,7 @@ def main(argv: list[str] = None) -> int:
         with open(model_path, "wb") as f:
             pickle.dump({
                 "model": candidate,
-                "features": FEATURES,
+                "features": model_features,
                 "target": target_col,
                 "kind": kind,
                 "metrics": metrics,
