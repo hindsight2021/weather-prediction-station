@@ -46,6 +46,57 @@ def _cold_risk(value: float | None, thresholds: dict[str, float]) -> tuple[float
     return 0.0, "none"
 
 
+def _convective_potential(
+    cape: float | None, cin: float | None, lifted_index: float | None
+) -> tuple[float, str]:
+    """Instability score (0-100) from CAPE, convective inhibition, and LI.
+
+    Thunderstorms need instability (CAPE / negative lifted index) that is not
+    capped off (high CIN suppresses realization). Surface temperature and
+    pressure cannot see any of this, so without these fields the score is 0 and
+    the storm rules fall back to their previous behaviour.
+    """
+    if cape is None and lifted_index is None:
+        return 0.0, "none"
+    # ~2500 J/kg of CAPE saturates the scale; NB rarely exceeds that.
+    cape_score = 0.0 if cape is None else min(100.0, max(0.0, cape) / 25.0)
+    # Lifted index is stability: negative is unstable. LI <= -4.5 saturates.
+    lifted_score = 0.0
+    if lifted_index is not None and lifted_index < 0:
+        lifted_score = min(100.0, -lifted_index * 22.0)
+    potential = 0.6 * cape_score + 0.4 * lifted_score
+    # A strong cap (high CIN) holds storms down even with ample CAPE.
+    if cin is not None and cin > 50.0:
+        potential *= max(0.0, 1.0 - (cin - 50.0) / 200.0)
+    if potential >= 60.0:
+        return potential, "strong"
+    if potential >= 30.0:
+        return potential, "moderate"
+    if potential >= 10.0:
+        return potential, "marginal"
+    return potential, "none"
+
+
+def _local_strike_corroborated(snapshot: WeatherSnapshot, thresholds: dict[str, float]) -> bool:
+    """Is a local lightning strike backed by an independent signal?
+
+    The AcuRite 6045M false-triggers on EMI (the well pump), producing isolated
+    single strikes. A genuine thunderstorm corroborates a local strike with
+    multiple strikes in the 30-min window, an independent internet-network
+    detection, or radar precipitation nearby. Without any of those, one local
+    strike is treated as likely-EMI so it can't drive a lightning warning on
+    its own (live) or fabricate a ground-truth event (verification).
+    """
+    min_count = thresholds.get("lightning_local_corroboration_min_count", 2.0)
+    if (snapshot.local_lightning_count_30m or 0) >= min_count:
+        return True
+    if (snapshot.internet_lightning_count_30m or 0) > 0:
+        return True
+    if (snapshot.radar_precip_nearby or 0) > 0:
+        return True
+    return False
+
+
 def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: dict[str, float]) -> Prediction:
     pressure_1h = store.pressure_delta(1)
     pressure_3h = store.pressure_delta(3)
@@ -108,9 +159,16 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     if snapshot.local_lightning_distance_km is not None:
         nearby = thresholds.get("lightning_nearby_km", 25.0)
         if snapshot.local_lightning_distance_km <= nearby:
-            lightning_risk += 75.0
+            strike_base = 75.0
         elif snapshot.local_lightning_distance_km <= nearby * 2:
-            lightning_risk += 45.0
+            strike_base = 45.0
+        else:
+            strike_base = 0.0
+        if strike_base > 0 and not _local_strike_corroborated(snapshot, thresholds):
+            # Likely EMI: keep a faint "possible" signal but never a warning
+            # off one uncorroborated strike.
+            strike_base = min(strike_base, thresholds.get("lightning_uncorroborated_cap", 20.0))
+        lightning_risk += strike_base
     if snapshot.local_lightning_count_30m is not None:
         lightning_risk += min(25.0, snapshot.local_lightning_count_30m * 5.0)
     if snapshot.internet_lightning_count_30m is not None:
@@ -136,6 +194,10 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         cold_signal = min(cold_signal if cold_signal is not None else min_cold_6h, min_cold_6h)
     cold_risk, cold_severity = _cold_risk(cold_signal, thresholds)
 
+    convective_potential, convective_label = _convective_potential(
+        snapshot.cape, snapshot.convective_inhibition, snapshot.lifted_index
+    )
+
     storm_risk_1h = clamp_score(
         pressure_score * 0.30
         + humidity_score * 0.15
@@ -143,6 +205,7 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         + rain_risk * 0.15
         + lightning_risk * 0.20
         + radar_score * 0.20
+        + convective_potential * 0.25
     )
     severe_forecast = 100.0 if (snapshot.forecast_severe_condition_24h or 0) > 0 else 0.0
     storm_risk_24h = clamp_score(max(
@@ -207,6 +270,14 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
         explanation_parts.append("lightning signal active")
     if radar_score > 0:
         explanation_parts.append("radar precipitation nearby")
+    if convective_label != "none":
+        detail = []
+        if snapshot.cape is not None:
+            detail.append(f"CAPE {snapshot.cape:.0f} J/kg")
+        if snapshot.lifted_index is not None:
+            detail.append(f"LI {snapshot.lifted_index:.1f}")
+        suffix = f" ({', '.join(detail)})" if detail else ""
+        explanation_parts.append(f"{convective_label} convective instability{suffix}")
     if alert_rank:
         explanation_parts.append(f"active ECCC {('advisory', 'watch', 'warning')[min(3, alert_rank)-1]}")
     if snapshot.forecast_precip_probability_1h is not None:

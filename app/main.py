@@ -15,6 +15,7 @@ from app.mqtt_client import WeatherMqttClient
 from app.publisher import publish_discovery, publish_prediction
 from app.risk_rules import score_weather
 from app.environmental import EnvironmentalClient
+from app.input_hygiene import TRANSIENT_INPUT_FIELDS, prune_stale_transient_inputs
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 STARTUP_GRACE_SECONDS = float(os.environ.get("STARTUP_GRACE_SECONDS", "5"))
@@ -113,6 +114,10 @@ def load_model_metrics(models_dir: Path = Path("models")) -> tuple[str, str]:
 def main() -> None:
     config = load_config()
     current_values: dict[str, float | None] = {key: None for key in config.input_topics}
+    # Monotonic receipt time of the last *live* (non-retained) message per
+    # transient field; used to expire stale lightning/radar reports so a single
+    # false strike or a retained replay can't latch the storm score.
+    transient_received_at: dict[str, float] = {}
     topic_to_field = {topic: field for field, topic in config.input_topics.items()}
     store = SnapshotStore(maxlen=config.runtime.snapshot_history_limit)
     mqtt_client = WeatherMqttClient(config.mqtt)
@@ -130,7 +135,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
-    def on_message(topic: str, payload: str) -> None:
+    def on_message(topic: str, payload: str, retain: bool = False) -> None:
         if topic == "ha_bridge/feedback/weather_brain":
             try:
                 feedback = json.loads(payload)
@@ -178,6 +183,10 @@ def main() -> None:
         if not field:
             return
         current_values[field] = parse_float(payload)
+        # Only a live delivery refreshes a transient field's freshness stamp;
+        # retained replays are historical and must not reset the TTL clock.
+        if field in TRANSIENT_INPUT_FIELDS and not retain:
+            transient_received_at[field] = time.monotonic()
 
     topics_to_subscribe = list(topic_to_field) + ["ha_bridge/feedback/weather_brain"]
     mqtt_client.connect(on_message=on_message, topics=topics_to_subscribe)
@@ -202,7 +211,12 @@ def main() -> None:
                 if now - last_environment_fetch >= 600:
                     environmental_values = environment.fetch()
                     last_environment_fetch = now
-                fields = dict(current_values)
+                fields = prune_stale_transient_inputs(
+                    current_values,
+                    transient_received_at,
+                    time.monotonic(),
+                    config.runtime.transient_input_ttl_seconds,
+                )
                 fields.update({k: v for k, v in environmental_values.items() if k in WeatherSnapshot.__dataclass_fields__})
                 snapshot = WeatherSnapshot(timestamp=datetime.now(timezone.utc), **fields)
                 store.add(snapshot)

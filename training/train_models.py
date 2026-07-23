@@ -18,10 +18,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import brier_score_loss, classification_report, roc_auc_score
 
-from features.transforms import FEATURES
+from features.transforms import CONVECTIVE_FEATURES, FEATURES
 
 LOGGER = logging.getLogger("train_models")
 
@@ -32,6 +33,12 @@ TEST_FRACTION = 0.2
 
 # A candidate must have Brier <= previous Brier + tolerance to be promoted.
 BRIER_REGRESSION_TOLERANCE = 0.005
+
+# Probability calibration folds. Each fold must hold both classes, so a target
+# needs at least this many minority-class samples before we attempt to
+# calibrate; below it we ship the raw model rather than risk a fit failure.
+CALIBRATION_FOLDS = 3
+MIN_MINORITY_FOR_CALIBRATION = CALIBRATION_FOLDS * 2
 
 TARGETS = {
     "convective_risk": {"target": "proxy_convective_risk_now", "kind": "binary"},
@@ -212,15 +219,48 @@ def chronological_split(df: pd.DataFrame, test_fraction: float = TEST_FRACTION) 
     return test_mask
 
 
-def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> HistGradientBoostingClassifier:
-    clf = HistGradientBoostingClassifier(
+def _base_estimator() -> HistGradientBoostingClassifier:
+    return HistGradientBoostingClassifier(
         max_iter=100,
         learning_rate=0.1,
         max_depth=5,
-        random_state=42
+        random_state=42,
     )
-    clf.fit(X_train, y_train)
-    return clf
+
+
+def train_model(X_train: pd.DataFrame, y_train: pd.Series, calibrate: bool = True):
+    """Train the gradient-boosted classifier, calibrating its probabilities.
+
+    The published risk scores are read as probabilities (verification divides
+    them by 100 and scores them with Brier), so a well-ranked but poorly
+    calibrated model still scores badly. A Platt/sigmoid calibration wrapper
+    maps the raw scores onto observed frequencies; sigmoid is used over
+    isotonic because it stays stable with the few storm/wind positives we have.
+
+    Calibration is skipped when a class is too rare to populate every fold, or
+    for multiclass thermal targets, in which case the raw model is returned so
+    training never fails on sparse data.
+    """
+    base = _base_estimator()
+    if not calibrate:
+        base.fit(X_train, y_train)
+        return base
+
+    minority = int(y_train.value_counts().min())
+    if minority < MIN_MINORITY_FOR_CALIBRATION:
+        LOGGER.warning(
+            "Only %d minority samples; shipping the raw (uncalibrated) model.",
+            minority,
+        )
+        base.fit(X_train, y_train)
+        return base
+
+    # cv=int uses StratifiedKFold, so every fold keeps both classes even when
+    # positives are rare. The chronological holdout used for promotion/metrics
+    # is a separate, untouched split, so this does not leak the headline score.
+    calibrated = CalibratedClassifierCV(base, method="sigmoid", cv=CALIBRATION_FOLDS)
+    calibrated.fit(X_train, y_train)
+    return calibrated
 
 
 def multiclass_brier(y_true: pd.Series, probs: np.ndarray, classes: list) -> float:
@@ -289,10 +329,23 @@ def main(argv: list[str] = None) -> int:
         except Exception as e:
             LOGGER.error(f"Failed to apply feedback dataset: {e}")
 
-    # Drop rows with missing features
+    # Base surface features are required; drop rows missing any of them. The
+    # convective columns are only included when the dataset actually carries
+    # non-null values (the ECCC archive has none), and the gradient-boosted
+    # trees handle any remaining NaN gaps natively -- so they are NOT part of
+    # the dropna subset.
     df = df.dropna(subset=FEATURES)
 
-    X = df[FEATURES]
+    convective_present = [
+        column
+        for column in CONVECTIVE_FEATURES
+        if column in df.columns and df[column].notna().any()
+    ]
+    model_features = FEATURES + convective_present
+    if convective_present:
+        LOGGER.info("Including convective features: %s", ", ".join(convective_present))
+
+    X = df[model_features]
     test_mask = chronological_split(df)
 
     args.models_dir.mkdir(parents=True, exist_ok=True)
@@ -321,7 +374,9 @@ def main(argv: list[str] = None) -> int:
             LOGGER.warning(f"Not enough chronological train/test data for {target_col}, skipping.")
             continue
 
-        candidate = train_model(X_train, y_train)
+        # Calibrate binary hazard probabilities; multiclass thermal targets
+        # can leave a class out of a fold, so they train uncalibrated.
+        candidate = train_model(X_train, y_train, calibrate=(kind != "multiclass"))
         metrics = evaluate_model(candidate, X_test, y_test, model_name)
 
         # Promotion gate: re-score the live model on the same chronological
@@ -372,7 +427,7 @@ def main(argv: list[str] = None) -> int:
         with open(model_path, "wb") as f:
             pickle.dump({
                 "model": candidate,
-                "features": FEATURES,
+                "features": model_features,
                 "target": target_col,
                 "kind": kind,
                 "metrics": metrics,

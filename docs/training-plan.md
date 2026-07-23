@@ -66,3 +66,30 @@ Later model architecture:
 ## Local calibration
 
 Build a local scaler by comparing Atlas data against nearest ECCC station over matching timestamps.
+
+## Convective features (in progress)
+
+Surface obs (temp/pressure/humidity/wind) cannot see atmospheric instability,
+which is the primary driver of thunderstorms — this is the biggest ceiling on
+storm/lightning skill. As of the `storm-lightning-viability` work:
+
+- **Live path (done):** `EnvironmentalClient._convective` pulls `cape`,
+  `convective_inhibition`, and `lifted_index` from the Open-Meteo forecast API
+  each cycle. They are logged into every snapshot and feed a convective-
+  potential term in the live rule engine (`app/risk_rules._convective_potential`).
+- **ML path (pipeline ready, data pending):** the models train on
+  `features/transforms.FEATURES` (surface only) plus `CONVECTIVE_FEATURES`
+  whenever the dataset actually carries them. `model_feature_columns()` folds
+  the convective columns in automatically, `build_inference_row` always
+  supplies them, each model bundle records the exact feature set it trained on,
+  and the gradient-boosted trees tolerate NaN gaps -- so there is no flag day:
+  the day the training data has CAPE, the models use it.
+- **Sourcing CAPE for history (open):** the ECCC hourly archive has no CAPE,
+  and -- verified 2026-07 -- Open-Meteo's ERA5 **archive**
+  (`archive-api.open-meteo.com`) returns *null* CAPE/CIN/LI, so there is no
+  drop-in historical backfill from it. The live engine now logs CAPE/CIN/LI
+  into every snapshot, so the practical path is to train (or fine-tune) on the
+  accumulating `data/weather_snapshots.jsonl` once it spans a convective
+  season, or to add a genuine ERA5 CAPE source (Copernicus CDS
+  `reanalysis-era5-single-levels`, variable `convective_available_potential_energy`,
+  which requires a CDS API key) and join it by station/timestamp.

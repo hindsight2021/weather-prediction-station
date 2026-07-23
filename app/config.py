@@ -28,6 +28,10 @@ class RuntimeSettings:
     snapshot_path: str
     write_predictions_jsonl: bool
     predictions_path: str
+    # Freshness window for transient event inputs (lightning, radar-nearby).
+    # A live reading older than this — or any retained replay — is dropped
+    # before it reaches a snapshot. Matches the console's lightning age guard.
+    transient_input_ttl_seconds: float = 2700.0
 
 
 @dataclass(frozen=True)
@@ -64,6 +68,7 @@ def load_config() -> AppConfig:
         snapshot_path=runtime_raw.get("snapshot_path", "/app/data/weather_snapshots.jsonl"),
         write_predictions_jsonl=bool(runtime_raw.get("write_predictions_jsonl", True)),
         predictions_path=runtime_raw.get("predictions_path", "/app/data/predictions.jsonl"),
+        transient_input_ttl_seconds=float(runtime_raw.get("transient_input_ttl_seconds", 2700.0)),
     )
 
     return AppConfig(

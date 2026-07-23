@@ -13,6 +13,8 @@ THRESHOLDS = {
     "rain_rate_watch_mm_h": 4.0,
     "rain_rate_warning_mm_h": 10.0,
     "lightning_nearby_km": 25.0,
+    "lightning_local_corroboration_min_count": 2.0,
+    "lightning_uncorroborated_cap": 20.0,
 }
 
 
@@ -48,6 +50,37 @@ def test_score_weather_promotes_warning_for_nearby_lightning_and_gusts() -> None
     assert prediction.lightning_risk_1h >= 85
     assert prediction.storm_risk_1h >= 60
     assert "lightning signal active" in prediction.explanation
+
+
+def test_isolated_local_strike_is_treated_as_emi() -> None:
+    # One AcuRite strike, no burst / internet / radar corroboration: capped so
+    # it can't raise a lightning warning on its own (the well-pump EMI case).
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=10)
+    snapshot = WeatherSnapshot(
+        timestamp=base, temperature_c=22.0, humidity_pct=60.0, pressure_hpa=1013.0,
+        local_lightning_distance_km=6.0, local_lightning_count_30m=1.0,
+    )
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    # Capped strike (<=20) + one strike count (5) -> well below warning (85).
+    assert prediction.lightning_risk_1h <= 30
+    assert prediction.level != "warning"
+
+
+def test_corroborated_local_strike_earns_full_signal() -> None:
+    # The same close strike, now corroborated by radar precip nearby, earns the
+    # full lightning signal.
+    base = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
+    store = SnapshotStore(maxlen=10)
+    snapshot = WeatherSnapshot(
+        timestamp=base, temperature_c=22.0, humidity_pct=60.0, pressure_hpa=1013.0,
+        local_lightning_distance_km=6.0, local_lightning_count_30m=1.0,
+        radar_precip_nearby=1.0,
+    )
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.lightning_risk_1h >= 75
 
 
 def test_score_weather_stays_normal_when_inputs_are_quiet() -> None:
