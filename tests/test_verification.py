@@ -212,16 +212,32 @@ def test_storm_hazard_uses_alert_labels(tmp_path: Path) -> None:
 
 
 def test_observed_storm_from_convective_signature() -> None:
-    # Heavy rain, damaging wind, or local lightning each count as an observed
-    # storm, matching the training proxy_storm_event definition.
+    # Heavy rain, damaging wind, or corroborated lightning each count as an
+    # observed storm, matching the training proxy_storm_event definition.
     assert observed_event("storm_1h", [{"rain_rate_mm_h": 12.0}])
     assert observed_event("storm_24h", [{"wind_gust_kmh": 70.0}])
-    assert observed_event("storm_1h", [{"local_lightning_distance_km": 8.0}])
+    # A burst of local strikes self-corroborates.
     assert observed_event("storm_1h", [{"local_lightning_count_30m": 2.0}])
+    # A single local strike needs radar (or internet) corroboration.
+    assert observed_event(
+        "storm_1h", [{"local_lightning_distance_km": 8.0, "radar_precip_nearby": 1.0}]
+    )
     # A muggy but quiet hour is not a storm.
     assert not observed_event(
         "storm_1h", [{"rain_rate_mm_h": 1.0, "wind_gust_kmh": 20.0}]
     )
+
+
+def test_uncorroborated_local_strike_is_not_an_event() -> None:
+    # A lone AcuRite strike (EMI from the well pump) with no burst, no internet
+    # detection, and no radar must not fabricate a lightning/storm event.
+    assert not observed_event("lightning_1h", [{"local_lightning_distance_km": 6.0}])
+    assert not observed_event(
+        "lightning_1h", [{"local_lightning_distance_km": 6.0, "local_lightning_count_30m": 1.0}]
+    )
+    assert not observed_event("storm_1h", [{"local_lightning_distance_km": 6.0}])
+    # An internet-network detection alone is enough to make it real.
+    assert observed_event("lightning_1h", [{"internet_lightning_count_30m": 3.0}])
 
 
 def test_storm_hazard_credits_observed_events_without_an_alert(tmp_path: Path) -> None:

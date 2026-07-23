@@ -27,6 +27,12 @@ COLD_WIND_CHILL_WARNING_C = -30.0
 
 # Lightning within this range is treated as a local lightning event.
 LIGHTNING_NEARBY_KM = 25.0
+# A local strike counts as a real event only when corroborated (this many
+# strikes in the 30-min window, an internet-network detection, or radar precip
+# nearby). The AcuRite 6045M false-triggers on EMI, so an isolated single
+# strike must not fabricate a ground-truth event. Mirrors the live engine's
+# lightning_local_corroboration_min_count (config/weather_brain.yaml).
+LIGHTNING_CORROBORATION_MIN_COUNT = 2.0
 
 # Observed convective-storm signature. Mirrors the training proxy_storm_event
 # target (training/build_features.py) so training, live scoring, and
@@ -113,10 +119,17 @@ def observed_event(hazard: str, window_snapshots: list[dict]) -> bool:
 
 
 def _lightning_observed(values) -> bool:
-    return (
-        any(v <= LIGHTNING_NEARBY_KM for v in values("local_lightning_distance_km"))
-        or any(v > 0 for v in values("local_lightning_count_30m"))
+    local_strike = any(v <= LIGHTNING_NEARBY_KM for v in values("local_lightning_distance_km"))
+    multi_strike = any(
+        v >= LIGHTNING_CORROBORATION_MIN_COUNT for v in values("local_lightning_count_30m")
     )
+    internet = any(v > 0 for v in values("internet_lightning_count_30m"))
+    radar = any(v > 0 for v in values("radar_precip_nearby"))
+    # A burst of strikes or an independent network detection is a real event on
+    # its own; a single local strike needs radar corroboration to count.
+    if multi_strike or internet:
+        return True
+    return local_strike and radar
 
 
 def hazard_for_alert_event(event: str) -> str | None:

@@ -77,6 +77,26 @@ def _convective_potential(
     return potential, "none"
 
 
+def _local_strike_corroborated(snapshot: WeatherSnapshot, thresholds: dict[str, float]) -> bool:
+    """Is a local lightning strike backed by an independent signal?
+
+    The AcuRite 6045M false-triggers on EMI (the well pump), producing isolated
+    single strikes. A genuine thunderstorm corroborates a local strike with
+    multiple strikes in the 30-min window, an independent internet-network
+    detection, or radar precipitation nearby. Without any of those, one local
+    strike is treated as likely-EMI so it can't drive a lightning warning on
+    its own (live) or fabricate a ground-truth event (verification).
+    """
+    min_count = thresholds.get("lightning_local_corroboration_min_count", 2.0)
+    if (snapshot.local_lightning_count_30m or 0) >= min_count:
+        return True
+    if (snapshot.internet_lightning_count_30m or 0) > 0:
+        return True
+    if (snapshot.radar_precip_nearby or 0) > 0:
+        return True
+    return False
+
+
 def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: dict[str, float]) -> Prediction:
     pressure_1h = store.pressure_delta(1)
     pressure_3h = store.pressure_delta(3)
@@ -139,9 +159,16 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     if snapshot.local_lightning_distance_km is not None:
         nearby = thresholds.get("lightning_nearby_km", 25.0)
         if snapshot.local_lightning_distance_km <= nearby:
-            lightning_risk += 75.0
+            strike_base = 75.0
         elif snapshot.local_lightning_distance_km <= nearby * 2:
-            lightning_risk += 45.0
+            strike_base = 45.0
+        else:
+            strike_base = 0.0
+        if strike_base > 0 and not _local_strike_corroborated(snapshot, thresholds):
+            # Likely EMI: keep a faint "possible" signal but never a warning
+            # off one uncorroborated strike.
+            strike_base = min(strike_base, thresholds.get("lightning_uncorroborated_cap", 20.0))
+        lightning_risk += strike_base
     if snapshot.local_lightning_count_30m is not None:
         lightning_risk += min(25.0, snapshot.local_lightning_count_30m * 5.0)
     if snapshot.internet_lightning_count_30m is not None:
