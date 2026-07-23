@@ -64,3 +64,8 @@ runtime:
   # can score it against what actually happened (accuracy roadmap Phase 0).
   write_predictions_jsonl: true
   predictions_path: /app/data/predictions.jsonl
+  # Transient event inputs (lightning distance/counts, radar-nearby) revert to
+  # None this many seconds after the last LIVE report. Retained MQTT replays are
+  # treated as already expired. Stops a stale/false AcuRite strike from latching
+  # the storm score and fabricating a lightning "event" in the verification log.
+  transient_input_ttl_seconds: 2700

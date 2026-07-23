@@ -25,3 +25,6 @@ runtime:
   snapshot_history_limit: 2016
   write_snapshots_jsonl: true
   snapshot_path: data_weather_snapshots.jsonl
+  # Transient event inputs (lightning, radar-nearby) expire this many seconds
+  # after the last live report; retained MQTT replays are treated as expired.
+  transient_input_ttl_seconds: 2700

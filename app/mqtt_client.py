@@ -19,7 +19,7 @@ class WeatherMqttClient:
         if settings.username:
             self.client.username_pw_set(settings.username, settings.password)
 
-    def connect(self, on_message: Callable[[str, str], None], topics: list[str]) -> None:
+    def connect(self, on_message: Callable[[str, str, bool], None], topics: list[str]) -> None:
         def handle_connect(client: mqtt.Client, userdata: Any, flags: Any, reason_code: Any, properties: Any) -> None:
             LOGGER.info("Connected to MQTT with reason_code=%s", reason_code)
             client.publish(self.settings.availability_topic, "online", retain=True)
@@ -29,7 +29,9 @@ class WeatherMqttClient:
 
         def handle_message(client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage) -> None:
             payload = message.payload.decode("utf-8", errors="replace")
-            on_message(message.topic, payload)
+            # ``retain`` distinguishes a live publish from a broker replay of the
+            # last retained value; transient inputs must not trust replays.
+            on_message(message.topic, payload, bool(message.retain))
 
         self.client.on_connect = handle_connect
         self.client.on_message = handle_message
