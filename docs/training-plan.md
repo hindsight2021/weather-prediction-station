@@ -66,3 +66,22 @@ Later model architecture:
 ## Local calibration
 
 Build a local scaler by comparing Atlas data against nearest ECCC station over matching timestamps.
+
+## Convective features (in progress)
+
+Surface obs (temp/pressure/humidity/wind) cannot see atmospheric instability,
+which is the primary driver of thunderstorms — this is the biggest ceiling on
+storm/lightning skill. As of the `storm-lightning-viability` work:
+
+- **Live path (done):** `EnvironmentalClient._convective` pulls `cape`,
+  `convective_inhibition`, and `lifted_index` from the Open-Meteo forecast API
+  each cycle. They are logged into every snapshot and feed a convective-
+  potential term in the live rule engine (`app/risk_rules._convective_potential`).
+- **ML path (TODO):** the trained models still use `features/transforms.FEATURES`,
+  which does **not** yet include the convective fields, because the ECCC hourly
+  training archive has no CAPE. To let the models learn instability, join the
+  Open-Meteo **historical** archive (`https://archive-api.open-meteo.com/v1/archive`,
+  ERA5-backed, same `cape,convective_inhibition,lifted_index` variables) onto the
+  training dataset by station/timestamp, then add the fields to `FEATURES`.
+  Keep training/inference in lockstep via the shared `FEATURES` list, and
+  backfill snapshots already accumulating the live values so train/serve match.
