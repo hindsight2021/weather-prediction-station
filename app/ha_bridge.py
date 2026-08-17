@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import os
 import paho.mqtt.client as mqtt
 import websockets
@@ -84,6 +85,12 @@ TOPIC_TRANSFORMS = {
     "radar/nearby/precip": _transform_precip_flag,
 }
 
+# World-record-scale short-duration rain is still well below this guardrail.
+# Rejecting instead of clipping prevents a broken counter/delta from becoming a
+# believable severe-weather observation.
+MAX_RAIN_RATE_MM_H = 300.0
+MAX_FIVE_MINUTE_RAIN_MM = MAX_RAIN_RATE_MM_H / 12.0
+
 INVALID_STATES = {"unavailable", "unknown", None}
 
 
@@ -93,11 +100,38 @@ def mqtt_payload_for_state(state):
     return state
 
 
-def publish_state(mqtt_client, entity_id, state):
+def normalize_rain_rate(state, attributes=None):
+    try:
+        value = float(state)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or value < 0:
+        return None
+
+    unit = str((attributes or {}).get("unit_of_measurement", "mm")).strip().lower()
+    if unit in {"mm/h", "mm/hr", "mmph"}:
+        rate = value
+    else:
+        if unit in {"in", "inch", "inches", "in/5min"}:
+            value *= 25.4
+        if value > MAX_FIVE_MINUTE_RAIN_MM:
+            return None
+        rate = value * 12.0
+    return rate if rate <= MAX_RAIN_RATE_MM_H else None
+
+
+def publish_state(mqtt_client, entity_id, state, attributes=None):
     topic = ENTITY_TO_TOPIC[entity_id]
     payload = mqtt_payload_for_state(state)
-    transform = TOPIC_TRANSFORMS.get(topic)
-    if state not in INVALID_STATES and transform is not None:
+    if state not in INVALID_STATES and entity_id == "sensor.rain_5_minute_delta":
+        rate = normalize_rain_rate(state, attributes)
+        if rate is None:
+            LOGGER.warning("Rejected implausible rain input from %s: %r %s", entity_id, state,
+                           (attributes or {}).get("unit_of_measurement", "mm"))
+            payload = mqtt_payload_for_state(None)
+        else:
+            payload = str(rate)
+    elif state not in INVALID_STATES and (transform := TOPIC_TRANSFORMS.get(topic)) is not None:
         try:
             payload = transform(state)
         except (TypeError, ValueError) as exc:
@@ -180,7 +214,7 @@ async def ha_ws_loop(mqtt_client):
                                 seen_entities.add(eid)
                                 val = s.get("state")
                                 try:
-                                    publish_state(mqtt_client, eid, val)
+                                    publish_state(mqtt_client, eid, val, s.get("attributes"))
                                     LOGGER.info("Initial state %s: %s", eid, val)
                                 except Exception as e:
                                     LOGGER.error("Error publishing initial state: %s", e)
@@ -204,9 +238,10 @@ async def ha_ws_loop(mqtt_client):
                         if eid in WEATHER_ENTITIES:
                             await request_forecasts()
                         if eid in ENTITY_TO_TOPIC:
-                            new_state = event_data.get("new_state", {}).get("state")
+                            new = event_data.get("new_state") or {}
+                            new_state = new.get("state")
                             try:
-                                publish_state(mqtt_client, eid, new_state)
+                                publish_state(mqtt_client, eid, new_state, new.get("attributes"))
                                 LOGGER.info("State changed %s: %s", eid, new_state)
                             except Exception as e:
                                 LOGGER.error("Error publishing state change: %s", e)

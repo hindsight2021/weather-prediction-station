@@ -4,6 +4,15 @@ from app.feature_builder import SnapshotStore
 from app.models import Prediction, WeatherSnapshot
 
 
+MAX_PLAUSIBLE_RAIN_RATE_MM_H = 300.0
+
+
+def plausible_rain_rate(value: float | None) -> float | None:
+    if value is None or value < 0 or value > MAX_PLAUSIBLE_RAIN_RATE_MM_H:
+        return None
+    return value
+
+
 def clamp_score(value: float) -> int:
     return max(0, min(100, int(round(value))))
 
@@ -50,7 +59,7 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     pressure_1h = store.pressure_delta(1)
     pressure_3h = store.pressure_delta(3)
     max_gust_30m = store.max_wind_gust(30)
-    max_rain_30m = store.max_rain_rate(30)
+    max_rain_30m = plausible_rain_rate(store.max_rain_rate(30))
 
     pressure_score = 0.0
     if pressure_1h is not None and pressure_1h < 0:
@@ -81,7 +90,9 @@ def score_weather(snapshot: WeatherSnapshot, store: SnapshotStore, thresholds: d
     wind_risk = max(wind_risk, forecast_wind_risk_1h)
 
     rain_risk = 0.0
-    rain_rate = snapshot.rain_rate_mm_h if snapshot.rain_rate_mm_h is not None else max_rain_30m
+    rain_rate = plausible_rain_rate(snapshot.rain_rate_mm_h)
+    if rain_rate is None:
+        rain_rate = max_rain_30m
     if rain_rate is not None:
         watch = thresholds.get("rain_rate_watch_mm_h", 4.0)
         warning = thresholds.get("rain_rate_warning_mm_h", 10.0)
