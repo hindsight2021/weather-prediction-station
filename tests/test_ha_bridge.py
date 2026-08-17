@@ -49,6 +49,22 @@ def test_rain_delta_is_converted_to_hourly_rate() -> None:
     assert client.messages == [("ha_bridge/atlas/rain_rate", "24.0", True)]
 
 
+def test_existing_hourly_rain_rate_is_not_multiplied_again() -> None:
+    client = FakeMqttClient()
+    ha_bridge.publish_state(
+        client, "sensor.rain_5_minute_delta", "8", {"unit_of_measurement": "mm/h"}
+    )
+    assert client.messages == [("ha_bridge/atlas/rain_rate", "8.0", True)]
+
+
+def test_implausible_rain_delta_clears_retained_rate() -> None:
+    client = FakeMqttClient()
+    ha_bridge.publish_state(client, "sensor.rain_5_minute_delta", "70", {"unit_of_measurement": "mm"})
+    assert client.messages == [
+        ("ha_bridge/atlas/rain_rate", json.dumps({"value": None, "state": "unavailable"}), True)
+    ]
+
+
 def test_thermal_bridge_uses_live_derived_sensors() -> None:
     assert ha_bridge.ENTITY_TO_TOPIC["sensor.humidex"] == "ha_bridge/derived/humidex"
     assert ha_bridge.ENTITY_TO_TOPIC["sensor.wind_chill"] == "ha_bridge/derived/wind_chill_c"

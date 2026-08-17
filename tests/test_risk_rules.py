@@ -108,6 +108,16 @@ def test_current_rain_can_never_publish_zero_risk() -> None:
     assert prediction.imminent_minutes == 0
 
 
+def test_implausible_rain_rate_cannot_create_an_imminent_alert() -> None:
+    snapshot = WeatherSnapshot(rain_rate_mm_h=840.0)
+    store = SnapshotStore(maxlen=10)
+    store.add(snapshot)
+    prediction = score_weather(snapshot, store, THRESHOLDS)
+    assert prediction.rain_risk_1h == 0
+    assert prediction.imminent_event == "none"
+    assert "840" not in prediction.explanation
+
+
 def test_hourly_forecast_drives_real_24h_and_imminent_prediction() -> None:
     snapshot = WeatherSnapshot(
         forecast_precip_probability_1h=90,
