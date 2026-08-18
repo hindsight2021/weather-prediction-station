@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
+from typing import Iterable
 
 # Magnus formula constants (Alduchov & Eskridge 1996), valid -40..50 C.
 _MAGNUS_A = 17.625
@@ -35,6 +36,32 @@ FEATURES = [
     "month_sin",
     "month_cos",
 ]
+
+# Convective-environment features (CAPE / CIN / lifted index). Kept OUT of the
+# canonical FEATURES list so existing surface-only datasets and models keep
+# working unchanged: the ECCC hourly archive has no CAPE, and -- verified
+# 2026-07 -- Open-Meteo's ERA5 archive returns null CAPE, so there is no
+# historical backfill to join. Instead the live engine now logs CAPE/CIN/LI
+# into every snapshot; once training runs on that accumulating snapshot log,
+# model_feature_columns() folds these in automatically and inference already
+# supplies them (build_inference_row). Train and serve therefore stay on the
+# same contract without a flag day.
+CONVECTIVE_FEATURES = [
+    "cape",
+    "convective_inhibition",
+    "lifted_index",
+]
+
+
+def model_feature_columns(available: Iterable[str]) -> list[str]:
+    """Canonical FEATURES plus any convective columns the dataset provides.
+
+    Lets the convective features enter training the moment the data carries
+    them, while keeping a stable, backward-compatible feature contract for
+    datasets (and trained model bundles) that predate them.
+    """
+    present = set(available)
+    return FEATURES + [column for column in CONVECTIVE_FEATURES if column in present]
 
 # Absolute-level features: imputing 0 for these puts inference catastrophically
 # out of distribution (a 0 hPa pressure does not exist on Earth). They are
@@ -103,6 +130,12 @@ def build_inference_row(snapshot, store) -> dict[str, float | None]:
         "station_pressure_hpa_delta_6h": store.pressure_delta(6),
         "wind_speed_kmh_rolling_mean_3h": store.wind_speed_mean(3),
         "wind_speed_kmh_rolling_std_3h": store.wind_speed_std(3),
+        # Convective environment (may be None when Open-Meteo is unavailable);
+        # a model trained without these simply ignores the extra keys, and the
+        # gradient-boosted trees tolerate NaN when trained with them.
+        "cape": getattr(snapshot, "cape", None),
+        "convective_inhibition": getattr(snapshot, "convective_inhibition", None),
+        "lifted_index": getattr(snapshot, "lifted_index", None),
     }
     row.update(time_features(snapshot.timestamp))
     return row

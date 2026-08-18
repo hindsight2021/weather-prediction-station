@@ -121,6 +121,9 @@ def forecast_reference_probability(spec: HazardSpec, snapshot_index: SnapshotInd
         return 1.0 if value >= WIND_GUST_ADVISORY_KMH else 0.0
     if "severe_condition" in spec.forecast_reference_field:
         return 1.0 if value > 0 else 0.0
+    if "next_severe_minutes" in spec.forecast_reference_field:
+        # A severe signal forecast to arrive within the 1h horizon.
+        return 1.0 if 0 <= value <= 60 else 0.0
     return None
 
 

@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 LOGGER = logging.getLogger(__name__)
 
 ECCC_API = "https://api.weather.gc.ca/collections"
+OPEN_METEO_API = "https://api.open-meteo.com/v1/forecast"
 NB_BURN_API = "https://gis-erd-der.gnb.ca/gisserver/rest/services/FireWeather/BurnCategories/MapServer/0/query"
 NB_FIRE_API = "https://gis-erd-der.gnb.ca/gisserver/rest/services/New_Brunswick_Fires/New_Brunswick_Fire_Locations/MapServer/0/query"
 
@@ -35,7 +36,7 @@ class EnvironmentalClient:
 
     def fetch(self) -> dict[str, float | str]:
         result = dict(self.last)
-        for loader in (self._alerts, self._aqhi, self._nb_fire):
+        for loader in (self._alerts, self._aqhi, self._nb_fire, self._convective):
             try:
                 result.update(loader())
             except Exception as exc:
@@ -81,6 +82,22 @@ class EnvironmentalClient:
         # AQHI >= 7 is high; nearby fires increase smoke concern without pretending to measure PM2.5.
         return {"aqhi_current": current, "aqhi_forecast_max_24h": peak, "aqhi_forecast_max_48h": peak}
 
+    def _convective(self) -> dict[str, float]:
+        """Current-hour convective environment (CAPE / CIN / lifted index).
+
+        Open-Meteo returns hourly arrays keyed by an ISO ``time`` list; we pick
+        the entry for the current UTC hour so live storm scoring sees the
+        instability the surface station is blind to.
+        """
+        data = _get(OPEN_METEO_API, {
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "hourly": "cape,convective_inhibition,lifted_index",
+            "forecast_days": 1,
+            "timezone": "UTC",
+        })
+        return parse_convective(data, datetime.now(timezone.utc))
+
     def _nb_fire(self) -> dict[str, float | str]:
         common = {"where": "1=1", "outFields": "*", "f": "geojson", "outSR": 4326}
         burn = _get(NB_BURN_API, common)
@@ -112,6 +129,33 @@ class EnvironmentalClient:
             # 999 = no active fire anywhere in the NB feed (sentinel keeps the sensor numeric).
             "nearest_fire_km": round(nearest_km, 1) if nearest_km is not None else 999.0,
         }
+
+
+CONVECTIVE_FIELD_TO_API = {
+    "cape": "cape",
+    "convective_inhibition": "convective_inhibition",
+    "lifted_index": "lifted_index",
+}
+
+
+def parse_convective(data: dict, now: datetime) -> dict[str, float]:
+    """Extract the current-hour convective values from an Open-Meteo response.
+
+    Falls back to the first hour if the exact current-hour timestamp is absent,
+    and silently skips any field the API did not return for that hour.
+    """
+    hourly = data.get("hourly", {}) if isinstance(data, dict) else {}
+    times = hourly.get("time") or []
+    if not times:
+        return {}
+    target = now.strftime("%Y-%m-%dT%H:00")
+    index = times.index(target) if target in times else 0
+    result: dict[str, float] = {}
+    for snapshot_field, api_name in CONVECTIVE_FIELD_TO_API.items():
+        values = hourly.get(api_name) or []
+        if index < len(values) and values[index] is not None:
+            result[snapshot_field] = float(values[index])
+    return result
 
 
 BURN_CATEGORY_LABELS = {0: "unknown", 1: "no_burn", 2: "restricted_20h_to_08h", 3: "burn_permitted"}

@@ -20,6 +20,12 @@ class WeatherSnapshot:
     local_lightning_count_30m: float | None = None
     internet_lightning_count_30m: float | None = None
     radar_precip_nearby: float | None = None
+    # Convective environment from Open-Meteo (current hour). Surface obs alone
+    # can't see instability; these are the physical drivers of thunderstorms and
+    # are logged for future ML training as well as live storm scoring.
+    cape: float | None = None
+    convective_inhibition: float | None = None
+    lifted_index: float | None = None
     forecast_precip_probability_1h: float | None = None
     forecast_precip_probability_6h: float | None = None
     forecast_precip_probability_24h: float | None = None
@@ -65,6 +71,9 @@ class WeatherSnapshot:
             "local_lightning_count_30m": self.local_lightning_count_30m,
             "internet_lightning_count_30m": self.internet_lightning_count_30m,
             "radar_precip_nearby": self.radar_precip_nearby,
+            "cape": self.cape,
+            "convective_inhibition": self.convective_inhibition,
+            "lifted_index": self.lifted_index,
             "forecast_precip_probability_1h": self.forecast_precip_probability_1h,
             "forecast_precip_probability_6h": self.forecast_precip_probability_6h,
             "forecast_precip_probability_24h": self.forecast_precip_probability_24h,
